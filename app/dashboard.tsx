@@ -1,6 +1,8 @@
 "use client";
-import { supabase } from "../lib/supabase";
+
 import { useMemo, useState } from "react";
+import { supabase } from "../lib/supabase";
+
 import {
   ArrowDownLeft,
   ArrowUpRight,
@@ -36,69 +38,15 @@ import {
 
 import { usePersistedFinance } from "../lib/use-persisted-finance";
 
-type Tx = {
-  id: number;
-  date: string;
-  description: string;
-  category: string;
-  icon: string;
-  account: string;
-  value: number;
-  status: "confirmado" | "previsto" | "revisar";
-  installment?: string;
-};
-
-const initial: Tx[] = [];
+/* =========================================================
+   UTILIDADES
+   ========================================================= */
 
 const fmt = (n: number) =>
   new Intl.NumberFormat("pt-BR", {
     style: "currency",
     currency: "BRL",
   }).format(Math.abs(n));
-
-const MONTHS = [
-  "Janeiro",
-  "Fevereiro",
-  "Março",
-  "Abril",
-  "Maio",
-  "Junho",
-  "Julho",
-  "Agosto",
-  "Setembro",
-  "Outubro",
-  "Novembro",
-  "Dezembro",
-];
-
-
-const monthOptions = useMemo(() => {
-  const now = new Date();
-  const currentYear = now.getFullYear();
-
-  const options: {
-    value: string;
-    label: string;
-  }[] = [];
-
-  for (
-    let year = currentYear - 1;
-    year <= currentYear + 1;
-    year++
-  ) {
-    for (let m = 1; m <= 12; m++) {
-      const value = `${year}-${String(m).padStart(2, "0")}`;
-
-      options.push({
-        value,
-        label: `${MONTHS[m - 1]} ${year}`,
-      });
-    }
-  }
-
-  return options;
-}, []);
-
 
 function currentMonthKey() {
   const now = new Date();
@@ -108,12 +56,205 @@ function currentMonthKey() {
   ).padStart(2, "0")}`;
 }
 
+function currentDateKey() {
+  const now = new Date();
+
+  return `${now.getFullYear()}-${String(
+    now.getMonth() + 1
+  ).padStart(2, "0")}-${String(now.getDate()).padStart(
+    2,
+    "0"
+  )}`;
+}
+
+function changeMonth(current: string, amount: number) {
+  const [year, month] = current.split("-").map(Number);
+
+  const date = new Date(year, month - 1 + amount, 1);
+
+  return `${date.getFullYear()}-${String(
+    date.getMonth() + 1
+  ).padStart(2, "0")}`;
+}
+
 function monthLabel(key: string) {
   const [year, month] = key.split("-").map(Number);
 
-  return `${MONTHS[month - 1]} ${year}`;
+  return new Intl.DateTimeFormat("pt-BR", {
+    month: "long",
+    year: "numeric",
+  }).format(new Date(year, month - 1, 1));
 }
 
+function defaultDateForMonth(month: string) {
+  if (month === currentMonthKey()) {
+    return currentDateKey();
+  }
+
+  return `${month}-01`;
+}
+
+function formatDate(date: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    return date;
+  }
+
+  const [year, month, day] = date.split("-").map(Number);
+
+  return new Intl.DateTimeFormat("pt-BR", {
+    day: "2-digit",
+    month: "short",
+  })
+    .format(new Date(year, month - 1, day))
+    .replace(".", "");
+}
+
+function dateBelongsToMonth(
+  date: string,
+  selectedMonth: string
+) {
+  return date.startsWith(selectedMonth);
+}
+
+function convertImportedDate(
+  value: string,
+  selectedMonth: string
+) {
+  const parts = value.split(/[/-]/).map(Number);
+
+  const day = parts[0];
+  const month = parts[1];
+
+  let year = parts[2];
+
+  if (!year) {
+    year = Number(selectedMonth.split("-")[0]);
+  }
+
+  if (year < 100) {
+    year += 2000;
+  }
+
+  return `${year}-${String(month).padStart(
+    2,
+    "0"
+  )}-${String(day).padStart(2, "0")}`;
+}
+
+/* =========================================================
+   TIPOS
+   ========================================================= */
+
+type Ledger = {
+  id: number;
+  type: "Receita" | "Despesa";
+  name: string;
+  category: string;
+  icon: string;
+  date: string;
+  value: number;
+  account: string;
+  frequency: "Único" | "Mensal" | "Parcelado";
+  installment?: string;
+  remaining?: number;
+  status: "Confirmado" | "Previsto";
+  sourceType?: "account" | "card" | "cash";
+  sourceId?: number;
+};
+
+type FinanceCard = {
+  id: number;
+  bank: string;
+  logo: string;
+  last4: string;
+  closing: number;
+  due: number;
+  color: string;
+  color2: string;
+};
+
+type FinanceAccount = {
+  id: number;
+  name: string;
+  bank: string;
+  type:
+    | "Corrente"
+    | "Poupança"
+    | "Dinheiro"
+    | "Investimento";
+  balance: number;
+};
+
+type PlanItem = {
+  id: number;
+  name: string;
+  category: string;
+  icon: string;
+  date: string;
+  value: number;
+  kind: "Fixo" | "Fatura" | "Parcela";
+  detail?: string;
+  active: boolean;
+};
+
+/* =========================================================
+   VALORES INICIAIS
+   ========================================================= */
+
+const ledgerSeed: Ledger[] = [];
+
+const initialCards: FinanceCard[] = [];
+
+const initialAccounts: FinanceAccount[] = [];
+
+const initialPlan: PlanItem[] = [];
+
+const initialBudgets: {
+  name: string;
+  icon: string;
+  value: number;
+  color: string;
+}[] = [];
+
+const categorySeed = [
+  ["Salários", "💼", "Receita"],
+  ["Bolsas", "🎓", "Receita"],
+  ["Renda extra", "📊", "Receita"],
+  ["Moradia", "🏠", "Despesa"],
+  ["Mercado", "🛒", "Despesa"],
+  ["Compras", "🛍️", "Despesa"],
+  ["Casa", "🛋️", "Despesa"],
+  ["Assinaturas", "🎵", "Despesa"],
+  ["Transporte", "🚗", "Despesa"],
+];
+
+const bankCatalog = [
+  ["Nubank", "#820ad1", "#4c0677", "NU"],
+  ["Inter", "#ff7a00", "#c94d00", "inter"],
+  ["Itaú", "#ec7000", "#073f87", "itaú"],
+  ["Banco do Brasil", "#f9dc16", "#173863", "BB"],
+  ["Caixa", "#087bb8", "#005ca9", "CAIXA"],
+  ["Bradesco", "#cc092f", "#8e0623", "bradesco"],
+  ["Santander", "#ec0000", "#9e0000", "S"],
+  ["C6 Bank", "#242424", "#050505", "C6"],
+  ["BTG Pactual", "#18365f", "#071a34", "BTG"],
+  ["XP", "#171717", "#000000", "XP"],
+  ["Sicredi", "#68a82f", "#39751e", "sicredi"],
+  ["Sicoob", "#006b5b", "#003b37", "sicoob"],
+  ["PicPay", "#21c25e", "#087f42", "PicPay"],
+  [
+    "Mercado Pago",
+    "#16aee8",
+    "#0876b9",
+    "mercado pago",
+  ],
+  ["PagBank", "#42b549", "#187c31", "PagBank"],
+  ["Neon", "#00b8e6", "#006ed0", "neon"],
+] as const;
+
+/* =========================================================
+   HOME
+   ========================================================= */
 
 export default function Home({
   userEmail,
@@ -122,18 +263,29 @@ export default function Home({
   userEmail: string;
   onLogout: () => void;
 }) {
-  const [section, setSection] = useState("Visão geral");
+  const [section, setSection] =
+    useState("Visão geral");
+
   const [mobile, setMobile] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
-  const [month, setMonth] = useState(currentMonthKey);
 
-  const [txs, setTxs, saveState] = usePersistedFinance<Tx[]>(
-    "dashboard-transactions",
-    initial
-  );
+  /* Sempre inicia no mês atual */
+  const [month, setMonth] =
+    useState(currentMonthKey);
 
-  const [importOpen, setImportOpen] = useState(false);
-  const [addOpen, setAddOpen] = useState(false);
+  /*
+    Fonte única dos lançamentos.
+    A Visão geral e Lançamentos usam o mesmo namespace.
+  */
+  const [entries, setEntries, saveState] =
+    usePersistedFinance<Ledger[]>(
+      "ledger",
+      ledgerSeed
+    );
+
+  const [importOpen, setImportOpen] =
+    useState(false);
+
   const [paste, setPaste] = useState("");
   const [notice, setNotice] = useState("");
   const [query, setQuery] = useState("");
@@ -149,107 +301,147 @@ export default function Home({
     ["Acessos", KeyRound],
   ] as const;
 
-  const spent = txs
-    .filter((x) => x.value < 0)
-    .reduce((a, b) => a - b.value, 0);
+  /* Lançamentos somente do mês selecionado */
+  const monthEntries = useMemo(
+    () =>
+      entries.filter((entry) =>
+        dateBelongsToMonth(entry.date, month)
+      ),
+    [entries, month]
+  );
 
-  const income = txs
-    .filter((x) => x.value > 0)
-    .reduce((a, b) => a + b.value, 0);
+  const income = monthEntries
+    .filter((entry) => entry.type === "Receita")
+    .reduce((total, entry) => total + entry.value, 0);
+
+  const spent = monthEntries
+    .filter((entry) => entry.type === "Despesa")
+    .reduce((total, entry) => total + entry.value, 0);
 
   const projectedBalance = income - spent;
 
-  const filtered = txs.filter(
-    (t) =>
-      t.value < 0 &&
-      (t.description + t.category + t.account)
+  const filtered = monthEntries.filter(
+    (entry) =>
+      entry.type === "Despesa" &&
+      (
+        entry.name +
+        entry.category +
+        entry.account
+      )
         .toLowerCase()
         .includes(query.toLowerCase())
   );
 
-  const cats = useMemo(
-    () =>
-      Object.entries(
-        txs
-          .filter((t) => t.value < 0)
-          .reduce(
-            (a, t) => ({
-              ...a,
-              [t.category]: (a[t.category] || 0) - t.value,
-            }),
-            {} as Record<string, number>
-          )
-      ).sort((a, b) => b[1] - a[1]),
-    [txs]
-  );
+  const cats = useMemo(() => {
+    const totals = monthEntries
+      .filter((entry) => entry.type === "Despesa")
+      .reduce(
+        (acc, entry) => {
+          acc[entry.category] =
+            (acc[entry.category] || 0) +
+            entry.value;
+
+          return acc;
+        },
+        {} as Record<string, number>
+      );
+
+    return Object.entries(totals).sort(
+      (a, b) => b[1] - a[1]
+    );
+  }, [monthEntries]);
 
   function doImport() {
-    const lines = paste.split(/\n/).filter(Boolean);
-    const added: Tx[] = [];
+    const lines = paste
+      .split(/\n/)
+      .filter(Boolean);
 
-    lines.forEach((line, j) => {
-      const m = line.match(
+    const added: Ledger[] = [];
+
+    lines.forEach((line, index) => {
+      const match = line.match(
         /(\d{2}[\/\-]\d{2}(?:[\/\-]\d{2,4})?).*?([+-]?\s?R?\$?\s?[\d.]+,\d{2})/
       );
 
-      if (!m) return;
+      if (!match) return;
 
-      const raw = m[2]
+      const raw = match[2]
         .replace(/[^\d,\-]/g, "")
-        .replace(".", "")
+        .replace(/\./g, "")
         .replace(",", ".");
 
-      const desc =
+      const value = Number(raw);
+
+      const description =
         line
           .slice(
-            m.index! + m[0].indexOf(m[1]) + m[1].length,
-            line.lastIndexOf(m[2])
+            match.index! +
+              match[0].indexOf(match[1]) +
+              match[1].length,
+            line.lastIndexOf(match[2])
           )
           .replace(/[;|]/g, " ")
           .trim() || "Lançamento importado";
 
-      const low = desc.toLowerCase();
+      const low = description.toLowerCase();
 
       const map = low.includes("merc")
         ? ["Mercado", "🛒"]
-        : low.includes("posto") || low.includes("uber")
+        : low.includes("posto") ||
+          low.includes("uber")
         ? ["Transporte", "🚗"]
         : low.includes("sal")
-        ? ["Renda", "💼"]
+        ? ["Salários", "💼"]
         : low.includes("ifood")
         ? ["Delivery", "🛵"]
         : ["A confirmar", "✨"];
 
       added.push({
-        id: Date.now() + j,
-        date: m[1].slice(0, 5).replace("/", " "),
-        description: desc,
+        id: Date.now() + index,
+        type:
+          value >= 0
+            ? "Receita"
+            : "Despesa",
+        name: description,
         category: map[0],
         icon: map[1],
+        date: convertImportedDate(
+          match[1],
+          month
+        ),
+        value: Math.abs(value),
         account: "Extrato importado",
-        value: Number(raw),
-        status: map[0] === "A confirmar" ? "revisar" : "confirmado",
+        frequency: "Único",
+        status:
+          map[0] === "A confirmar"
+            ? "Previsto"
+            : "Confirmado",
+        sourceType: "cash",
       });
     });
 
     if (!added.length) {
       setNotice(
-        "Não identifiquei linhas com data e valor. Cole uma movimentação por linha."
+        "Não identifiquei linhas com data e valor."
       );
+
       return;
     }
 
     const unique = added.filter(
-      (n) =>
-        !txs.some(
-          (t) =>
-            t.description === n.description &&
-            t.value === n.value &&
-            t.date === n.date
+      (newEntry) =>
+        !entries.some(
+          (entry) =>
+            entry.name === newEntry.name &&
+            entry.value === newEntry.value &&
+            entry.date === newEntry.date
         )
     );
 
-    setTxs((p) => [...unique, ...p]);
+    setEntries((current) => [
+      ...unique,
+      ...current,
+    ]);
 
     setNotice(
       `${unique.length} lançamentos novos; ${
@@ -261,14 +453,34 @@ export default function Home({
   }
 
   return (
-    <div className={collapsed ? "app-shell sidebar-collapsed" : "app-shell"}>
-      <aside className={mobile ? "sidebar open" : "sidebar"}>
+    <div
+      className={
+        collapsed
+          ? "app-shell sidebar-collapsed"
+          : "app-shell"
+      }
+    >
+      <aside
+        className={
+          mobile ? "sidebar open" : "sidebar"
+        }
+      >
         <button
           className="collapse-sidebar"
-          onClick={() => setCollapsed((v) => !v)}
-          aria-label={collapsed ? "Expandir menu" : "Recolher menu"}
+          onClick={() =>
+            setCollapsed((value) => !value)
+          }
+          aria-label={
+            collapsed
+              ? "Expandir menu"
+              : "Recolher menu"
+          }
         >
-          {collapsed ? <PanelLeftOpen /> : <PanelLeftClose />}
+          {collapsed ? (
+            <PanelLeftOpen />
+          ) : (
+            <PanelLeftClose />
+          )}
         </button>
 
         <div className="brand">
@@ -280,31 +492,41 @@ export default function Home({
 
           <div>
             <strong>HAS Financial</strong>
-            <small>Inteligência financeira</small>
+            <small>
+              Inteligência financeira
+            </small>
           </div>
 
-          <button className="close-mobile" onClick={() => setMobile(false)}>
+          <button
+            className="close-mobile"
+            onClick={() => setMobile(false)}
+          >
             <X />
           </button>
         </div>
 
         <nav>
-          {nav.map(([n, I]) => (
+          {nav.map(([name, Icon]) => (
             <button
-              key={n}
-              className={section === n ? "nav active" : "nav"}
+              key={name}
+              className={
+                section === name
+                  ? "nav active"
+                  : "nav"
+              }
               onClick={() => {
-                if (n === "Acessos") {
-                  location.href = "/admin/requests";
+                if (name === "Acessos") {
+                  location.href =
+                    "/admin/requests";
                   return;
                 }
 
-                setSection(n);
+                setSection(name);
                 setMobile(false);
               }}
             >
-              <I />
-              <span>{n}</span>
+              <Icon />
+              <span>{name}</span>
             </button>
           ))}
         </nav>
@@ -316,10 +538,17 @@ export default function Home({
           </button>
 
           <div className="profile">
-            <div>{userEmail.slice(0, 2).toUpperCase()}</div>
+            <div>
+              {userEmail
+                .slice(0, 2)
+                .toUpperCase()}
+            </div>
 
             <span>
-              <b>{userEmail.split("@")[0]}</b>
+              <b>
+                {userEmail.split("@")[0]}
+              </b>
+
               <small>Conta pessoal</small>
             </span>
 
@@ -338,7 +567,10 @@ export default function Home({
 
       <main>
         <header>
-          <button className="hamb" onClick={() => setMobile(true)}>
+          <button
+            className="hamb"
+            onClick={() => setMobile(true)}
+          >
             <Menu />
           </button>
 
@@ -358,55 +590,110 @@ export default function Home({
           </div>
 
           <div className="header-actions">
-            <div className="month-picker">
-  <CalendarDays />
+            {/* Navegação mensal ilimitada */}
 
-  <select
-    value={month}
-    onChange={(e) => setMonth(e.target.value)}
-    aria-label="Selecionar mês"
-  >
-    {monthOptions.map((option) => (
-      <option
-        key={option.value}
-        value={option.value}
-      >
-        {option.label}
-      </option>
-    ))}
-  </select>
+            <div className="month-navigation">
+              <button
+                type="button"
+                onClick={() =>
+                  setMonth((current) =>
+                    changeMonth(current, -1)
+                  )
+                }
+                title="Mês anterior"
+              >
+                ‹
+              </button>
 
-  <ChevronDown />
-</div>
+              <label
+                className="month-current"
+                title="Selecionar mês e ano"
+              >
+                <CalendarDays />
 
-            <button className="iconbtn" title={userEmail}>
+                <input
+                  type="month"
+                  value={month}
+                  onChange={(event) =>
+                    setMonth(event.target.value)
+                  }
+                  aria-label="Selecionar mês"
+                />
+              </label>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setMonth((current) =>
+                    changeMonth(current, 1)
+                  )
+                }
+                title="Próximo mês"
+              >
+                ›
+              </button>
+            </div>
+
+            <button
+              className="iconbtn"
+              title="Voltar para o mês atual"
+              onClick={() =>
+                setMonth(currentMonthKey())
+              }
+            >
+              <CalendarDays />
+            </button>
+
+            <button
+              className="iconbtn"
+              title={userEmail}
+            >
               <Bell />
             </button>
 
-            <button className="primary" onClick={() => setImportOpen(true)}>
+            <button
+              className="primary"
+              onClick={() =>
+                setImportOpen(true)
+              }
+            >
               <Upload />
               Importar extrato
             </button>
 
-            <button className="add" onClick={() => setAddOpen(true)}>
+            <button
+              className="add"
+              onClick={() =>
+                setSection("Lançamentos")
+              }
+              title="Novo lançamento"
+            >
               <Plus />
             </button>
 
-            <button className="iconbtn" onClick={onLogout} title="Sair">
+            <button
+              className="iconbtn"
+              onClick={onLogout}
+              title="Sair"
+            >
               <LogOut />
             </button>
           </div>
         </header>
 
-       {section === "Cartões" ? (
-  <BankCatalog />
-) : section === "Contas" ? (
-  <AccountsWorkspace />
-) : section === "Planejamento" ? (
-  <Planning />
-) : section === "Lançamentos" ? (
-  <TransactionsWorkspace selectedMonth={month} />
-) : section !== "Visão geral" ? (
+        {section === "Cartões" ? (
+          <BankCatalog />
+        ) : section === "Contas" ? (
+          <AccountsWorkspace />
+        ) : section === "Planejamento" ? (
+          <Planning />
+        ) : section === "Lançamentos" ? (
+          <TransactionsWorkspace
+            selectedMonth={month}
+            entries={entries}
+            setEntries={setEntries}
+          />
+        ) : section !== "Visão geral" ? (
           <div className="section-placeholder">
             <div className="placeholder-icon">
               <Sparkles />
@@ -415,39 +702,47 @@ export default function Home({
             <h2>{section}</h2>
 
             <p>
-              Esta área faz parte do seu controle financeiro e será vinculada
-              aos dados da sua conta.
+              Esta área faz parte do seu
+              controle financeiro e será
+              vinculada aos dados da sua conta.
             </p>
-
-            <button className="primary" onClick={() => setAddOpen(true)}>
-              <Plus />
-              Novo lançamento
-            </button>
           </div>
         ) : (
           <div className="content">
             <section className="forecast">
               <div>
-                <span className="eyebrow">SALDO PROJETADO</span>
+                <span className="eyebrow">
+                  SALDO PROJETADO ·{" "}
+                  {monthLabel(month)}
+                </span>
 
                 <h2>
-                  {projectedBalance < 0 ? "− " : ""}
+                  {projectedBalance < 0
+                    ? "− "
+                    : ""}
                   {fmt(projectedBalance)}
                 </h2>
 
                 <p>
-                  {txs.length
-                    ? "Calculado com base nos seus lançamentos."
-                    : "Cadastre suas receitas e despesas para iniciar."}
+                  {monthEntries.length
+                    ? "Calculado com base nos lançamentos deste mês."
+                    : "Nenhum lançamento registrado neste mês."}
                 </p>
               </div>
 
               <div className="forecast-right">
                 <div>
-                  <span>Saldo projetado</span>
+                  <span>
+                    Saldo projetado
+                  </span>
+
                   <b>
-                    {projectedBalance < 0 ? "− " : ""}
-                    {fmt(projectedBalance)}
+                    {projectedBalance < 0
+                      ? "− "
+                      : ""}
+                    {fmt(
+                      projectedBalance
+                    )}
                   </b>
                 </div>
 
@@ -455,12 +750,18 @@ export default function Home({
 
                 <div>
                   <span>A receber</span>
-                  <b className="green">+ {fmt(income)}</b>
+
+                  <b className="green">
+                    + {fmt(income)}
+                  </b>
                 </div>
 
                 <div>
                   <span>A pagar</span>
-                  <b className="red">− {fmt(spent)}</b>
+
+                  <b className="red">
+                    − {fmt(spent)}
+                  </b>
                 </div>
               </div>
             </section>
@@ -470,20 +771,27 @@ export default function Home({
 
               <div>
                 <b>
-                  {txs.length
-                    ? "Seus dados financeiros estão atualizados"
-                    : "Comece seu planejamento financeiro"}
+                  {monthEntries.length
+                    ? `Dados de ${monthLabel(
+                        month
+                      )}`
+                    : `Nenhum lançamento em ${monthLabel(
+                        month
+                      )}`}
                 </b>
 
                 <span>
-                  {txs.length
-                    ? "Todas as informações são vinculadas à sua conta."
-                    : "Cadastre receitas, despesas, cartões e contas para montar seu painel."}
+                  Use o seletor superior para
+                  consultar qualquer mês.
                 </span>
               </div>
 
-              <button onClick={() => setSection("Lançamentos")}>
-                {txs.length ? "Ver lançamentos" : "Começar"}
+              <button
+                onClick={() =>
+                  setSection("Lançamentos")
+                }
+              >
+                Ver lançamentos
               </button>
             </div>
 
@@ -491,16 +799,22 @@ export default function Home({
               <Kpi
                 title="Receitas"
                 value={fmt(income)}
-                sub="Registradas no período"
-                foot={`${txs.filter((t) => t.value > 0).length} lançamentos`}
+                sub={monthLabel(month)}
+                foot={`${monthEntries.filter(
+                  (entry) =>
+                    entry.type === "Receita"
+                ).length} lançamentos`}
                 kind="green"
               />
 
               <Kpi
                 title="Despesas"
                 value={fmt(spent)}
-                sub="Registradas no período"
-                foot={`${txs.filter((t) => t.value < 0).length} lançamentos`}
+                sub={monthLabel(month)}
+                foot={`${monthEntries.filter(
+                  (entry) =>
+                    entry.type === "Despesa"
+                ).length} lançamentos`}
                 kind="coral"
               />
 
@@ -508,7 +822,7 @@ export default function Home({
                 title="Cartões"
                 value="R$ 0,00"
                 sub="Faturas do período"
-                foot="Cadastre seus cartões"
+                foot="Integração em desenvolvimento"
                 kind="cards"
               />
 
@@ -525,8 +839,12 @@ export default function Home({
               <section className="panel cash">
                 <PanelHead
                   title="Fluxo do mês"
-                  sub="Entradas e saídas registradas"
-                  onDetails={() => setSection("Lançamentos")}
+                  sub={monthLabel(month)}
+                  onDetails={() =>
+                    setSection(
+                      "Lançamentos"
+                    )
+                  }
                 />
 
                 <div className="legend">
@@ -555,16 +873,41 @@ export default function Home({
                   </div>
 
                   <div className="plot">
-                    {[0, 0, 0, 0, 0, 0].map((h, i) => (
-                      <div className="bars" key={i}>
-                        <i className="in" style={{ height: `${h}%` }} />
-                        <i className="out" style={{ height: `${h}%` }} />
+                    {[0, 0, 0, 0, 0, 0].map(
+                      (height, index) => (
+                        <div
+                          className="bars"
+                          key={index}
+                        >
+                          <i
+                            className="in"
+                            style={{
+                              height: `${height}%`,
+                            }}
+                          />
 
-                        <span>
-                          {["01", "06", "12", "18", "24", "30"][i]}
-                        </span>
-                      </div>
-                    ))}
+                          <i
+                            className="out"
+                            style={{
+                              height: `${height}%`,
+                            }}
+                          />
+
+                          <span>
+                            {
+                              [
+                                "01",
+                                "06",
+                                "12",
+                                "18",
+                                "24",
+                                "30",
+                              ][index]
+                            }
+                          </span>
+                        </div>
+                      )
+                    )}
                   </div>
                 </div>
               </section>
@@ -572,28 +915,43 @@ export default function Home({
               <section className="panel categories">
                 <PanelHead
                   title="Para onde foi o dinheiro"
-                  sub="Maiores categorias no período"
+                  sub={monthLabel(month)}
                 />
 
                 <div className="donut-wrap">
                   <div className="donut">
                     <div>
                       <b>{fmt(spent)}</b>
-                      <span>total gasto</span>
+                      <span>
+                        total gasto
+                      </span>
                     </div>
                   </div>
 
                   <div className="cat-list">
-                    {cats.slice(0, 5).map(([c, v], i) => (
-                      <div key={c}>
-                        <span>
-                          <i className={`c${i}`} />
-                          ✨ {c}
-                        </span>
+                    {cats
+                      .slice(0, 5)
+                      .map(
+                        (
+                          [category, value],
+                          index
+                        ) => (
+                          <div
+                            key={category}
+                          >
+                            <span>
+                              <i
+                                className={`c${index}`}
+                              />
+                              ✨ {category}
+                            </span>
 
-                        <b>{fmt(v)}</b>
-                      </div>
-                    ))}
+                            <b>
+                              {fmt(value)}
+                            </b>
+                          </div>
+                        )
+                      )}
                   </div>
                 </div>
               </section>
@@ -602,8 +960,15 @@ export default function Home({
             <section className="panel transactions">
               <div className="panel-head">
                 <div>
-                  <h3>Despesas do mês</h3>
-                  <p>Despesas registradas na sua conta</p>
+                  <h3>
+                    Despesas de{" "}
+                    {monthLabel(month)}
+                  </h3>
+
+                  <p>
+                    Despesas registradas no
+                    período selecionado
+                  </p>
                 </div>
 
                 <div className="table-actions">
@@ -613,11 +978,21 @@ export default function Home({
                     <input
                       placeholder="Buscar"
                       value={query}
-                      onChange={(e) => setQuery(e.target.value)}
+                      onChange={(event) =>
+                        setQuery(
+                          event.target.value
+                        )
+                      }
                     />
                   </label>
 
-                  <button onClick={() => setAddOpen(true)}>
+                  <button
+                    onClick={() =>
+                      setSection(
+                        "Lançamentos"
+                      )
+                    }
+                  >
                     <Plus />
                     Adicionar
                   </button>
@@ -631,45 +1006,86 @@ export default function Home({
                       <th>Data</th>
                       <th>Descrição</th>
                       <th>Categoria</th>
-                      <th>Conta / cartão</th>
+                      <th>
+                        Conta / cartão
+                      </th>
                       <th>Status</th>
                       <th>Valor</th>
                     </tr>
                   </thead>
 
                   <tbody>
-                    {filtered.map((t) => (
-                      <tr key={t.id}>
-                        <td>{t.date}</td>
+                    {filtered.map(
+                      (entry) => (
+                        <tr key={entry.id}>
+                          <td>
+                            {formatDate(
+                              entry.date
+                            )}
+                          </td>
 
-                        <td>
-                          <span className="tx-icon">{t.icon}</span>
-                          <b>{t.description}</b>
+                          <td>
+                            <span className="tx-icon">
+                              {entry.icon}
+                            </span>
 
-                          {t.installment && (
-                            <small>Parcela {t.installment}</small>
-                          )}
-                        </td>
+                            <b>
+                              {entry.name}
+                            </b>
 
-                        <td>{t.category}</td>
-                        <td>{t.account}</td>
+                            {entry.installment && (
+                              <small>
+                                Parcela{" "}
+                                {
+                                  entry.installment
+                                }
+                              </small>
+                            )}
+                          </td>
 
-                        <td>
-                          <span className={`status ${t.status}`}>
-                            {t.status === "confirmado"
-                              ? "Confirmado"
-                              : t.status === "previsto"
-                              ? "Previsto"
-                              : "Revisar"}
-                          </span>
-                        </td>
+                          <td>
+                            {entry.category}
+                          </td>
 
-                        <td className={t.value > 0 ? "green" : ""}>
-                          {t.value > 0 ? "+ " : "− "}
-                          {fmt(t.value)}
-                        </td>
-                      </tr>
-                    ))}
+                          <td>
+                            {entry.account}
+                          </td>
+
+                          <td>
+                            <span
+                              className={`status ${
+                                entry.status ===
+                                "Confirmado"
+                                  ? "confirmado"
+                                  : "previsto"
+                              }`}
+                            >
+                              {
+                                entry.status
+                              }
+                            </span>
+                          </td>
+
+                          <td
+                            className={
+                              entry.type ===
+                              "Receita"
+                                ? "green"
+                                : "red"
+                            }
+                          >
+                            {entry.type ===
+                            "Receita"
+                              ? "+ "
+                              : "− "}
+
+                            {fmt(
+                              entry.value
+                            )}
+                          </td>
+                        </tr>
+                      )
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -696,19 +1112,36 @@ export default function Home({
 
               <textarea
                 value={paste}
-                onChange={(e) => setPaste(e.target.value)}
+                onChange={(event) =>
+                  setPaste(
+                    event.target.value
+                  )
+                }
                 placeholder={
                   "03/09 Supermercado -387,42\n05/09 Salário +5.498,70"
                 }
               />
             </label>
 
-            {notice && <p className="notice">{notice}</p>}
+            {notice && (
+              <p className="notice">
+                {notice}
+              </p>
+            )}
 
             <div className="modal-foot">
-              <button onClick={() => setImportOpen(false)}>Cancelar</button>
+              <button
+                onClick={() =>
+                  setImportOpen(false)
+                }
+              >
+                Cancelar
+              </button>
 
-              <button className="primary" onClick={doImport}>
+              <button
+                className="primary"
+                onClick={doImport}
+              >
                 Analisar lançamentos
                 <ArrowUpRight />
               </button>
@@ -716,97 +1149,13 @@ export default function Home({
           </div>
         </div>
       )}
-
-      {addOpen && (
-        <div className="modal-bg">
-          <form
-            className="modal small"
-            onSubmit={(e) => {
-              e.preventDefault();
-
-              const fd = new FormData(e.currentTarget);
-
-              setTxs((p) => [
-                {
-                  id: Date.now(),
-                  date: String(fd.get("date") || "Hoje"),
-                  description: String(fd.get("desc")),
-                  category: String(fd.get("cat")),
-                  icon: "✨",
-                  account: "Conta principal",
-                  value: -Math.abs(Number(fd.get("value")) || 0),
-                  status: "confirmado",
-                },
-                ...p,
-              ]);
-
-              setAddOpen(false);
-            }}
-          >
-            <ModalHead
-              title="Novo lançamento"
-              sub="Registre uma despesa."
-              close={() => setAddOpen(false)}
-              icon={<Plus />}
-            />
-
-            <div className="form-grid">
-              <label>
-  Data
-
-  <input
-    name="date"
-    type="date"
-    required
-    defaultValue={new Date().toISOString().slice(0, 10)}
-  />
-</label>
-
-              <label>
-                Valor
-                <input
-                  name="value"
-                  type="number"
-                  step="0.01"
-                  placeholder="0,00"
-                  required
-                />
-              </label>
-
-              <label className="wide">
-                Descrição
-                <input name="desc" placeholder="Ex.: Mercado" required />
-              </label>
-
-              <label className="wide">
-                Categoria
-                <select name="cat">
-                  <option>Mercado</option>
-                  <option>Moradia</option>
-                  <option>Transporte</option>
-                  <option>Compras</option>
-                  <option>Assinaturas</option>
-                  <option>Outros</option>
-                </select>
-              </label>
-            </div>
-
-            <div className="modal-foot">
-              <button type="button" onClick={() => setAddOpen(false)}>
-                Cancelar
-              </button>
-
-              <button className="primary" type="submit">
-                <Check />
-                Salvar lançamento
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
     </div>
   );
 }
+
+/* =========================================================
+   KPI
+   ========================================================= */
 
 function Kpi({
   title,
@@ -859,6 +1208,10 @@ function Kpi({
   );
 }
 
+/* =========================================================
+   CABEÇALHO DE PAINEL
+   ========================================================= */
+
 function PanelHead({
   title,
   sub,
@@ -875,10 +1228,18 @@ function PanelHead({
         <p>{sub}</p>
       </div>
 
-      {onDetails && <button onClick={onDetails}>Ver detalhes</button>}
+      {onDetails && (
+        <button onClick={onDetails}>
+          Ver detalhes
+        </button>
+      )}
     </div>
   );
 }
+
+/* =========================================================
+   CABEÇALHO DE MODAL
+   ========================================================= */
 
 function ModalHead({
   title,
@@ -894,7 +1255,9 @@ function ModalHead({
   return (
     <div className="modal-head">
       <div>
-        <span className="modal-icon">{icon}</span>
+        <span className="modal-icon">
+          {icon}
+        </span>
 
         <div>
           <h2>{title}</h2>
@@ -902,65 +1265,42 @@ function ModalHead({
         </div>
       </div>
 
-      <button onClick={close} type="button">
+      <button
+        onClick={close}
+        type="button"
+      >
         <X />
       </button>
     </div>
   );
 }
 
-type Ledger = {
-  id: number;
-  type: "Receita" | "Despesa";
-  name: string;
-  category: string;
-  icon: string;
-  date: string;
-  value: number;
-  account: string;
-  frequency: "Único" | "Mensal" | "Parcelado";
-  installment?: string;
-  remaining?: number;
-  status: "Confirmado" | "Previsto";
-   sourceType?: "account" | "card" | "cash";
-  sourceId?: number;
-};
+/* =========================================================
+   LANÇAMENTOS
+   ========================================================= */
 
-const ledgerSeed: Ledger[] = [];
-
-const categorySeed = [
-  ["Salários", "💼", "Receita"],
-  ["Bolsas", "🎓", "Receita"],
-  ["Renda extra", "📊", "Receita"],
-  ["Moradia", "🏠", "Despesa"],
-  ["Mercado", "🛒", "Despesa"],
-  ["Compras", "🛍️", "Despesa"],
-  ["Casa", "🛋️", "Despesa"],
-  ["Assinaturas", "🎵", "Despesa"],
-  ["Transporte", "🚗", "Despesa"],
-];
-
-
-  function TransactionsWorkspace({
+function TransactionsWorkspace({
   selectedMonth,
+  entries,
+  setEntries,
 }: {
   selectedMonth: string;
+  entries: Ledger[];
+  setEntries: React.Dispatch<
+    React.SetStateAction<Ledger[]>
+  >;
 }) {
+  const [accounts, setAccounts] =
+    usePersistedFinance<FinanceAccount[]>(
+      "accounts",
+      initialAccounts
+    );
 
-  const [accounts, setAccounts] = usePersistedFinance<FinanceAccount[]>(
-    "accounts",
-    initialAccounts
-  );
-
-  const [cards] = usePersistedFinance<FinanceCard[]>(
-    "cards",
-    initialCards
-  );
-
-  const [entries, setEntries] = usePersistedFinance<Ledger[]>(
-    "ledger",
-    ledgerSeed
-  );
+  const [cards] =
+    usePersistedFinance<FinanceCard[]>(
+      "cards",
+      initialCards
+    );
 
   const [view, setView] = useState<
     "Todos" | "Receitas" | "Despesas"
@@ -975,92 +1315,93 @@ const categorySeed = [
       categorySeed
     );
 
-  const [catOpen, setCatOpen] = useState(false);
-  const [newCat, setNewCat] = useState("");
+  const [catOpen, setCatOpen] =
+    useState(false);
 
-const monthEntries = entries.filter((entry) =>
-  entry.date.startsWith(selectedMonth)
-);
+  const [newCat, setNewCat] =
+    useState("");
 
-const shown = monthEntries.filter(
-  (e) =>
-    (view === "Todos" ||
-      e.type === view.slice(0, -1)) &&
-    (e.name + e.category + e.account)
-      .toLowerCase()
-      .includes(search.toLowerCase())
-);
+  const monthEntries = entries.filter(
+    (entry) =>
+      dateBelongsToMonth(
+        entry.date,
+        selectedMonth
+      )
+  );
 
-  const revenues = entries
-    .filter((e) => e.type === "Receita")
-    .reduce((a, e) => a + e.value, 0);
+  const shown = monthEntries.filter(
+    (entry) =>
+      (view === "Todos" ||
+        entry.type ===
+          (view === "Receitas"
+            ? "Receita"
+            : "Despesa")) &&
+      (
+        entry.name +
+        entry.category +
+        entry.account
+      )
+        .toLowerCase()
+        .includes(search.toLowerCase())
+  );
 
-  const expenses = entries
-    .filter((e) => e.type === "Despesa")
-    .reduce((a, e) => a + e.value, 0);
-
-  const monthlyIncome = entries
-    .filter((e) => e.type === "Receita" && e.frequency === "Mensal")
-    .reduce((a, e) => a + e.value, 0);
-
-  const futureInstallments = entries
-    .filter((e) => e.frequency === "Parcelado")
-    .reduce((a, e) => a + e.value * (e.remaining || 0), 0);
-
-  async function submit(e: React.FormEvent<HTMLFormElement>) {
-  e.preventDefault();
-
-  const fd = new FormData(e.currentTarget);
-
-  const type = String(fd.get("type")) as "Receita" | "Despesa";
-  const frequency = String(fd.get("frequency")) as Ledger["frequency"];
-  const total = Math.max(1, Number(fd.get("parts")) || 1);
-  const value = Math.abs(Number(fd.get("value")) || 0);
-  const destination = String(fd.get("account"));
-
-  let accountLabel = "Dinheiro";
-  let sourceType: "account" | "card" | "cash" = "cash";
-  let sourceId: number | undefined;
-
-  // CONTA BANCÁRIA
-  if (destination.startsWith("account:")) {
-    const accountId = Number(destination.replace("account:", ""));
-
-    const selectedAccount = accounts.find(
-      (account) => account.id === accountId
+  const revenues = monthEntries
+    .filter(
+      (entry) => entry.type === "Receita"
+    )
+    .reduce(
+      (total, entry) =>
+        total + entry.value,
+      0
     );
 
-    if (!selectedAccount) {
-      alert("Conta não encontrada.");
-      return;
-    }
-
-    sourceType = "account";
-    sourceId = accountId;
-
-    accountLabel = `${selectedAccount.name} · ${selectedAccount.bank}`;
-
-    const updatedAccounts = accounts.map((account) =>
-      account.id === accountId
-        ? {
-            ...account,
-            balance:
-              type === "Receita"
-                ? account.balance + value
-                : account.balance - value,
-          }
-        : account
+  const expenses = monthEntries
+    .filter(
+      (entry) => entry.type === "Despesa"
+    )
+    .reduce(
+      (total, entry) =>
+        total + entry.value,
+      0
     );
 
-    setAccounts(updatedAccounts);
+  const monthlyIncome = monthEntries
+    .filter(
+      (entry) =>
+        entry.type === "Receita" &&
+        entry.frequency === "Mensal"
+    )
+    .reduce(
+      (total, entry) =>
+        total + entry.value,
+      0
+    );
 
+  const futureInstallments = monthEntries
+    .filter(
+      (entry) =>
+        entry.frequency === "Parcelado"
+    )
+    .reduce(
+      (total, entry) =>
+        total +
+        entry.value *
+          (entry.remaining || 0),
+      0
+    );
+
+  async function saveNamespace(
+    namespace: string,
+    payload: unknown
+  ) {
     const {
       data: { user },
     } = await supabase.auth.getUser();
 
     if (!user) {
-      alert("Usuário não autenticado.");
-      return;
+      throw new Error(
+        "Usuário não autenticado."
+      );
     }
 
     const { error } = await supabase
@@ -1068,170 +1409,307 @@ const shown = monthEntries.filter(
       .upsert(
         {
           user_id: user.id,
-          namespace: "accounts",
-          payload: updatedAccounts,
-          updated_at: new Date().toISOString(),
+          namespace,
+          payload,
+          updated_at:
+            new Date().toISOString(),
         },
         {
-          onConflict: "user_id,namespace",
+          onConflict:
+            "user_id,namespace",
         }
       );
 
     if (error) {
-      console.error("Erro ao atualizar saldo:", error);
-      alert("Erro ao atualizar o saldo da conta.");
-      return;
+      throw error;
     }
   }
 
-  // CARTÃO
-  if (destination.startsWith("card:")) {
-    const cardId = Number(destination.replace("card:", ""));
+  async function submit(
+    event: React.FormEvent<HTMLFormElement>
+  ) {
+    event.preventDefault();
 
-    const selectedCard = cards.find(
-      (card) => card.id === cardId
+    const fd = new FormData(
+      event.currentTarget
     );
 
-    if (!selectedCard) {
-      alert("Cartão não encontrado.");
-      return;
-    }
+    const type = String(
+      fd.get("type")
+    ) as "Receita" | "Despesa";
 
-    sourceType = "card";
-    sourceId = cardId;
+    const frequency = String(
+      fd.get("frequency")
+    ) as Ledger["frequency"];
 
-    accountLabel = `${selectedCard.bank} • ${selectedCard.last4}`;
-  }
-
-  const newEntry: Ledger = {
-    id: Date.now(),
-    type,
-    name: String(fd.get("name")),
-    category: String(fd.get("category")),
-    icon: type === "Receita" ? "💰" : "✨",
-    date: String(fd.get("date") || "Hoje"),
-    value,
-    account: accountLabel,
-    frequency,
-    installment:
-      frequency === "Parcelado" ? `1/${total}` : undefined,
-    remaining:
-      frequency === "Parcelado" ? total - 1 : undefined,
-    status: "Previsto",
-    sourceType,
-    sourceId,
-  };
-
-  setEntries((list) => [newEntry, ...list]);
-
-  setForm(false);
-}
-
-
-async function deleteEntry(entry: Ledger) {
-  if (!window.confirm(`Excluir "${entry.name}"?`)) return;
-
-  let updatedAccounts = accounts;
-
-  if (entry.sourceType === "account" && entry.sourceId) {
-    updatedAccounts = accounts.map((account) =>
-      account.id === entry.sourceId
-        ? {
-            ...account,
-            balance:
-              entry.type === "Despesa"
-                ? account.balance + entry.value
-                : account.balance - entry.value,
-          }
-        : account
+    const total = Math.max(
+      1,
+      Number(fd.get("parts")) || 1
     );
 
-    setAccounts(updatedAccounts);
+    const value = Math.abs(
+      Number(fd.get("value")) || 0
+    );
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const destination = String(
+      fd.get("account")
+    );
 
-    if (!user) {
-      alert("Usuário não autenticado.");
-      return;
-    }
+    let accountLabel = "Dinheiro";
 
-    const { error: accountError } = await supabase
-      .from("finance_records")
-      .upsert(
-        {
-          user_id: user.id,
-          namespace: "accounts",
-          payload: updatedAccounts,
-          updated_at: new Date().toISOString(),
-        },
-        {
-          onConflict: "user_id,namespace",
-        }
+    let sourceType:
+      | "account"
+      | "card"
+      | "cash" = "cash";
+
+    let sourceId:
+      | number
+      | undefined;
+
+    if (
+      destination.startsWith(
+        "account:"
+      )
+    ) {
+      const accountId = Number(
+        destination.replace(
+          "account:",
+          ""
+        )
       );
 
-    if (accountError) {
-      console.error(
-        "Erro ao devolver valor para a conta:",
-        accountError
-      );
+      const selectedAccount =
+        accounts.find(
+          (account) =>
+            account.id === accountId
+        );
 
-      alert("Erro ao devolver o valor para a conta.");
-      return;
-    }
-  }
-
-  const updatedEntries = entries.filter(
-    (item) => item.id !== entry.id
-  );
-
-  setEntries(updatedEntries);
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) return;
-
-  const { error: ledgerError } = await supabase
-    .from("finance_records")
-    .upsert(
-      {
-        user_id: user.id,
-        namespace: "ledger",
-        payload: updatedEntries,
-        updated_at: new Date().toISOString(),
-      },
-      {
-        onConflict: "user_id,namespace",
+      if (!selectedAccount) {
+        alert("Conta não encontrada.");
+        return;
       }
-    );
 
-  if (ledgerError) {
-    console.error(
-      "Erro ao excluir lançamento:",
-      ledgerError
-    );
+      sourceType = "account";
+      sourceId = accountId;
 
-    alert("Erro ao excluir o lançamento.");
+      accountLabel = `${selectedAccount.name} · ${selectedAccount.bank}`;
+
+      const updatedAccounts =
+        accounts.map((account) =>
+          account.id === accountId
+            ? {
+                ...account,
+                balance:
+                  type === "Receita"
+                    ? account.balance +
+                      value
+                    : account.balance -
+                      value,
+              }
+            : account
+        );
+
+      try {
+        await saveNamespace(
+          "accounts",
+          updatedAccounts
+        );
+
+        setAccounts(updatedAccounts);
+      } catch (error) {
+        console.error(error);
+
+        alert(
+          "Erro ao atualizar o saldo da conta."
+        );
+
+        return;
+      }
+    }
+
+    if (
+      destination.startsWith("card:")
+    ) {
+      const cardId = Number(
+        destination.replace(
+          "card:",
+          ""
+        )
+      );
+
+      const selectedCard =
+        cards.find(
+          (card) =>
+            card.id === cardId
+        );
+
+      if (!selectedCard) {
+        alert(
+          "Cartão não encontrado."
+        );
+
+        return;
+      }
+
+      sourceType = "card";
+      sourceId = cardId;
+
+      accountLabel = `${selectedCard.bank} • ${selectedCard.last4}`;
+    }
+
+    const newEntry: Ledger = {
+      id: Date.now(),
+      type,
+      name: String(fd.get("name")),
+      category: String(
+        fd.get("category")
+      ),
+      icon:
+        type === "Receita"
+          ? "💰"
+          : "✨",
+      date: String(fd.get("date")),
+      value,
+      account: accountLabel,
+      frequency,
+      installment:
+        frequency === "Parcelado"
+          ? `1/${total}`
+          : undefined,
+      remaining:
+        frequency === "Parcelado"
+          ? total - 1
+          : undefined,
+      status: "Confirmado",
+      sourceType,
+      sourceId,
+    };
+
+    const updatedEntries = [
+      newEntry,
+      ...entries,
+    ];
+
+    try {
+      await saveNamespace(
+        "ledger",
+        updatedEntries
+      );
+
+      setEntries(updatedEntries);
+      setForm(false);
+    } catch (error) {
+      console.error(error);
+
+      alert(
+        "Erro ao salvar o lançamento."
+      );
+    }
   }
-}
+
+  async function deleteEntry(
+    entry: Ledger
+  ) {
+    if (
+      !window.confirm(
+        `Excluir "${entry.name}"?`
+      )
+    ) {
+      return;
+    }
+
+    if (
+      entry.sourceType ===
+        "account" &&
+      entry.sourceId
+    ) {
+      const updatedAccounts =
+        accounts.map((account) =>
+          account.id ===
+          entry.sourceId
+            ? {
+                ...account,
+                balance:
+                  entry.type ===
+                  "Despesa"
+                    ? account.balance +
+                      entry.value
+                    : account.balance -
+                      entry.value,
+              }
+            : account
+        );
+
+      try {
+        await saveNamespace(
+          "accounts",
+          updatedAccounts
+        );
+
+        setAccounts(updatedAccounts);
+      } catch (error) {
+        console.error(error);
+
+        alert(
+          "Erro ao devolver o valor para a conta."
+        );
+
+        return;
+      }
+    }
+
+    const updatedEntries =
+      entries.filter(
+        (item) =>
+          item.id !== entry.id
+      );
+
+    try {
+      await saveNamespace(
+        "ledger",
+        updatedEntries
+      );
+
+      setEntries(updatedEntries);
+    } catch (error) {
+      console.error(error);
+
+      alert(
+        "Erro ao excluir o lançamento."
+      );
+    }
+  }
+
   return (
     <div className="ledger-page">
       <section className="ledger-heading">
         <div>
-          <span>CONTROLE FINANCEIRO</span>
-          <h2>Receitas e despesas</h2>
+          <span>
+            CONTROLE FINANCEIRO
+          </span>
+
+          <h2>
+            Receitas e despesas ·{" "}
+            {monthLabel(
+              selectedMonth
+            )}
+          </h2>
+
           <p>
-            Cadastre receitas, despesas, recorrências e compras parceladas.
+            Cadastre receitas, despesas,
+            recorrências e compras
+            parceladas.
           </p>
         </div>
 
         <div>
           <button
             className="category-btn"
-            onClick={() => setCatOpen((v) => !v)}
+            onClick={() =>
+              setCatOpen(
+                (value) => !value
+              )
+            }
           >
             <Settings />
             Categorias
@@ -1239,7 +1717,9 @@ async function deleteEntry(entry: Ledger) {
 
           <button
             className="primary ledger-add"
-            onClick={() => setForm(true)}
+            onClick={() =>
+              setForm(true)
+            }
           >
             <Plus />
             Novo lançamento
@@ -1250,17 +1730,32 @@ async function deleteEntry(entry: Ledger) {
       <section className="ledger-summary">
         <article>
           <span>Receitas</span>
-          <b className="ledger-green">+ {fmt(revenues)}</b>
-          <small>{fmt(monthlyIncome)} recorrentes mensalmente</small>
+
+          <b className="ledger-green">
+            + {fmt(revenues)}
+          </b>
+
+          <small>
+            {fmt(monthlyIncome)}{" "}
+            recorrentes mensalmente
+          </small>
         </article>
 
         <article>
           <span>Despesas</span>
-          <b className="ledger-red">− {fmt(expenses)}</b>
+
+          <b className="ledger-red">
+            − {fmt(expenses)}
+          </b>
+
           <small>
             {
-              entries.filter(
-                (e) => e.type === "Despesa" && e.frequency === "Mensal"
+              monthEntries.filter(
+                (entry) =>
+                  entry.type ===
+                    "Despesa" &&
+                  entry.frequency ===
+                    "Mensal"
               ).length
             }{" "}
             compromissos recorrentes
@@ -1268,56 +1763,111 @@ async function deleteEntry(entry: Ledger) {
         </article>
 
         <article>
-          <span>Saldo previsto</span>
+          <span>
+            Saldo previsto
+          </span>
+
           <b>
-            {revenues - expenses < 0 ? "− " : ""}
-            {fmt(revenues - expenses)}
+            {revenues - expenses <
+            0
+              ? "− "
+              : ""}
+
+            {fmt(
+              revenues - expenses
+            )}
           </b>
-          <small>Considerando todos os lançamentos</small>
+
+          <small>
+            Considerando os
+            lançamentos deste mês
+          </small>
         </article>
 
         <article>
-          <span>Parcelas futuras</span>
-          <b>{fmt(futureInstallments)}</b>
-          <small>Valores programados</small>
+          <span>
+            Parcelas futuras
+          </span>
+
+          <b>
+            {fmt(
+              futureInstallments
+            )}
+          </b>
+
+          <small>
+            Valores programados
+          </small>
         </article>
       </section>
 
       {catOpen && (
         <section className="category-manager">
           <div>
-            <h3>Categorias personalizadas</h3>
-            <p>Organize receitas e despesas do seu jeito.</p>
+            <h3>
+              Categorias
+              personalizadas
+            </h3>
+
+            <p>
+              Organize receitas e
+              despesas do seu jeito.
+            </p>
           </div>
 
           <div className="category-chips">
-            {categories.map((c, i) => (
-              <span key={c[0]}>
-                {c[1]} {c[0]}
-                <small>{c[2]}</small>
-
-                <button
-                  onClick={() =>
-                    setCategories((list) =>
-                      list.filter((_, j) => j !== i)
-                    )
-                  }
+            {categories.map(
+              (category, index) => (
+                <span
+                  key={`${category[0]}-${index}`}
                 >
-                  ×
-                </button>
-              </span>
-            ))}
+                  {category[1]}{" "}
+                  {category[0]}
+
+                  <small>
+                    {category[2]}
+                  </small>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setCategories(
+                        (list) =>
+                          list.filter(
+                            (
+                              _,
+                              current
+                            ) =>
+                              current !==
+                              index
+                          )
+                      )
+                    }
+                  >
+                    ×
+                  </button>
+                </span>
+              )
+            )}
           </div>
 
           <form
-            onSubmit={(e) => {
-              e.preventDefault();
+            onSubmit={(event) => {
+              event.preventDefault();
 
-              if (newCat.trim()) {
-                setCategories((list) => [
-                  ...list,
-                  [newCat, "✨", "Despesa"],
-                ]);
+              if (
+                newCat.trim()
+              ) {
+                setCategories(
+                  (list) => [
+                    ...list,
+                    [
+                      newCat,
+                      "✨",
+                      "Despesa",
+                    ],
+                  ]
+                );
 
                 setNewCat("");
               }
@@ -1325,8 +1875,12 @@ async function deleteEntry(entry: Ledger) {
           >
             <input
               value={newCat}
-              onChange={(e) => setNewCat(e.target.value)}
-              placeholder="Nome da nova categoria"
+              onChange={(event) =>
+                setNewCat(
+                  event.target.value
+                )
+              }
+              placeholder="Nova categoria"
             />
 
             <button>
@@ -1340,20 +1894,44 @@ async function deleteEntry(entry: Ledger) {
       <section className="panel ledger-panel">
         <div className="ledger-toolbar">
           <div className="ledger-tabs">
-            {(["Todos", "Receitas", "Despesas"] as const).map((t) => (
+            {[
+              "Todos",
+              "Receitas",
+              "Despesas",
+            ].map((tab) => (
               <button
-                className={view === t ? "active" : ""}
-                onClick={() => setView(t)}
-                key={t}
+                key={tab}
+                className={
+                  view === tab
+                    ? "active"
+                    : ""
+                }
+                onClick={() =>
+                  setView(
+                    tab as
+                      | "Todos"
+                      | "Receitas"
+                      | "Despesas"
+                  )
+                }
               >
-                {t}
+                {tab}
 
                 <span>
-                  {t === "Todos"
-                    ? entries.length
-                    : t === "Receitas"
-                    ? entries.filter((e) => e.type === "Receita").length
-                    : entries.filter((e) => e.type === "Despesa").length}
+                  {tab === "Todos"
+                    ? monthEntries.length
+                    : tab ===
+                      "Receitas"
+                    ? monthEntries.filter(
+                        (entry) =>
+                          entry.type ===
+                          "Receita"
+                      ).length
+                    : monthEntries.filter(
+                        (entry) =>
+                          entry.type ===
+                          "Despesa"
+                      ).length}
                 </span>
               </button>
             ))}
@@ -1364,75 +1942,103 @@ async function deleteEntry(entry: Ledger) {
 
             <input
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(event) =>
+                setSearch(
+                  event.target.value
+                )
+              }
               placeholder="Buscar lançamento, categoria ou conta"
             />
           </label>
         </div>
 
-<div className="ledger-list">
-  <div className="ledger-row ledger-labels">
-    <span>Data</span>
-    <span>Lançamento</span>
-    <span>Categoria</span>
-    <span>Conta ou cartão</span>
-    <span>Repetição</span>
-    <span>Valor</span>
-    <span>Ações</span>
-  </div>
+        <div className="ledger-list">
+          <div className="ledger-row ledger-labels">
+            <span>Data</span>
+            <span>Lançamento</span>
+            <span>Categoria</span>
+            <span>
+              Conta ou cartão
+            </span>
+            <span>Repetição</span>
+            <span>Valor</span>
+            <span>Ações</span>
+          </div>
 
-  {shown.map((e) => (
-            <article className="ledger-row" key={e.id}>
-              <span>{e.date}</span>
+          {shown.map((entry) => (
+            <article
+              className="ledger-row"
+              key={entry.id}
+            >
+              <span>
+                {formatDate(
+                  entry.date
+                )}
+              </span>
 
               <div>
-                <i>{e.icon}</i>
+                <i>{entry.icon}</i>
 
                 <p>
-                  <b>{e.name}</b>
-                  <small>{e.status}</small>
+                  <b>{entry.name}</b>
+
+                  <small>
+                    {entry.status}
+                  </small>
                 </p>
               </div>
 
-              <span className="ledger-category">{e.category}</span>
-              <span>{e.account}</span>
+              <span className="ledger-category">
+                {entry.category}
+              </span>
+
+              <span>
+                {entry.account}
+              </span>
 
               <div>
-                <b className="frequency">{e.frequency}</b>
+                <b className="frequency">
+                  {entry.frequency}
+                </b>
 
-                {e.installment && (
+                {entry.installment && (
                   <small>
-                    Parcela {e.installment} · faltam {e.remaining}
+                    Parcela{" "}
+                    {
+                      entry.installment
+                    }{" "}
+                    · faltam{" "}
+                    {
+                      entry.remaining
+                    }
                   </small>
                 )}
               </div>
 
               <strong
-  className={
-    e.type === "Receita"
-      ? "ledger-green"
-      : "ledger-red"
-  }
->
-  {e.type === "Receita" ? "+" : "−"} {fmt(e.value)}
-</strong>
+                className={
+                  entry.type ===
+                  "Receita"
+                    ? "ledger-green"
+                    : "ledger-red"
+                }
+              >
+                {entry.type ===
+                "Receita"
+                  ? "+"
+                  : "−"}{" "}
+                {fmt(entry.value)}
+              </strong>
 
-<button
-  type="button"
-  onClick={() => deleteEntry(e)}
-  title="Excluir lançamento"
-  style={{
-    border: "none",
-    background: "transparent",
-    cursor: "pointer",
-    padding: "8px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-  }}
->
-  <Trash2 size={18} />
-</button>
+              <button
+                type="button"
+                onClick={() =>
+                  deleteEntry(entry)
+                }
+                title="Excluir lançamento"
+              >
+                <Trash2 size={18} />
+              </button>
             </article>
           ))}
         </div>
@@ -1440,38 +2046,53 @@ async function deleteEntry(entry: Ledger) {
 
       {form && (
         <div className="modal-bg">
-          <form className="modal ledger-modal" onSubmit={submit}>
+          <form
+            className="modal ledger-modal"
+            onSubmit={submit}
+          >
             <ModalHead
               title="Novo lançamento"
-              sub="Defina se o valor acontece uma vez, mensalmente ou em parcelas."
-              close={() => setForm(false)}
+              sub={`Novo lançamento em ${monthLabel(
+                selectedMonth
+              )}.`}
+              close={() =>
+                setForm(false)
+              }
               icon={<Plus />}
             />
 
             <div className="ledger-form">
               <label>
                 Tipo
+
                 <select name="type">
-                  <option>Despesa</option>
-                  <option>Receita</option>
+                  <option>
+                    Despesa
+                  </option>
+                  <option>
+                    Receita
+                  </option>
                 </select>
               </label>
 
               <label>
                 Descrição
+
                 <input
                   name="name"
                   required
-                  placeholder="Ex.: Salário, aluguel ou compra"
+                  placeholder="Ex.: Mercado, salário ou aluguel"
                 />
               </label>
 
               <label>
                 Valor
+
                 <input
                   name="value"
                   type="number"
-                  step=".01"
+                  step="0.01"
+                  min="0"
                   required
                   placeholder="0,00"
                 />
@@ -1479,75 +2100,133 @@ async function deleteEntry(entry: Ledger) {
 
               <label>
                 Data
-                <input name="date" required placeholder="15 out" />
+
+                <input
+                  name="date"
+                  type="date"
+                  required
+                  defaultValue={defaultDateForMonth(
+                    selectedMonth
+                  )}
+                />
               </label>
 
               <label>
                 Categoria
+
                 <select name="category">
-                  {categories.map((c) => (
-                    <option key={c[0]}>{c[0]}</option>
-                  ))}
+                  {categories.map(
+                    (
+                      category,
+                      index
+                    ) => (
+                      <option
+                        key={`${category[0]}-${index}`}
+                      >
+                        {
+                          category[0]
+                        }
+                      </option>
+                    )
+                  )}
                 </select>
               </label>
 
- <label>
-  Conta ou cartão
+              <label>
+                Conta ou cartão
 
-  <select name="account" required>
-    <option value="">Selecione</option>
+                <select
+                  name="account"
+                  required
+                >
+                  <option value="">
+                    Selecione
+                  </option>
 
-    {accounts.map((account) => (
-      <option
-        key={`account-${account.id}`}
-        value={`account:${account.id}`}
-      >
-        {account.name} · {account.bank} · Saldo {fmt(account.balance)}
-      </option>
-    ))}
+                  {accounts.map(
+                    (account) => (
+                      <option
+                        key={`account-${account.id}`}
+                        value={`account:${account.id}`}
+                      >
+                        {
+                          account.name
+                        }{" "}
+                        ·{" "}
+                        {
+                          account.bank
+                        }{" "}
+                        · Saldo{" "}
+                        {fmt(
+                          account.balance
+                        )}
+                      </option>
+                    )
+                  )}
 
-    {cards.map((card) => (
-      <option
-        key={`card-${card.id}`}
-        value={`card:${card.id}`}
-      >
-        {card.bank} • {card.last4}
-      </option>
-    ))}
+                  {cards.map(
+                    (card) => (
+                      <option
+                        key={`card-${card.id}`}
+                        value={`card:${card.id}`}
+                      >
+                        {card.bank} •{" "}
+                        {card.last4}
+                      </option>
+                    )
+                  )}
 
-    <option value="cash">Dinheiro</option>
-  </select>
-</label>
+                  <option value="cash">
+                    Dinheiro
+                  </option>
+                </select>
+              </label>
 
               <label>
                 Repetição
+
                 <select name="frequency">
-                  <option>Único</option>
-                  <option>Mensal</option>
-                  <option>Parcelado</option>
+                  <option>
+                    Único
+                  </option>
+                  <option>
+                    Mensal
+                  </option>
+                  <option>
+                    Parcelado
+                  </option>
                 </select>
               </label>
 
               <label>
                 Número de parcelas
+
                 <input
                   name="parts"
                   type="number"
                   min="1"
-                  placeholder="Preencha se parcelado"
+                  placeholder="Somente se parcelado"
                 />
               </label>
             </div>
 
             <div className="modal-foot">
-              <button type="button" onClick={() => setForm(false)}>
+              <button
+                type="button"
+                onClick={() =>
+                  setForm(false)
+                }
+              >
                 Cancelar
               </button>
 
-              <button className="primary" type="submit">
-  <Check />
-  Salvar lançamento
-</button>
+              <button
+                className="primary"
+                type="submit"
+              >
+                <Check />
+                Salvar lançamento
+              </button>
             </div>
           </form>
         </div>
@@ -1556,71 +2235,89 @@ async function deleteEntry(entry: Ledger) {
   );
 }
 
-type PlanItem = {
-  id: number;
-  name: string;
-  category: string;
-  icon: string;
-  date: string;
-  value: number;
-  kind: "Fixo" | "Fatura" | "Parcela";
-  detail?: string;
-  active: boolean;
-};
-
-const initialPlan: PlanItem[] = [];
-
-const initialBudgets: {
-  name: string;
-  icon: string;
-  value: number;
-  color: string;
-}[] = [];
+/* =========================================================
+   PLANEJAMENTO
+   ========================================================= */
 
 function Planning() {
-  const [income, setIncome] = usePersistedFinance<number>(
-    "planning-income",
-    0
-  );
+  const [income, setIncome] =
+    usePersistedFinance<number>(
+      "planning-income",
+      0
+    );
 
-  const [reserve, setReserve] = usePersistedFinance<number>(
-    "planning-reserve",
-    0
-  );
+  const [reserve, setReserve] =
+    usePersistedFinance<number>(
+      "planning-reserve",
+      0
+    );
 
-  const [items, setItems] = usePersistedFinance<PlanItem[]>(
-    "planning-items",
-    initialPlan
-  );
+  const [items, setItems] =
+    usePersistedFinance<PlanItem[]>(
+      "planning-items",
+      initialPlan
+    );
 
-  const [budgets, setBudgets] = usePersistedFinance<
-    typeof initialBudgets
-  >("planning-budgets", initialBudgets);
+  const [budgets, setBudgets] =
+    usePersistedFinance<
+      typeof initialBudgets
+    >(
+      "planning-budgets",
+      initialBudgets
+    );
 
-  const [editing, setEditing] = useState(false);
+  const [editing, setEditing] =
+    useState(false);
 
   const commitments = items
-    .filter((i) => i.active)
-    .reduce((sum, i) => sum + i.value, 0);
+    .filter((item) => item.active)
+    .reduce(
+      (sum, item) =>
+        sum + item.value,
+      0
+    );
 
-  const flexible = budgets.reduce((sum, i) => sum + i.value, 0);
+  const flexible = budgets.reduce(
+    (sum, item) =>
+      sum + item.value,
+    0
+  );
 
-  const free = income - commitments - flexible - reserve;
+  const free =
+    income -
+    commitments -
+    flexible -
+    reserve;
 
   const plannedPct =
     income > 0
       ? Math.min(
           100,
           Math.round(
-            ((commitments + flexible + reserve) / income) * 100
+            ((commitments +
+              flexible +
+              reserve) /
+              income) *
+              100
           )
         )
       : 0;
 
-  const changeBudget = (index: number, value: number) =>
+  const changeBudget = (
+    index: number,
+    value: number
+  ) =>
     setBudgets((list) =>
-      list.map((b, i) =>
-        i === index ? { ...b, value: Math.max(0, value) } : b
+      list.map((budget, current) =>
+        current === index
+          ? {
+              ...budget,
+              value: Math.max(
+                0,
+                value
+              ),
+            }
+          : budget
       )
     );
 
@@ -1629,22 +2326,33 @@ function Planning() {
       <section className="planning-top">
         <div>
           <span className="planning-kicker">
-            <CalendarDays /> PLANEJAMENTO
+            <CalendarDays />{" "}
+            PLANEJAMENTO
           </span>
 
-          <h2>Decida o mês antes que ele comece.</h2>
+          <h2>
+            Decida o mês antes que
+            ele comece.
+          </h2>
 
           <p>
-            Organize compromissos, limites de gasto e reservas.
+            Organize compromissos,
+            limites de gasto e
+            reservas.
           </p>
         </div>
 
         <div className="planning-score">
           <span>PLANEJADO</span>
+
           <b>{plannedPct}%</b>
 
           <div>
-            <i style={{ width: `${plannedPct}%` }} />
+            <i
+              style={{
+                width: `${plannedPct}%`,
+              }}
+            />
           </div>
 
           <small>
@@ -1666,16 +2374,26 @@ function Planning() {
 
           <label>
             R${" "}
+
             <input
               aria-label="Receita prevista"
               type="number"
               step="100"
               value={income}
-              onChange={(e) => setIncome(Number(e.target.value))}
+              onChange={(event) =>
+                setIncome(
+                  Number(
+                    event.target.value
+                  )
+                )
+              }
             />
           </label>
 
-          <small>Salários e outras entradas</small>
+          <small>
+            Salários e outras
+            entradas
+          </small>
         </article>
 
         <article>
@@ -1685,7 +2403,16 @@ function Planning() {
           </span>
 
           <b>{fmt(commitments)}</b>
-          <small>{items.filter((i) => i.active).length} programados</small>
+
+          <small>
+            {
+              items.filter(
+                (item) =>
+                  item.active
+              ).length
+            }{" "}
+            programados
+          </small>
         </article>
 
         <article>
@@ -1696,19 +2423,34 @@ function Planning() {
 
           <label>
             R${" "}
+
             <input
               aria-label="Reserva planejada"
               type="number"
               step="50"
               value={reserve}
-              onChange={(e) => setReserve(Number(e.target.value))}
+              onChange={(event) =>
+                setReserve(
+                  Number(
+                    event.target.value
+                  )
+                )
+              }
             />
           </label>
 
-          <small>Valor reservado</small>
+          <small>
+            Valor reservado
+          </small>
         </article>
 
-        <article className={free < 0 ? "free-card danger" : "free-card"}>
+        <article
+          className={
+            free < 0
+              ? "free-card danger"
+              : "free-card"
+          }
+        >
           <span>
             <Wallet />
             Saldo livre projetado
@@ -1719,7 +2461,9 @@ function Planning() {
             {fmt(free)}
           </b>
 
-          <small>Depois de todo o plano</small>
+          <small>
+            Depois de todo o plano
+          </small>
         </article>
       </section>
 
@@ -1727,77 +2471,135 @@ function Planning() {
         <section className="panel plan-commitments">
           <div className="panel-head">
             <div>
-              <h3>Compromissos do mês</h3>
-              <p>Adicione as despesas programadas</p>
+              <h3>
+                Compromissos do mês
+              </h3>
+
+              <p>
+                Adicione as despesas
+                programadas
+              </p>
             </div>
 
-            <button onClick={() => setEditing((v) => !v)}>
-              {editing ? "Concluir" : "Editar plano"}
+            <button
+              onClick={() =>
+                setEditing(
+                  (value) => !value
+                )
+              }
+            >
+              {editing
+                ? "Concluir"
+                : "Editar plano"}
             </button>
           </div>
 
           <div className="commitment-list">
             {items.map((item) => (
               <article
-                className={item.active ? "" : "disabled"}
+                className={
+                  item.active
+                    ? ""
+                    : "disabled"
+                }
                 key={item.id}
               >
                 <button
                   className="plan-check"
                   onClick={() =>
                     setItems((list) =>
-                      list.map((i) =>
-                        i.id === item.id
-                          ? { ...i, active: !i.active }
-                          : i
+                      list.map(
+                        (current) =>
+                          current.id ===
+                          item.id
+                            ? {
+                                ...current,
+                                active:
+                                  !current.active,
+                              }
+                            : current
                       )
                     )
                   }
                 >
-                  {item.active ? <CircleCheck /> : <Circle />}
+                  {item.active ? (
+                    <CircleCheck />
+                  ) : (
+                    <Circle />
+                  )}
                 </button>
 
-                <span className="plan-emoji">{item.icon}</span>
+                <span className="plan-emoji">
+                  {item.icon}
+                </span>
 
                 <div>
                   <b>{item.name}</b>
 
                   <small>
-                    {item.date} · {item.kind}
-                    {item.detail ? ` · ${item.detail}` : ""}
+                    {item.date} ·{" "}
+                    {item.kind}
+
+                    {item.detail
+                      ? ` · ${item.detail}`
+                      : ""}
                   </small>
                 </div>
 
                 {editing ? (
                   <label className="plan-value">
                     R${" "}
+
                     <input
                       type="number"
                       value={item.value}
-                      onChange={(e) =>
-                        setItems((list) =>
-                          list.map((i) =>
-                            i.id === item.id
-                              ? {
-                                  ...i,
-                                  value: Number(e.target.value),
-                                }
-                              : i
-                          )
+                      onChange={(
+                        event
+                      ) =>
+                        setItems(
+                          (list) =>
+                            list.map(
+                              (
+                                current
+                              ) =>
+                                current.id ===
+                                item.id
+                                  ? {
+                                      ...current,
+                                      value:
+                                        Number(
+                                          event
+                                            .target
+                                            .value
+                                        ),
+                                    }
+                                  : current
+                            )
                         )
                       }
                     />
                   </label>
                 ) : (
-                  <strong>{fmt(item.value)}</strong>
+                  <strong>
+                    {fmt(
+                      item.value
+                    )}
+                  </strong>
                 )}
 
                 {editing && (
                   <button
                     className="plan-remove"
                     onClick={() =>
-                      setItems((list) =>
-                        list.filter((i) => i.id !== item.id)
+                      setItems(
+                        (list) =>
+                          list.filter(
+                            (
+                              current
+                            ) =>
+                              current.id !==
+                              item.id
+                          )
                       )
                     }
                   >
@@ -1834,40 +2636,76 @@ function Planning() {
         <section className="panel plan-budgets">
           <div className="panel-head">
             <div>
-              <h3>Limites para gastos variáveis</h3>
-              <p>Defina quanto pretende gastar</p>
+              <h3>
+                Limites para gastos
+                variáveis
+              </h3>
+
+              <p>
+                Defina quanto pretende
+                gastar
+              </p>
             </div>
           </div>
 
           <div className="budget-list">
-            {budgets.map((budget, index) => (
-              <article key={budget.name}>
-                <div className={`budget-icon ${budget.color}`}>
-                  {budget.icon}
-                </div>
+            {budgets.map(
+              (
+                budget,
+                index
+              ) => (
+                <article
+                  key={budget.name}
+                >
+                  <div
+                    className={`budget-icon ${budget.color}`}
+                  >
+                    {budget.icon}
+                  </div>
 
-                <div>
-                  <b>{budget.name}</b>
-                  <span>Limite mensal</span>
-                </div>
+                  <div>
+                    <b>
+                      {budget.name}
+                    </b>
 
-                <label>
-                  R${" "}
-                  <input
-                    type="number"
-                    step="50"
-                    value={budget.value}
-                    onChange={(e) =>
-                      changeBudget(index, Number(e.target.value))
-                    }
-                  />
-                </label>
-              </article>
-            ))}
+                    <span>
+                      Limite mensal
+                    </span>
+                  </div>
+
+                  <label>
+                    R${" "}
+
+                    <input
+                      type="number"
+                      step="50"
+                      value={
+                        budget.value
+                      }
+                      onChange={(
+                        event
+                      ) =>
+                        changeBudget(
+                          index,
+                          Number(
+                            event.target
+                              .value
+                          )
+                        )
+                      }
+                    />
+                  </label>
+                </article>
+              )
+            )}
           </div>
 
           <div className="budget-total">
-            <span>Total reservado para variáveis</span>
+            <span>
+              Total reservado para
+              variáveis
+            </span>
+
             <b>{fmt(flexible)}</b>
           </div>
 
@@ -1875,11 +2713,22 @@ function Planning() {
             <Sparkles />
 
             <p>
-              <b>Margem disponível</b>
+              <b>
+                Margem disponível
+              </b>
+
               <br />
+
               Sua margem atual é{" "}
               <strong>
-                {income > 0 ? Math.round((free / income) * 100) : 0}%
+                {income > 0
+                  ? Math.round(
+                      (free /
+                        income) *
+                        100
+                    )
+                  : 0}
+                %
               </strong>
               .
             </p>
@@ -1890,57 +2739,41 @@ function Planning() {
   );
 }
 
-type FinanceCard = {
-  id: number;
-  bank: string;
-  logo: string;
-  last4: string;
-  closing: number;
-  due: number;
-  color: string;
-  color2: string;
-};
-
-const bankCatalog = [
-  ["Nubank", "#820ad1", "#4c0677", "NU"],
-  ["Inter", "#ff7a00", "#c94d00", "inter"],
-  ["Itaú", "#ec7000", "#073f87", "itaú"],
-  ["Banco do Brasil", "#f9dc16", "#173863", "BB"],
-  ["Caixa", "#087bb8", "#005ca9", "CAIXA"],
-  ["Bradesco", "#cc092f", "#8e0623", "bradesco"],
-  ["Santander", "#ec0000", "#9e0000", "S"],
-  ["C6 Bank", "#242424", "#050505", "C6"],
-  ["BTG Pactual", "#18365f", "#071a34", "BTG"],
-  ["XP", "#171717", "#000000", "XP"],
-  ["Sicredi", "#68a82f", "#39751e", "sicredi"],
-  ["Sicoob", "#006b5b", "#003b37", "sicoob"],
-  ["PicPay", "#21c25e", "#087f42", "PicPay"],
-  ["Mercado Pago", "#16aee8", "#0876b9", "mercado pago"],
-  ["PagBank", "#42b549", "#187c31", "PagBank"],
-  ["Neon", "#00b8e6", "#006ed0", "neon"],
-] as const;
-
-const initialCards: FinanceCard[] = [];
+/* =========================================================
+   CARTÕES
+   ========================================================= */
 
 function BankCatalog() {
-  const [cards, setCards] = usePersistedFinance<FinanceCard[]>(
-    "cards",
-    initialCards
-  );
+  const [cards, setCards] =
+    usePersistedFinance<FinanceCard[]>(
+      "cards",
+      initialCards
+    );
 
   const [q, setQ] = useState("");
-  const [editing, setEditing] = useState<FinanceCard | null>(null);
 
-  const banks = bankCatalog.filter((b) =>
-    b[0].toLowerCase().includes(q.toLowerCase())
+  const [editing, setEditing] =
+    useState<FinanceCard | null>(
+      null
+    );
+
+  const banks = bankCatalog.filter(
+    (bank) =>
+      bank[0]
+        .toLowerCase()
+        .includes(q.toLowerCase())
   );
 
-  function openCard(bank?: (typeof bankCatalog)[number]) {
+  function openCard(
+    bank?: (typeof bankCatalog)[number]
+  ) {
     setEditing({
       id: Date.now(),
       bank: bank?.[0] || "",
-      color: bank?.[1] || "#063b70",
-      color2: bank?.[2] || "#021b3a",
+      color:
+        bank?.[1] || "#078c94",
+      color2:
+        bank?.[2] || "#04363c",
       logo: bank?.[3] || "CARD",
       last4: "",
       closing: 1,
@@ -1948,28 +2781,61 @@ function BankCatalog() {
     });
   }
 
-  function saveCard(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  function saveCard(
+    event: React.FormEvent<HTMLFormElement>
+  ) {
+    event.preventDefault();
 
-    const fd = new FormData(e.currentTarget);
+    if (!editing) return;
+
+    const fd = new FormData(
+      event.currentTarget
+    );
 
     const next: FinanceCard = {
-      id: editing!.id,
-      bank: String(fd.get("bank")).trim(),
-      logo: String(fd.get("logo")).trim() || "CARD",
-      last4: String(fd.get("last4"))
+      id: editing.id,
+
+      bank: String(
+        fd.get("bank")
+      ).trim(),
+
+      logo:
+        String(
+          fd.get("logo")
+        ).trim() || "CARD",
+
+      last4: String(
+        fd.get("last4")
+      )
         .replace(/\D/g, "")
         .slice(-4)
         .padStart(4, "0"),
-      closing: Number(fd.get("closing")),
+
+      closing: Number(
+        fd.get("closing")
+      ),
+
       due: Number(fd.get("due")),
-      color: String(fd.get("color")),
-      color2: String(fd.get("color2")),
+
+      color: String(
+        fd.get("color")
+      ),
+
+      color2: String(
+        fd.get("color2")
+      ),
     };
 
     setCards((list) =>
-      list.some((c) => c.id === next.id)
-        ? list.map((c) => (c.id === next.id ? next : c))
+      list.some(
+        (card) =>
+          card.id === next.id
+      )
+        ? list.map((card) =>
+            card.id === next.id
+              ? next
+              : card
+          )
         : [...list, next]
     );
 
@@ -1980,10 +2846,18 @@ function BankCatalog() {
     <div className="bank-page">
       <div className="bank-title">
         <div>
-          <span className="bank-kicker">CARTEIRA DE CARTÕES</span>
-          <h2>Meus cartões e bancos</h2>
+          <span className="bank-kicker">
+            CARTEIRA DE CARTÕES
+          </span>
+
+          <h2>
+            Meus cartões e bancos
+          </h2>
+
           <p>
-            Cadastre seus cartões e configure fechamento e vencimento.
+            Cadastre seus cartões e
+            configure fechamento e
+            vencimento.
           </p>
         </div>
 
@@ -1993,12 +2867,21 @@ function BankCatalog() {
 
             <input
               value={q}
-              onChange={(e) => setQ(e.target.value)}
+              onChange={(event) =>
+                setQ(
+                  event.target.value
+                )
+              }
               placeholder="Buscar instituição"
             />
           </label>
 
-          <button className="primary" onClick={() => openCard()}>
+          <button
+            className="primary"
+            onClick={() =>
+              openCard()
+            }
+          >
             <Plus />
             Adicionar cartão
           </button>
@@ -2024,45 +2907,66 @@ function BankCatalog() {
                 className="credit-visual"
                 key={card.id}
                 style={{
-                  background: `linear-gradient(135deg,${card.color},${card.color2})`,
+                  background: `linear-gradient(135deg, ${card.color}, ${card.color2})`,
                 }}
               >
                 <div className="card-shine" />
 
                 <div className="card-top">
-                  <span>{card.logo}</span>
+                  <span>
+                    {card.logo}
+                  </span>
+
                   <CreditCard />
                 </div>
 
-                <b>••••&nbsp; {card.last4}</b>
+                <b>
+                  ••••&nbsp;{" "}
+                  {card.last4}
+                </b>
 
                 <small>
-                  Fechamento dia {card.closing} · Vencimento dia{" "}
+                  Fechamento dia{" "}
+                  {card.closing} ·
+                  Vencimento dia{" "}
                   {card.due}
                 </small>
 
                 <button
                   className="edit-card"
-                  onClick={() => setEditing(card)}
+                  onClick={() =>
+                    setEditing(card)
+                  }
                 >
                   <Pencil />
                   Editar
                 </button>
 
-                <strong>{card.bank}</strong>
+                <strong>
+                  {card.bank}
+                </strong>
               </article>
             ))}
           </div>
         ) : (
           <div className="empty-cards">
             <CreditCard />
-            <b>Nenhum cartão cadastrado</b>
+
+            <b>
+              Nenhum cartão cadastrado
+            </b>
 
             <span>
-              Adicione seu primeiro cartão para acompanhar suas faturas.
+              Adicione seu primeiro
+              cartão.
             </span>
 
-            <button className="primary" onClick={() => openCard()}>
+            <button
+              className="primary"
+              onClick={() =>
+                openCard()
+              }
+            >
               <Plus />
               Adicionar cartão
             </button>
@@ -2070,19 +2974,34 @@ function BankCatalog() {
         )}
       </div>
 
-      <h3>Catálogo de instituições</h3>
+      <h3>
+        Catálogo de instituições
+      </h3>
 
       <div className="bank-grid">
         {banks.map((bank) => {
-          const added = cards.some((c) => c.bank === bank[0]);
+          const added = cards.some(
+            (card) =>
+              card.bank === bank[0]
+          );
 
           return (
             <button
               key={bank[0]}
-              className={added ? "bank-option chosen" : "bank-option"}
+              className={
+                added
+                  ? "bank-option chosen"
+                  : "bank-option"
+              }
               onClick={() =>
                 added
-                  ? setEditing(cards.find((c) => c.bank === bank[0])!)
+                  ? setEditing(
+                      cards.find(
+                        (card) =>
+                          card.bank ===
+                          bank[0]
+                      )!
+                    )
                   : openCard(bank)
               }
             >
@@ -2091,7 +3010,10 @@ function BankCatalog() {
                 style={{
                   background: `linear-gradient(135deg,${bank[1]},${bank[2]})`,
                   color:
-                    bank[0] === "Banco do Brasil" ? "#173863" : "white",
+                    bank[0] ===
+                    "Banco do Brasil"
+                      ? "#173863"
+                      : "white",
                 }}
               >
                 {bank[3]}
@@ -2100,7 +3022,9 @@ function BankCatalog() {
               <b>{bank[0]}</b>
 
               <small>
-                {added ? "Editar cartão" : "Adicionar cartão"}
+                {added
+                  ? "Editar cartão"
+                  : "Adicionar cartão"}
               </small>
 
               {added && <Check />}
@@ -2110,28 +3034,44 @@ function BankCatalog() {
 
         <button
           className="bank-option custom-bank"
-          onClick={() => openCard()}
+          onClick={() =>
+            openCard()
+          }
         >
           <span className="bank-logo">
             <Plus />
           </span>
 
-          <b>Outra instituição</b>
-          <small>Cadastrar manualmente</small>
+          <b>
+            Outra instituição
+          </b>
+
+          <small>
+            Cadastrar manualmente
+          </small>
         </button>
       </div>
 
       {editing && (
         <div className="modal-bg">
-          <form className="modal card-modal" onSubmit={saveCard}>
+          <form
+            className="modal card-modal"
+            onSubmit={saveCard}
+          >
             <ModalHead
               title={
-                cards.some((c) => c.id === editing.id)
+                cards.some(
+                  (card) =>
+                    card.id ===
+                    editing.id
+                )
                   ? "Editar cartão"
                   : "Adicionar cartão"
               }
               sub="Configure as informações do cartão."
-              close={() => setEditing(null)}
+              close={() =>
+                setEditing(null)
+              }
               icon={<CreditCard />}
             />
 
@@ -2141,12 +3081,21 @@ function BankCatalog() {
                 background: `linear-gradient(135deg,${editing.color},${editing.color2})`,
               }}
             >
-              <span>{editing.logo || "CARD"}</span>
+              <span>
+                {editing.logo ||
+                  "CARD"}
+              </span>
 
-              <b>••••&nbsp; {editing.last4 || "0000"}</b>
+              <b>
+                ••••&nbsp;{" "}
+                {editing.last4 ||
+                  "0000"}
+              </b>
 
               <small>
-                Fechamento dia {editing.closing} · Vencimento dia{" "}
+                Fechamento dia{" "}
+                {editing.closing} ·
+                Vencimento dia{" "}
                 {editing.due}
               </small>
             </div>
@@ -2154,82 +3103,103 @@ function BankCatalog() {
             <div className="card-form">
               <label>
                 Instituição
+
                 <input
                   name="bank"
                   required
                   value={editing.bank}
-                  onChange={(e) => {
-                    const match = bankCatalog.find(
-                      (b) =>
-                        b[0].toLowerCase() ===
-                        e.target.value.toLowerCase()
-                    );
+                  onChange={(event) => {
+                    const match =
+                      bankCatalog.find(
+                        (bank) =>
+                          bank[0].toLowerCase() ===
+                          event.target.value.toLowerCase()
+                      );
 
                     setEditing({
                       ...editing,
-                      bank: e.target.value,
+                      bank:
+                        event.target
+                          .value,
                       ...(match
                         ? {
-                            logo: match[3],
-                            color: match[1],
-                            color2: match[2],
+                            logo:
+                              match[3],
+                            color:
+                              match[1],
+                            color2:
+                              match[2],
                           }
                         : {}),
                     });
                   }}
-                  placeholder="Ex.: Nubank"
                 />
               </label>
 
               <label>
                 Nome curto / logo
+
                 <input
                   name="logo"
                   value={editing.logo}
-                  onChange={(e) =>
+                  onChange={(event) =>
                     setEditing({
                       ...editing,
-                      logo: e.target.value,
+                      logo:
+                        event.target
+                          .value,
                     })
                   }
                   maxLength={12}
-                  placeholder="Ex.: NU"
                 />
               </label>
 
               <label>
                 Final do cartão
+
                 <input
                   name="last4"
                   inputMode="numeric"
                   required
                   value={editing.last4}
-                  onChange={(e) =>
+                  onChange={(event) =>
                     setEditing({
                       ...editing,
-                      last4: e.target.value
-                        .replace(/\D/g, "")
-                        .slice(0, 4),
+                      last4:
+                        event.target.value
+                          .replace(
+                            /\D/g,
+                            ""
+                          )
+                          .slice(
+                            0,
+                            4
+                          ),
                     })
                   }
                   maxLength={4}
-                  placeholder="0000"
                 />
               </label>
 
               <label>
                 Fechamento
+
                 <input
                   name="closing"
                   type="number"
                   min="1"
                   max="31"
                   required
-                  value={editing.closing}
-                  onChange={(e) =>
+                  value={
+                    editing.closing
+                  }
+                  onChange={(event) =>
                     setEditing({
                       ...editing,
-                      closing: Number(e.target.value),
+                      closing: Number(
+                        event.target
+                          .value
+                      ),
                     })
                   }
                 />
@@ -2237,6 +3207,7 @@ function BankCatalog() {
 
               <label>
                 Vencimento
+
                 <input
                   name="due"
                   type="number"
@@ -2244,10 +3215,13 @@ function BankCatalog() {
                   max="31"
                   required
                   value={editing.due}
-                  onChange={(e) =>
+                  onChange={(event) =>
                     setEditing({
                       ...editing,
-                      due: Number(e.target.value),
+                      due: Number(
+                        event.target
+                          .value
+                      ),
                     })
                   }
                 />
@@ -2255,14 +3229,19 @@ function BankCatalog() {
 
               <label className="color-field">
                 Cor principal
+
                 <input
                   name="color"
                   type="color"
-                  value={editing.color}
-                  onChange={(e) =>
+                  value={
+                    editing.color
+                  }
+                  onChange={(event) =>
                     setEditing({
                       ...editing,
-                      color: e.target.value,
+                      color:
+                        event.target
+                          .value,
                     })
                   }
                 />
@@ -2270,14 +3249,19 @@ function BankCatalog() {
 
               <label className="color-field">
                 Cor de apoio
+
                 <input
                   name="color2"
                   type="color"
-                  value={editing.color2}
-                  onChange={(e) =>
+                  value={
+                    editing.color2
+                  }
+                  onChange={(event) =>
                     setEditing({
                       ...editing,
-                      color2: e.target.value,
+                      color2:
+                        event.target
+                          .value,
                     })
                   }
                 />
@@ -2285,13 +3269,22 @@ function BankCatalog() {
             </div>
 
             <div className="modal-foot card-modal-foot">
-              {cards.some((c) => c.id === editing.id) && (
+              {cards.some(
+                (card) =>
+                  card.id ===
+                  editing.id
+              ) && (
                 <button
                   className="delete-card"
                   type="button"
                   onClick={() => {
-                    setCards((list) =>
-                      list.filter((c) => c.id !== editing.id)
+                    setCards(
+                      (list) =>
+                        list.filter(
+                          (card) =>
+                            card.id !==
+                            editing.id
+                        )
                     );
 
                     setEditing(null);
@@ -2304,11 +3297,19 @@ function BankCatalog() {
 
               <span />
 
-              <button type="button" onClick={() => setEditing(null)}>
+              <button
+                type="button"
+                onClick={() =>
+                  setEditing(null)
+                }
+              >
                 Cancelar
               </button>
 
-              <button className="primary" type="submit">
+              <button
+                className="primary"
+                type="submit"
+              >
                 <Check />
                 Salvar cartão
               </button>
@@ -2320,38 +3321,51 @@ function BankCatalog() {
   );
 }
 
-type FinanceAccount = {
-  id: number;
-  name: string;
-  bank: string;
-  type: "Corrente" | "Poupança" | "Dinheiro" | "Investimento";
-  balance: number;
-};
-
-const initialAccounts: FinanceAccount[] = [];
+/* =========================================================
+   CONTAS
+   ========================================================= */
 
 function AccountsWorkspace() {
-  const [accounts, setAccounts] = usePersistedFinance<FinanceAccount[]>(
-    "accounts",
-    initialAccounts
-  );
+  const [accounts, setAccounts] =
+    usePersistedFinance<FinanceAccount[]>(
+      "accounts",
+      initialAccounts
+    );
 
-  const [formOpen, setFormOpen] = useState(false);
+  const [formOpen, setFormOpen] =
+    useState(false);
 
-  function saveAccount(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  function saveAccount(
+    event: React.FormEvent<HTMLFormElement>
+  ) {
+    event.preventDefault();
 
-    const fd = new FormData(e.currentTarget);
+    const fd = new FormData(
+      event.currentTarget
+    );
 
     const account: FinanceAccount = {
       id: Date.now(),
-      name: String(fd.get("name")),
-      bank: String(fd.get("bank")),
-      type: String(fd.get("type")) as FinanceAccount["type"],
-      balance: Number(fd.get("balance")) || 0,
+      name: String(
+        fd.get("name")
+      ),
+      bank: String(
+        fd.get("bank")
+      ),
+      type: String(
+        fd.get("type")
+      ) as FinanceAccount["type"],
+      balance:
+        Number(
+          fd.get("balance")
+        ) || 0,
     };
 
-    setAccounts((list) => [...list, account]);
+    setAccounts((list) => [
+      ...list,
+      account,
+    ]);
+
     setFormOpen(false);
   }
 
@@ -2359,16 +3373,25 @@ function AccountsWorkspace() {
     <div className="bank-page">
       <div className="bank-title">
         <div>
-          <span className="bank-kicker">CONTAS FINANCEIRAS</span>
+          <span className="bank-kicker">
+            CONTAS FINANCEIRAS
+          </span>
+
           <h2>Minhas contas</h2>
+
           <p>
-            Cadastre contas bancárias, dinheiro, poupança e investimentos.
+            Cadastre contas
+            bancárias, dinheiro,
+            poupança e
+            investimentos.
           </p>
         </div>
 
         <button
           className="primary"
-          onClick={() => setFormOpen(true)}
+          onClick={() =>
+            setFormOpen(true)
+          }
         >
           <Plus />
           Adicionar conta
@@ -2377,52 +3400,96 @@ function AccountsWorkspace() {
 
       <div className="selected-banks">
         <div className="selected-heading">
-          <h3>Contas cadastradas</h3>
+          <h3>
+            Contas cadastradas
+          </h3>
 
           <small>
             {accounts.length}{" "}
-            {accounts.length === 1 ? "conta" : "contas"}
+            {accounts.length === 1
+              ? "conta"
+              : "contas"}
           </small>
         </div>
 
         {accounts.length ? (
           <div className="account-list">
-            {accounts.map((account) => (
-              <article className="panel" key={account.id}>
-                <div>
-                  <Landmark />
-                  <h3>{account.name}</h3>
-                  <p>{account.bank}</p>
-                  <small>{account.type}</small>
-                </div>
-
-                <strong>{fmt(account.balance)}</strong>
-
-                <button
-                  className="delete-card"
-                  onClick={() =>
-                    setAccounts((list) =>
-                      list.filter((a) => a.id !== account.id)
-                    )
-                  }
+            {accounts.map(
+              (account) => (
+                <article
+                  className="panel"
+                  key={account.id}
                 >
-                  <Trash2 />
-                  Excluir
-                </button>
-              </article>
-            ))}
+                  <div>
+                    <Landmark />
+
+                    <h3>
+                      {
+                        account.name
+                      }
+                    </h3>
+
+                    <p>
+                      {
+                        account.bank
+                      }
+                    </p>
+
+                    <small>
+                      {
+                        account.type
+                      }
+                    </small>
+                  </div>
+
+                  <strong>
+                    {fmt(
+                      account.balance
+                    )}
+                  </strong>
+
+                  <button
+                    className="delete-card"
+                    onClick={() =>
+                      setAccounts(
+                        (list) =>
+                          list.filter(
+                            (
+                              current
+                            ) =>
+                              current.id !==
+                              account.id
+                          )
+                      )
+                    }
+                  >
+                    <Trash2 />
+                    Excluir
+                  </button>
+                </article>
+              )
+            )}
           </div>
         ) : (
           <div className="empty-cards">
             <Landmark />
-            <b>Nenhuma conta cadastrada</b>
+
+            <b>
+              Nenhuma conta
+              cadastrada
+            </b>
+
             <span>
-              Adicione sua primeira conta para organizar seus saldos.
+              Adicione sua primeira
+              conta para organizar
+              seus saldos.
             </span>
 
             <button
               className="primary"
-              onClick={() => setFormOpen(true)}
+              onClick={() =>
+                setFormOpen(true)
+              }
             >
               <Plus />
               Adicionar conta
@@ -2440,13 +3507,16 @@ function AccountsWorkspace() {
             <ModalHead
               title="Nova conta"
               sub="Cadastre uma conta financeira."
-              close={() => setFormOpen(false)}
+              close={() =>
+                setFormOpen(false)
+              }
               icon={<Landmark />}
             />
 
             <div className="form-grid">
               <label className="wide">
                 Nome da conta
+
                 <input
                   name="name"
                   required
@@ -2456,6 +3526,7 @@ function AccountsWorkspace() {
 
               <label className="wide">
                 Banco / instituição
+
                 <input
                   name="bank"
                   required
@@ -2465,16 +3536,26 @@ function AccountsWorkspace() {
 
               <label>
                 Tipo
+
                 <select name="type">
-                  <option>Corrente</option>
-                  <option>Poupança</option>
-                  <option>Dinheiro</option>
-                  <option>Investimento</option>
+                  <option>
+                    Corrente
+                  </option>
+                  <option>
+                    Poupança
+                  </option>
+                  <option>
+                    Dinheiro
+                  </option>
+                  <option>
+                    Investimento
+                  </option>
                 </select>
               </label>
 
               <label>
                 Saldo atual
+
                 <input
                   name="balance"
                   type="number"
@@ -2487,12 +3568,17 @@ function AccountsWorkspace() {
             <div className="modal-foot">
               <button
                 type="button"
-                onClick={() => setFormOpen(false)}
+                onClick={() =>
+                  setFormOpen(false)
+                }
               >
                 Cancelar
               </button>
 
-              <button className="primary" type="submit">
+              <button
+                className="primary"
+                type="submit"
+              >
                 <Check />
                 Salvar conta
               </button>
