@@ -147,19 +147,40 @@ function convertImportedDate(
 
 type Ledger = {
   id: number;
-  type: "Receita" | "Despesa";
+
+  type:
+    | "Receita"
+    | "Despesa"
+    | "Investimento";
+
   name: string;
   category: string;
   icon: string;
   date: string;
   value: number;
   account: string;
-  frequency: "Único" | "Mensal" | "Parcelado";
+
+  frequency:
+    | "Único"
+    | "Mensal até dezembro"
+    | "Mensal"
+    | "Parcelado";
+
   installment?: string;
   remaining?: number;
-  status: "Confirmado" | "Previsto";
-  sourceType?: "account" | "card" | "cash";
+
+  status:
+    | "Confirmado"
+    | "Previsto";
+
+  sourceType?:
+    | "account"
+    | "card"
+    | "cash";
+
   sourceId?: number;
+
+  seriesId?: number;
 };
 
 type FinanceCard = {
@@ -275,6 +296,24 @@ export default function Home({
   userEmail: string;
   onLogout: () => void;
 }) {
+
+    const [
+  investmentAccounts,
+  setInvestmentAccounts,
+] =
+  usePersistedFinance<
+    FinanceAccount[]
+  >(
+    "accounts",
+    initialAccounts
+  );
+
+  const [
+  investOpen,
+  setInvestOpen,
+] = useState(false);
+
+
   const [section, setSection] =
     useState("Visão geral");
 
@@ -284,7 +323,14 @@ export default function Home({
   /* Sempre inicia no mês atual */
   const [month, setMonth] =
     useState(currentMonthKey);
+const [investmentAccounts, setInvestmentAccounts] =
+  usePersistedFinance<FinanceAccount[]>(
+    "accounts",
+    initialAccounts
+  );
 
+const [investOpen, setInvestOpen] =
+  useState(false);
   /*
     Fonte única dos lançamentos.
     A Visão geral e Lançamentos usam o mesmo namespace.
@@ -330,7 +376,21 @@ export default function Home({
     .filter((entry) => entry.type === "Despesa")
     .reduce((total, entry) => total + entry.value, 0);
 
-  const projectedBalance = income - spent;
+  onst invested = monthEntries
+  .filter(
+    (entry) =>
+      entry.type === "Investimento"
+  )
+  .reduce(
+    (total, entry) =>
+      total + entry.value,
+    0
+  );
+
+const projectedBalance =
+  income -
+  spent -
+  invested;
 
   const filtered = monthEntries.filter(
     (entry) =>
@@ -734,7 +794,18 @@ export default function Home({
                     : ""}
                   {fmt(projectedBalance)}
                 </h2>
-
+{projectedBalance > 0 && (
+  <button
+    type="button"
+    className="invest-balance"
+    onClick={() =>
+      setInvestOpen(true)
+    }
+  >
+    <PiggyBank />
+    Guardar saldo
+  </button>
+)}
                 <p>
                   {monthEntries.length
                     ? "Calculado com base nos lançamentos deste mês."
@@ -1161,6 +1232,299 @@ export default function Home({
           </div>
         </div>
       )}
+
+      {investOpen && (
+  <div className="modal-bg">
+    <form
+      className="modal small"
+      onSubmit={async (event) => {
+        event.preventDefault();
+
+        const fd =
+          new FormData(
+            event.currentTarget
+          );
+
+        const accountId =
+          Number(
+            fd.get(
+              "investmentAccount"
+            )
+          );
+
+        const amount =
+          Math.min(
+            projectedBalance,
+            Math.abs(
+              Number(
+                fd.get(
+                  "investmentValue"
+                )
+              )
+            )
+          );
+
+        const account =
+          investmentAccounts.find(
+            (item) =>
+              item.id ===
+              accountId
+          );
+
+        if (!account) {
+          alert(
+            "Selecione uma conta."
+          );
+          return;
+        }
+
+        if (amount <= 0) {
+          alert(
+            "Informe um valor válido."
+          );
+          return;
+        }
+
+        const updatedAccounts =
+          investmentAccounts.map(
+            (item) =>
+              item.id ===
+              accountId
+                ? {
+                    ...item,
+                    balance:
+                      item.balance +
+                      amount,
+                  }
+                : item
+          );
+
+        const movement: Ledger = {
+          id: Date.now(),
+
+          type: "Investimento",
+
+          name:
+            "Reserva / investimento",
+
+          category:
+            "Investimentos",
+
+          icon: "🐷",
+
+          date:
+            currentDateKey(),
+
+          value: amount,
+
+          account:
+            account.name,
+
+          frequency:
+            "Único",
+
+          status:
+            "Confirmado",
+
+          sourceType:
+            "account",
+
+          sourceId:
+            account.id,
+        };
+
+        const updatedEntries = [
+          movement,
+          ...entries,
+        ];
+
+        const {
+          data: { user },
+        } =
+          await supabase.auth.getUser();
+
+        if (!user) {
+          alert(
+            "Usuário não autenticado."
+          );
+          return;
+        }
+
+        const {
+          error: accountError,
+        } = await supabase
+          .from(
+            "finance_records"
+          )
+          .upsert(
+            {
+              user_id:
+                user.id,
+
+              namespace:
+                "accounts",
+
+              payload:
+                updatedAccounts,
+
+              updated_at:
+                new Date().toISOString(),
+            },
+            {
+              onConflict:
+                "user_id,namespace",
+            }
+          );
+
+        if (accountError) {
+          console.error(
+            accountError
+          );
+
+          alert(
+            "Erro ao atualizar a conta."
+          );
+          return;
+        }
+
+        const {
+          error: ledgerError,
+        } = await supabase
+          .from(
+            "finance_records"
+          )
+          .upsert(
+            {
+              user_id:
+                user.id,
+
+              namespace:
+                "ledger",
+
+              payload:
+                updatedEntries,
+
+              updated_at:
+                new Date().toISOString(),
+            },
+            {
+              onConflict:
+                "user_id,namespace",
+            }
+          );
+
+        if (ledgerError) {
+          console.error(
+            ledgerError
+          );
+
+          alert(
+            "Erro ao registrar investimento."
+          );
+          return;
+        }
+
+        setInvestmentAccounts(
+          updatedAccounts
+        );
+
+        setEntries(
+          updatedEntries
+        );
+
+        setInvestOpen(false);
+      }}
+    >
+      <ModalHead
+        title="Guardar saldo"
+        sub="Envie parte do saldo disponível para uma conta."
+        close={() =>
+          setInvestOpen(false)
+        }
+        icon={<PiggyBank />}
+      />
+
+      <div className="form-grid">
+        <label className="wide">
+          Valor
+
+          <input
+            name="investmentValue"
+            type="number"
+            step="0.01"
+            min="0.01"
+            max={
+              projectedBalance
+            }
+            defaultValue={
+              projectedBalance.toFixed(
+                2
+              )
+            }
+            required
+          />
+        </label>
+
+        <label className="wide">
+          Conta para guardar
+
+          <select
+            name="investmentAccount"
+            required
+          >
+            <option value="">
+              Selecione
+            </option>
+
+            {investmentAccounts.map(
+              (account) => (
+                <option
+                  key={
+                    account.id
+                  }
+                  value={
+                    account.id
+                  }
+                >
+                  {
+                    account.name
+                  }{" "}
+                  ·{" "}
+                  {
+                    account.bank
+                  }{" "}
+                  ·{" "}
+                  {fmt(
+                    account.balance
+                  )}
+                </option>
+              )
+            )}
+          </select>
+        </label>
+      </div>
+
+      <div className="modal-foot">
+        <button
+          type="button"
+          onClick={() =>
+            setInvestOpen(false)
+          }
+        >
+          Cancelar
+        </button>
+
+        <button
+          className="primary"
+          type="submit"
+        >
+          <PiggyBank />
+          Guardar dinheiro
+        </button>
+      </div>
+    </form>
+  </div>
+)}
     </div>
   );
 }
@@ -1302,6 +1666,12 @@ function TransactionsWorkspace({
     React.SetStateAction<Ledger[]>
   >;
 }) {
+    const [
+  editingEntry,
+  setEditingEntry,
+] = useState<Ledger | null>(
+  null
+);
 
     const [entryType, setEntryType] = useState<
   "Receita" | "Despesa"
@@ -1330,6 +1700,8 @@ const [frequency, setFrequency] = useState<
 
   const [search, setSearch] = useState("");
   const [form, setForm] = useState(false);
+const [editingEntry, setEditingEntry] =
+  useState<Ledger | null>(null);
 
   const [categories, setCategories] =
     usePersistedFinance<string[][]>(
@@ -1480,7 +1852,7 @@ const [frequency, setFrequency] = useState<
   const baseDate = String(
     fd.get("date")
   );
-
+const seriesId = Date.now();
   let accountLabel = "Dinheiro";
 
   let sourceType:
@@ -1609,79 +1981,207 @@ const [frequency, setFrequency] = useState<
 
   let newEntries: Ledger[] = [];
 
-  if (
-    frequency === "Parcelado"
-  ) {
-    const [year, month, day] =
-      baseDate
-        .split("-")
-        .map(Number);
+/* =====================================================
+   RECEITA MENSAL SOMENTE ATÉ DEZEMBRO
+   ===================================================== */
 
-    newEntries = Array.from(
-      { length: total },
-      (_, index) => {
-        const parcelDate = new Date(
-          year,
-          month - 1 + index,
-          day
-        );
+if (
+  type === "Receita" &&
+  frequency === "Mensal até dezembro"
+) {
+  const [year, month, day] =
+    baseDate.split("-").map(Number);
 
-        const parcelDateKey =
-          `${parcelDate.getFullYear()}-${String(
-            parcelDate.getMonth() + 1
-          ).padStart(2, "0")}-${String(
-            parcelDate.getDate()
-          ).padStart(2, "0")}`;
+  const monthsRemaining =
+    12 - month + 1;
 
-        return {
-          id:
-            Date.now() +
-            index,
+  newEntries = Array.from(
+    {
+      length: monthsRemaining,
+    },
+    (_, index) => {
+      const date = new Date(
+        year,
+        month - 1 + index,
+        day
+      );
 
-          type,
+      const dateKey =
+        `${date.getFullYear()}-${String(
+          date.getMonth() + 1
+        ).padStart(2, "0")}-${String(
+          date.getDate()
+        ).padStart(2, "0")}`;
 
-          name: String(
-            fd.get("name")
-          ),
+      return {
+        id:
+          seriesId +
+          index,
 
-          category: String(
-            fd.get("category")
-          ),
+        seriesId,
 
-          icon:
-            type === "Receita"
-              ? "💰"
-              : "✨",
+        type: "Receita",
 
-          date: parcelDateKey,
+        name: String(
+          fd.get("name")
+        ),
 
-          value,
+        category: String(
+          fd.get("category")
+        ),
 
-          account:
-            accountLabel,
+        icon: "💰",
 
-          frequency:
-            "Parcelado",
+        date: dateKey,
 
-          installment:
-            `${index + 1}/${total}`,
+        value,
 
-          remaining:
-            total -
-            index -
-            1,
+        account:
+          "Receita mensal",
 
-          status:
-            index === 0
-              ? "Confirmado"
-              : "Previsto",
+        frequency:
+          "Mensal até dezembro",
 
-          sourceType,
-          sourceId,
-        };
-      }
-    );
-  } else {
+        status:
+          index === 0
+            ? "Confirmado"
+            : "Previsto",
+
+        sourceType:
+          "cash",
+      };
+    }
+  );
+}
+
+/* =====================================================
+   DESPESA PARCELADA
+   ===================================================== */
+
+else if (
+  type === "Despesa" &&
+  frequency === "Parcelado"
+) {
+  const [year, month, day] =
+    baseDate.split("-").map(Number);
+
+  newEntries = Array.from(
+    {
+      length: total,
+    },
+    (_, index) => {
+      const date = new Date(
+        year,
+        month - 1 + index,
+        day
+      );
+
+      const dateKey =
+        `${date.getFullYear()}-${String(
+          date.getMonth() + 1
+        ).padStart(2, "0")}-${String(
+          date.getDate()
+        ).padStart(2, "0")}`;
+
+      return {
+        id:
+          seriesId +
+          index,
+
+        seriesId,
+
+        type,
+
+        name: String(
+          fd.get("name")
+        ),
+
+        category: String(
+          fd.get("category")
+        ),
+
+        icon: "✨",
+
+        date: dateKey,
+
+        value,
+
+        account:
+          accountLabel,
+
+        frequency:
+          "Parcelado",
+
+        installment:
+          `${index + 1}/${total}`,
+
+        remaining:
+          total -
+          index -
+          1,
+
+        status:
+          index === 0
+            ? "Confirmado"
+            : "Previsto",
+
+        sourceType,
+        sourceId,
+      };
+    }
+  );
+}
+
+/* =====================================================
+   LANÇAMENTO ÚNICO
+   ===================================================== */
+
+else {
+  newEntries = [
+    {
+      id: seriesId,
+
+      type,
+
+      name: String(
+        fd.get("name")
+      ),
+
+      category: String(
+        fd.get("category")
+      ),
+
+      icon:
+        type === "Receita"
+          ? "💰"
+          : "✨",
+
+      date: baseDate,
+
+      value,
+
+      account:
+        type === "Receita"
+          ? "Receita"
+          : accountLabel,
+
+      frequency,
+
+      status:
+        "Confirmado",
+
+      sourceType:
+        type === "Receita"
+          ? "cash"
+          : sourceType,
+
+      sourceId:
+        type === "Receita"
+          ? undefined
+          : sourceId,
+    },
+  ];
+} else {
     newEntries = [
       {
         id: Date.now(),
@@ -2165,7 +2665,15 @@ const [frequency, setFrequency] = useState<
                   : "−"}{" "}
                 {fmt(entry.value)}
               </strong>
-
+<button
+  type="button"
+  onClick={() =>
+    setEditingEntry(entry)
+  }
+  title="Editar lançamento"
+>
+  <Pencil size={17} />
+</button>
               <button
                 type="button"
                 onClick={() =>
@@ -2304,53 +2812,40 @@ const [frequency, setFrequency] = useState<
   </label>
 
   {entryType === "Receita" ? (
-    <>
-      <label>
-        Conta de destino
+  <>
+    <label>
+      Repetição
 
-        <select
-          name="account"
-          required
-        >
-          <option value="">
-            Selecione
-          </option>
+      <select
+        name="frequency"
+        value={frequency}
+        onChange={(event) =>
+          setFrequency(
+            event.target.value as
+              | "Único"
+              | "Mensal até dezembro"
+          )
+        }
+      >
+        <option>Único</option>
 
-          {accounts.map((account) => (
-            <option
-              key={`account-${account.id}`}
-              value={`account:${account.id}`}
-            >
-              {account.name} · {account.bank}
-            </option>
-          ))}
+        <option>
+          Mensal até dezembro
+        </option>
+      </select>
+    </label>
 
-          <option value="cash">
-            Dinheiro
-          </option>
-        </select>
-      </label>
+    <div className="income-info">
+      <Sparkles />
 
-      <label>
-        Repetição
-
-        <select
-          name="frequency"
-          value={frequency}
-          onChange={(event) =>
-            setFrequency(
-              event.target.value as
-                | "Único"
-                | "Mensal"
-            )
-          }
-        >
-          <option>Único</option>
-          <option>Mensal</option>
-        </select>
-      </label>
-    </>
-  ) : (
+      <span>
+        Receitas mensais serão criadas somente
+        até dezembro do ano selecionado e
+        poderão ser ajustadas individualmente.
+      </span>
+    </div>
+  </>
+) : (
     <>
       <label>
         Conta ou cartão
@@ -2447,6 +2942,180 @@ const [frequency, setFrequency] = useState<
           </form>
         </div>
       )}
+
+      {editingEntry && (
+  <div className="modal-bg">
+    <form
+      className="modal small"
+      onSubmit={async (event) => {
+        event.preventDefault();
+
+        const fd = new FormData(
+          event.currentTarget
+        );
+
+        const updatedEntry: Ledger = {
+          ...editingEntry,
+
+          name: String(
+            fd.get("name")
+          ),
+
+          value: Math.abs(
+            Number(
+              fd.get("value")
+            )
+          ),
+
+          date: String(
+            fd.get("date")
+          ),
+
+          category: String(
+            fd.get("category")
+          ),
+
+          status: String(
+            fd.get("status")
+          ) as
+            | "Confirmado"
+            | "Previsto",
+        };
+
+        const updatedEntries =
+          entries.map((entry) =>
+            entry.id ===
+            editingEntry.id
+              ? updatedEntry
+              : entry
+          );
+
+        try {
+          await saveNamespace(
+            "ledger",
+            updatedEntries
+          );
+
+          setEntries(
+            updatedEntries
+          );
+
+          setEditingEntry(
+            null
+          );
+        } catch (error) {
+          console.error(error);
+
+          alert(
+            "Erro ao atualizar lançamento."
+          );
+        }
+      }}
+    >
+      <ModalHead
+        title="Editar lançamento"
+        sub="A alteração será aplicada somente neste mês."
+        close={() =>
+          setEditingEntry(null)
+        }
+        icon={<Pencil />}
+      />
+
+      <div className="form-grid">
+        <label className="wide">
+          Descrição
+
+          <input
+            name="name"
+            defaultValue={
+              editingEntry.name
+            }
+            required
+          />
+        </label>
+
+        <label>
+          Valor
+
+          <input
+            name="value"
+            type="number"
+            step="0.01"
+            min="0"
+            defaultValue={
+              editingEntry.value
+            }
+            required
+          />
+        </label>
+
+        <label>
+          Data
+
+          <input
+            name="date"
+            type="date"
+            defaultValue={
+              editingEntry.date
+            }
+            required
+          />
+        </label>
+
+        <label>
+          Categoria
+
+          <input
+            name="category"
+            defaultValue={
+              editingEntry.category
+            }
+            required
+          />
+        </label>
+
+        <label>
+          Status
+
+          <select
+            name="status"
+            defaultValue={
+              editingEntry.status
+            }
+          >
+            <option>
+              Confirmado
+            </option>
+
+            <option>
+              Previsto
+            </option>
+          </select>
+        </label>
+      </div>
+
+      <div className="modal-foot">
+        <button
+          type="button"
+          onClick={() =>
+            setEditingEntry(null)
+          }
+        >
+          Cancelar
+        </button>
+
+        <button
+          className="primary"
+          type="submit"
+        >
+          <Check />
+          Salvar alteração
+        </button>
+      </div>
+    </form>
+  </div>
+)}
+
     </div>
   );
 }

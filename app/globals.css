@@ -2318,3 +2318,25 @@ textarea:focus {
   background: #e5f7f4;
   color: #078c82;
 }
+
+.invest-balance{
+  margin-top:14px;
+  min-height:38px;
+  padding:0 14px;
+  border:1px solid #6fd4cb;
+  border-radius:9px;
+  background:#ffffff12;
+  color:#b9fff6;
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  font-weight:700;
+}
+
+.invest-balance:hover{
+  background:#ffffff1f;
+}
+
+.invest-balance svg{
+  width:16px;
+}
