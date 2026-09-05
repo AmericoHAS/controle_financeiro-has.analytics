@@ -2131,3 +2131,25 @@ textarea:focus {
     grid-template-columns: 1fr 1fr;
   }
 }
+
+/* Ajuste do botão Salvar no modal de lançamentos */
+.ledger-modal .modal-foot {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.ledger-modal .modal-foot button {
+  min-width: 120px;
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
+.ledger-modal .modal-foot .primary {
+  border-radius: 9px;
+  padding: 0 18px !important;
+}

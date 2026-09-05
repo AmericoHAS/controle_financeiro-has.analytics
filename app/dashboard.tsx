@@ -1463,10 +1463,10 @@ async function deleteEntry(entry: Ledger) {
                 Cancelar
               </button>
 
-              <button className="primary">
-                <Check />
-                Salvar
-              </button>
+              <button className="primary" type="submit">
+  <Check />
+  Salvar lançamento
+</button>
             </div>
           </form>
         </div>
