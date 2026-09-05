@@ -867,7 +867,8 @@ const categorySeed = [
   ["Transporte", "🚗", "Despesa"],
 ];
 
-function TransactionsWorkspace() {
+
+  function TransactionsWorkspace() {
   const [accounts, setAccounts] = usePersistedFinance<FinanceAccount[]>(
     "accounts",
     initialAccounts
@@ -883,31 +884,18 @@ function TransactionsWorkspace() {
     ledgerSeed
   );
 
-const [accounts, setAccounts] = usePersistedFinance<FinanceAccount[]>(
-  "accounts",
-  initialAccounts
-);
-
-const [cards] = usePersistedFinance<FinanceCard[]>(
-  "cards",
-  initialCards
-);
-  const [entries, setEntries] = usePersistedFinance<Ledger[]>(
-    "ledger",
-    ledgerSeed
-  );
-
-  const [view, setView] = useState<"Todos" | "Receitas" | "Despesas">(
-    "Todos"
-  );
+  const [view, setView] = useState<
+    "Todos" | "Receitas" | "Despesas"
+  >("Todos");
 
   const [search, setSearch] = useState("");
   const [form, setForm] = useState(false);
 
-  const [categories, setCategories] = usePersistedFinance<string[][]>(
-    "categories",
-    categorySeed
-  );
+  const [categories, setCategories] =
+    usePersistedFinance<string[][]>(
+      "categories",
+      categorySeed
+    );
 
   const [catOpen, setCatOpen] = useState(false);
   const [newCat, setNewCat] = useState("");
@@ -936,7 +924,7 @@ const [cards] = usePersistedFinance<FinanceCard[]>(
     .filter((e) => e.frequency === "Parcelado")
     .reduce((a, e) => a + e.value * (e.remaining || 0), 0);
 
-  function submit(e: React.FormEvent<HTMLFormElement>) {
+  async function submit(e: React.FormEvent<HTMLFormElement>) {
   e.preventDefault();
 
   const fd = new FormData(e.currentTarget);
@@ -944,8 +932,85 @@ const [cards] = usePersistedFinance<FinanceCard[]>(
   const type = String(fd.get("type")) as "Receita" | "Despesa";
   const frequency = String(fd.get("frequency")) as Ledger["frequency"];
   const total = Math.max(1, Number(fd.get("parts")) || 1);
-  const value = Math.abs(Number(fd.get("value")));
-  const accountName = String(fd.get("account"));
+  const value = Math.abs(Number(fd.get("value")) || 0);
+
+  const destination = String(fd.get("account"));
+
+  let accountLabel = "Dinheiro";
+
+  // CONTA BANCÁRIA
+  if (destination.startsWith("account:")) {
+    const accountId = Number(destination.replace("account:", ""));
+
+    const selectedAccount = accounts.find(
+      (account) => account.id === accountId
+    );
+
+    if (!selectedAccount) {
+      alert("Conta não encontrada.");
+      return;
+    }
+
+    accountLabel = `${selectedAccount.name} · ${selectedAccount.bank}`;
+
+    const updatedAccounts = accounts.map((account) =>
+      account.id === accountId
+        ? {
+            ...account,
+            balance:
+              type === "Receita"
+                ? account.balance + value
+                : account.balance - value,
+          }
+        : account
+    );
+
+    // Atualiza a interface
+    setAccounts(updatedAccounts);
+
+    // Salva imediatamente no Supabase
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      alert("Usuário não autenticado.");
+      return;
+    }
+
+    const { error } = await supabase
+      .from("finance_records")
+      .upsert(
+        {
+          user_id: user.id,
+          namespace: "accounts",
+          payload: updatedAccounts,
+          updated_at: new Date().toISOString(),
+        },
+        {
+          onConflict: "user_id,namespace",
+        }
+      );
+
+    if (error) {
+      console.error("Erro ao atualizar saldo:", error);
+      alert("Erro ao atualizar o saldo da conta.");
+      return;
+    }
+  }
+
+  // CARTÃO
+  if (destination.startsWith("card:")) {
+    const cardId = Number(destination.replace("card:", ""));
+
+    const selectedCard = cards.find(
+      (card) => card.id === cardId
+    );
+
+    if (selectedCard) {
+      accountLabel = `${selectedCard.bank} • ${selectedCard.last4}`;
+    }
+  }
 
   const newEntry: Ledger = {
     id: Date.now(),
@@ -955,36 +1020,20 @@ const [cards] = usePersistedFinance<FinanceCard[]>(
     icon: type === "Receita" ? "💰" : "✨",
     date: String(fd.get("date") || "Hoje"),
     value,
-    account: accountName,
+    account: accountLabel,
     frequency,
-    installment: frequency === "Parcelado" ? `1/${total}` : undefined,
-    remaining: frequency === "Parcelado" ? total - 1 : undefined,
+    installment:
+      frequency === "Parcelado"
+        ? `1/${total}`
+        : undefined,
+    remaining:
+      frequency === "Parcelado"
+        ? total - 1
+        : undefined,
     status: "Previsto",
   };
 
   setEntries((list) => [newEntry, ...list]);
-
-  const selectedAccount = accounts.find(
-    (account) =>
-      account.name === accountName ||
-      `${account.name} · ${account.bank}` === accountName
-  );
-
-  if (selectedAccount) {
-    setAccounts((list) =>
-      list.map((account) =>
-        account.id === selectedAccount.id
-          ? {
-              ...account,
-              balance:
-                type === "Receita"
-                  ? account.balance + value
-                  : account.balance - value,
-            }
-          : account
-      )
-    );
-  }
 
   setForm(false);
 }
@@ -1245,27 +1294,31 @@ const [cards] = usePersistedFinance<FinanceCard[]>(
                 </select>
               </label>
 
-              <label>
+ <label>
   Conta ou cartão
+
   <select name="account" required>
     <option value="">Selecione</option>
 
     {accounts.map((account) => (
-      <option key={`account-${account.id}`} value={account.name}>
-        {account.name} · {account.bank}
+      <option
+        key={`account-${account.id}`}
+        value={`account:${account.id}`}
+      >
+        {account.name} · {account.bank} · Saldo {fmt(account.balance)}
       </option>
     ))}
 
     {cards.map((card) => (
       <option
         key={`card-${card.id}`}
-        value={`${card.bank} • ${card.last4}`}
+        value={`card:${card.id}`}
       >
         {card.bank} • {card.last4}
       </option>
     ))}
 
-    <option value="Dinheiro">Dinheiro</option>
+    <option value="cash">Dinheiro</option>
   </select>
 </label>
 
