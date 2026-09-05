@@ -56,6 +56,65 @@ const fmt = (n: number) =>
     currency: "BRL",
   }).format(Math.abs(n));
 
+const MONTHS = [
+  "Janeiro",
+  "Fevereiro",
+  "Março",
+  "Abril",
+  "Maio",
+  "Junho",
+  "Julho",
+  "Agosto",
+  "Setembro",
+  "Outubro",
+  "Novembro",
+  "Dezembro",
+];
+
+
+const monthOptions = useMemo(() => {
+  const now = new Date();
+  const currentYear = now.getFullYear();
+
+  const options: {
+    value: string;
+    label: string;
+  }[] = [];
+
+  for (
+    let year = currentYear - 1;
+    year <= currentYear + 1;
+    year++
+  ) {
+    for (let m = 1; m <= 12; m++) {
+      const value = `${year}-${String(m).padStart(2, "0")}`;
+
+      options.push({
+        value,
+        label: `${MONTHS[m - 1]} ${year}`,
+      });
+    }
+  }
+
+  return options;
+}, []);
+
+
+function currentMonthKey() {
+  const now = new Date();
+
+  return `${now.getFullYear()}-${String(
+    now.getMonth() + 1
+  ).padStart(2, "0")}`;
+}
+
+function monthLabel(key: string) {
+  const [year, month] = key.split("-").map(Number);
+
+  return `${MONTHS[month - 1]} ${year}`;
+}
+
+
 export default function Home({
   userEmail,
   onLogout,
@@ -66,7 +125,7 @@ export default function Home({
   const [section, setSection] = useState("Visão geral");
   const [mobile, setMobile] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
-  const [month, setMonth] = useState("Setembro 2026");
+  const [month, setMonth] = useState(currentMonthKey);
 
   const [txs, setTxs, saveState] = usePersistedFinance<Tx[]>(
     "dashboard-transactions",
@@ -299,20 +358,26 @@ export default function Home({
           </div>
 
           <div className="header-actions">
-            <button
-              className="month"
-              onClick={() =>
-                setMonth(
-                  month === "Setembro 2026"
-                    ? "Outubro 2026"
-                    : "Setembro 2026"
-                )
-              }
-            >
-              <CalendarDays />
-              {month}
-              <ChevronDown />
-            </button>
+            <div className="month-picker">
+  <CalendarDays />
+
+  <select
+    value={month}
+    onChange={(e) => setMonth(e.target.value)}
+    aria-label="Selecionar mês"
+  >
+    {monthOptions.map((option) => (
+      <option
+        key={option.value}
+        value={option.value}
+      >
+        {option.label}
+      </option>
+    ))}
+  </select>
+
+  <ChevronDown />
+</div>
 
             <button className="iconbtn" title={userEmail}>
               <Bell />
@@ -340,7 +405,7 @@ export default function Home({
 ) : section === "Planejamento" ? (
   <Planning />
 ) : section === "Lançamentos" ? (
-  <TransactionsWorkspace />
+  <TransactionsWorkspace selectedMonth={month} />
 ) : section !== "Visão geral" ? (
           <div className="section-placeholder">
             <div className="placeholder-icon">
@@ -687,9 +752,15 @@ export default function Home({
 
             <div className="form-grid">
               <label>
-                Data
-                <input name="date" placeholder="04 set" required />
-              </label>
+  Data
+
+  <input
+    name="date"
+    type="date"
+    required
+    defaultValue={new Date().toISOString().slice(0, 10)}
+  />
+</label>
 
               <label>
                 Valor
@@ -870,7 +941,12 @@ const categorySeed = [
 ];
 
 
-  function TransactionsWorkspace() {
+  function TransactionsWorkspace({
+  selectedMonth,
+}: {
+  selectedMonth: string;
+}) {
+
   const [accounts, setAccounts] = usePersistedFinance<FinanceAccount[]>(
     "accounts",
     initialAccounts
@@ -902,13 +978,18 @@ const categorySeed = [
   const [catOpen, setCatOpen] = useState(false);
   const [newCat, setNewCat] = useState("");
 
-  const shown = entries.filter(
-    (e) =>
-      (view === "Todos" || e.type === view.slice(0, -1)) &&
-      (e.name + e.category + e.account)
-        .toLowerCase()
-        .includes(search.toLowerCase())
-  );
+const monthEntries = entries.filter((entry) =>
+  entry.date.startsWith(selectedMonth)
+);
+
+const shown = monthEntries.filter(
+  (e) =>
+    (view === "Todos" ||
+      e.type === view.slice(0, -1)) &&
+    (e.name + e.category + e.account)
+      .toLowerCase()
+      .includes(search.toLowerCase())
+);
 
   const revenues = entries
     .filter((e) => e.type === "Receita")
