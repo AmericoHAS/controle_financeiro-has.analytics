@@ -217,15 +217,27 @@ const initialBudgets: {
 }[] = [];
 
 const categorySeed = [
-  ["Salários", "💼", "Receita"],
-  ["Bolsas", "🎓", "Receita"],
-  ["Renda extra", "📊", "Receita"],
+  ["Salário", "💼", "Receita"],
+  ["Bolsa", "🎓", "Receita"],
+  ["Freelance", "💻", "Receita"],
+  ["Renda extra", "📈", "Receita"],
+  ["Investimentos", "💰", "Receita"],
+  ["Reembolso", "↩️", "Receita"],
+  ["Outras receitas", "✨", "Receita"],
+
   ["Moradia", "🏠", "Despesa"],
   ["Mercado", "🛒", "Despesa"],
-  ["Compras", "🛍️", "Despesa"],
-  ["Casa", "🛋️", "Despesa"],
-  ["Assinaturas", "🎵", "Despesa"],
+  ["Alimentação", "🍽️", "Despesa"],
   ["Transporte", "🚗", "Despesa"],
+  ["Combustível", "⛽", "Despesa"],
+  ["Saúde", "❤️", "Despesa"],
+  ["Educação", "📚", "Despesa"],
+  ["Lazer", "🎮", "Despesa"],
+  ["Compras", "🛍️", "Despesa"],
+  ["Assinaturas", "🎵", "Despesa"],
+  ["Contas da casa", "💡", "Despesa"],
+  ["Impostos", "🧾", "Despesa"],
+  ["Outras despesas", "✨", "Despesa"],
 ];
 
 const bankCatalog = [
@@ -1290,6 +1302,16 @@ function TransactionsWorkspace({
     React.SetStateAction<Ledger[]>
   >;
 }) {
+
+    const [entryType, setEntryType] = useState<
+  "Receita" | "Despesa"
+>("Despesa");
+
+const [frequency, setFrequency] = useState<
+  "Único" | "Mensal" | "Parcelado"
+>("Único");
+
+
   const [accounts, setAccounts] =
     usePersistedFinance<FinanceAccount[]>(
       "accounts",
@@ -1389,7 +1411,7 @@ function TransactionsWorkspace({
     0
   );
 
-  
+
   async function saveNamespace(
     namespace: string,
     payload: unknown
@@ -2176,153 +2198,233 @@ function TransactionsWorkspace({
             />
 
             <div className="ledger-form">
-              <label>
-                Tipo
 
-                <select name="type">
-                  <option>
-                    Despesa
-                  </option>
-                  <option>
-                    Receita
-                  </option>
-                </select>
-              </label>
+  <div className="entry-type-selector">
+    <button
+      type="button"
+      className={
+        entryType === "Despesa"
+          ? "active expense"
+          : ""
+      }
+      onClick={() => {
+        setEntryType("Despesa");
+        setFrequency("Único");
+      }}
+    >
+      <ArrowUpRight />
+      Despesa
+    </button>
 
-              <label>
-                Descrição
+    <button
+      type="button"
+      className={
+        entryType === "Receita"
+          ? "active income"
+          : ""
+      }
+      onClick={() => {
+        setEntryType("Receita");
+        setFrequency("Único");
+      }}
+    >
+      <ArrowDownLeft />
+      Receita
+    </button>
+  </div>
 
-                <input
-                  name="name"
-                  required
-                  placeholder="Ex.: Mercado, salário ou aluguel"
-                />
-              </label>
+  <input
+    type="hidden"
+    name="type"
+    value={entryType}
+  />
 
-              <label>
-                Valor
+  <label>
+    Descrição
 
-                <input
-                  name="value"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  required
-                  placeholder="0,00"
-                />
-              </label>
+    <input
+      name="name"
+      required
+      placeholder={
+        entryType === "Despesa"
+          ? "Ex.: Mercado, aluguel ou combustível"
+          : "Ex.: Salário, bolsa ou renda extra"
+      }
+    />
+  </label>
 
-              <label>
-                Data
+  <label>
+    Valor
 
-                <input
-                  name="date"
-                  type="date"
-                  required
-                  defaultValue={defaultDateForMonth(
-                    selectedMonth
-                  )}
-                />
-              </label>
+    <input
+      name="value"
+      type="number"
+      step="0.01"
+      min="0"
+      required
+      placeholder="0,00"
+    />
+  </label>
 
-              <label>
-                Categoria
+  <label>
+    Data
 
-                <select name="category">
-                  {categories.map(
-                    (
-                      category,
-                      index
-                    ) => (
-                      <option
-                        key={`${category[0]}-${index}`}
-                      >
-                        {
-                          category[0]
-                        }
-                      </option>
-                    )
-                  )}
-                </select>
-              </label>
+    <input
+      name="date"
+      type="date"
+      required
+      defaultValue={defaultDateForMonth(
+        selectedMonth
+      )}
+    />
+  </label>
 
-              <label>
-                Conta ou cartão
+  <label>
+    Categoria
 
-                <select
-                  name="account"
-                  required
-                >
-                  <option value="">
-                    Selecione
-                  </option>
+    <select name="category" required>
+      <option value="">
+        Selecione
+      </option>
 
-                  {accounts.map(
-                    (account) => (
-                      <option
-                        key={`account-${account.id}`}
-                        value={`account:${account.id}`}
-                      >
-                        {
-                          account.name
-                        }{" "}
-                        ·{" "}
-                        {
-                          account.bank
-                        }{" "}
-                        · Saldo{" "}
-                        {fmt(
-                          account.balance
-                        )}
-                      </option>
-                    )
-                  )}
+      {categories
+        .filter(
+          (category) =>
+            category[2] === entryType
+        )
+        .map((category, index) => (
+          <option
+            key={`${category[0]}-${index}`}
+            value={category[0]}
+          >
+            {category[1]} {category[0]}
+          </option>
+        ))}
+    </select>
+  </label>
 
-                  {cards.map(
-                    (card) => (
-                      <option
-                        key={`card-${card.id}`}
-                        value={`card:${card.id}`}
-                      >
-                        {card.bank} •{" "}
-                        {card.last4}
-                      </option>
-                    )
-                  )}
+  {entryType === "Receita" ? (
+    <>
+      <label>
+        Conta de destino
 
-                  <option value="cash">
-                    Dinheiro
-                  </option>
-                </select>
-              </label>
+        <select
+          name="account"
+          required
+        >
+          <option value="">
+            Selecione
+          </option>
 
-              <label>
-                Repetição
+          {accounts.map((account) => (
+            <option
+              key={`account-${account.id}`}
+              value={`account:${account.id}`}
+            >
+              {account.name} · {account.bank}
+            </option>
+          ))}
 
-                <select name="frequency">
-                  <option>
-                    Único
-                  </option>
-                  <option>
-                    Mensal
-                  </option>
-                  <option>
-                    Parcelado
-                  </option>
-                </select>
-              </label>
+          <option value="cash">
+            Dinheiro
+          </option>
+        </select>
+      </label>
 
-              <label>
-                Número de parcelas
+      <label>
+        Repetição
 
-                <input
-                  name="parts"
-                  type="number"
-                  min="1"
-                  placeholder="Somente se parcelado"
-                />
-              </label>
-            </div>
+        <select
+          name="frequency"
+          value={frequency}
+          onChange={(event) =>
+            setFrequency(
+              event.target.value as
+                | "Único"
+                | "Mensal"
+            )
+          }
+        >
+          <option>Único</option>
+          <option>Mensal</option>
+        </select>
+      </label>
+    </>
+  ) : (
+    <>
+      <label>
+        Conta ou cartão
+
+        <select
+          name="account"
+          required
+        >
+          <option value="">
+            Selecione
+          </option>
+
+          {accounts.map((account) => (
+            <option
+              key={`account-${account.id}`}
+              value={`account:${account.id}`}
+            >
+              {account.name} · {account.bank} · Saldo{" "}
+              {fmt(account.balance)}
+            </option>
+          ))}
+
+          {cards.map((card) => (
+            <option
+              key={`card-${card.id}`}
+              value={`card:${card.id}`}
+            >
+              {card.bank} • {card.last4}
+            </option>
+          ))}
+
+          <option value="cash">
+            Dinheiro
+          </option>
+        </select>
+      </label>
+
+      <label>
+        Repetição
+
+        <select
+          name="frequency"
+          value={frequency}
+          onChange={(event) =>
+            setFrequency(
+              event.target.value as
+                | "Único"
+                | "Mensal"
+                | "Parcelado"
+            )
+          }
+        >
+          <option>Único</option>
+          <option>Mensal</option>
+          <option>Parcelado</option>
+        </select>
+      </label>
+
+      {frequency === "Parcelado" && (
+        <label>
+          Número de parcelas
+
+          <input
+            name="parts"
+            type="number"
+            min="2"
+            required
+            placeholder="Ex.: 3"
+          />
+        </label>
+      )}
+    </>
+  )}
+</div>
 
             <div className="modal-foot">
               <button
