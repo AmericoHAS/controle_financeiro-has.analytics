@@ -868,6 +868,15 @@ const categorySeed = [
 ];
 
 function TransactionsWorkspace() {
+    const [accounts] = usePersistedFinance<FinanceAccount[]>(
+  "accounts",
+  initialAccounts
+);
+
+const [cards] = usePersistedFinance<FinanceCard[]>(
+  "cards",
+  initialCards
+);
   const [entries, setEntries] = usePersistedFinance<Ledger[]>(
     "ledger",
     ledgerSeed
@@ -1201,12 +1210,28 @@ function TransactionsWorkspace() {
               </label>
 
               <label>
-                Conta ou cartão
-                <select name="account">
-                  <option>Conta principal</option>
-                  <option>Dinheiro</option>
-                </select>
-              </label>
+  Conta ou cartão
+  <select name="account" required>
+    <option value="">Selecione</option>
+
+    {accounts.map((account) => (
+      <option key={`account-${account.id}`} value={account.name}>
+        {account.name} · {account.bank}
+      </option>
+    ))}
+
+    {cards.map((card) => (
+      <option
+        key={`card-${card.id}`}
+        value={`${card.bank} • ${card.last4}`}
+      >
+        {card.bank} • {card.last4}
+      </option>
+    ))}
+
+    <option value="Dinheiro">Dinheiro</option>
+  </select>
+</label>
 
               <label>
                 Repetição
