@@ -75,3 +75,593 @@ header{background:#f8fbfe;border-bottom-color:#b9cada}.content{max-width:1600px}
 /* Visible bank palette selector */
 .card-palettes{margin:17px 24px 0;padding:0;border:0}.card-palettes legend{margin-bottom:8px;color:#486177;font-size:11px;font-weight:800}.card-palettes>div{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}.card-palettes button{min-height:44px;border:1px solid #cad8e3;border-radius:10px;background:#f8fbfe;color:#36536b;padding:6px 8px;display:flex;align-items:center;gap:7px;cursor:pointer;font-size:10px;text-align:left}.card-palettes button:hover,.card-palettes button.active{border-color:#078ca8;background:#e8f6f8;box-shadow:0 0 0 2px #078ca817}.card-palettes button i{width:27px;height:27px;border-radius:8px;flex:none;box-shadow:inset 0 0 0 1px #ffffff30}.card-palettes button span{flex:1}.card-palettes button svg{width:13px;color:#078ca8}.credit-visual{isolation:isolate;transition:transform .2s ease,box-shadow .2s ease}.credit-visual:hover{transform:translateY(-3px);box-shadow:0 20px 36px #001d3d3d}.credit-visual:after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(110deg,#ffffff1c 0%,transparent 38%,#00000012 100%)}
 @media(max-width:760px){.card-palettes>div{grid-template-columns:1fr 1fr}.card-form{max-height:38vh}}
+
+
+/* =========================================================
+   HAS FINANCIAL — IDENTIDADE VISUAL FINAL
+   Azul-esverdeado / teal
+   ========================================================= */
+
+:root{
+  --hf-dark:#062f36;
+  --hf-dark-2:#07454c;
+  --hf-primary:#078c94;
+  --hf-primary-2:#0aa7a4;
+  --hf-accent:#27c5bb;
+  --hf-soft:#dff5f3;
+  --hf-soft-2:#edf9f8;
+
+  --ink:#123438;
+  --muted:#607b7d;
+  --line:#cfe1df;
+  --paper:#eef6f5;
+
+  --green:#078c94;
+  --coral:#e46f61;
+  --gold:#d7a63d;
+}
+
+
+/* FUNDO GERAL */
+
+body{
+  background:linear-gradient(
+    180deg,
+    #f3f9f8 0%,
+    #e7f2f1 100%
+  );
+  color:var(--ink);
+}
+
+
+/* =========================================================
+   MENU LATERAL
+   ========================================================= */
+
+.sidebar{
+  background:
+    radial-gradient(
+      circle at 20% 10%,
+      #0ca7a522,
+      transparent 32%
+    ),
+    linear-gradient(
+      180deg,
+      #042d34 0%,
+      #063b42 55%,
+      #05292f 100%
+    );
+
+  border-right:1px solid #14535a;
+}
+
+.brand small{
+  color:#83b9ba;
+}
+
+.nav{
+  color:#acd0cf;
+}
+
+.nav:hover,
+.nav.active{
+  background:#ffffff12;
+  color:#fff;
+}
+
+.nav.active{
+  box-shadow:inset 3px 0 #27c5bb;
+}
+
+.profile{
+  border-color:#ffffff1c;
+}
+
+.profile>div{
+  background:#dff5f3;
+  color:#07565b;
+}
+
+.collapse-sidebar{
+  background:#063940;
+  border-color:#247078;
+  color:#bce3e1;
+}
+
+
+/* =========================================================
+   CABEÇALHO
+   ========================================================= */
+
+header{
+  background:#fbfefd;
+  border-bottom-color:#cee0de;
+  box-shadow:0 4px 18px #063c4408;
+}
+
+header p,
+.eyebrow{
+  color:#078c94;
+}
+
+.month,
+.iconbtn,
+.add{
+  background:#fbfefd;
+  border-color:#ccdfdd;
+}
+
+
+/* =========================================================
+   BOTÕES PRINCIPAIS
+   ========================================================= */
+
+.primary,
+.access-submit,
+.request-actions .approve{
+  background:linear-gradient(
+    135deg,
+    #087e87,
+    #0aa7a4
+  )!important;
+
+  color:#fff!important;
+}
+
+.primary:hover,
+.access-submit:hover{
+  filter:brightness(1.06);
+}
+
+
+/* =========================================================
+   PAINEL DE SALDO
+   ========================================================= */
+
+.forecast{
+  background:
+    radial-gradient(
+      circle at 85% 15%,
+      #27c5bb35,
+      transparent 30%
+    ),
+    linear-gradient(
+      118deg,
+      #052f37 0%,
+      #07545b 58%,
+      #087b7d 100%
+    );
+
+  box-shadow:0 14px 30px #063c4430;
+}
+
+.forecast .eyebrow{
+  color:#8ee4dd;
+}
+
+.forecast p,
+.forecast-right span{
+  color:#b9dcda;
+}
+
+.forecast .green{
+  color:#84ead6!important;
+}
+
+
+/* =========================================================
+   ALERTAS
+   ========================================================= */
+
+.alert{
+  background:#e6f6f4;
+  border-color:#b8dedb;
+}
+
+.alert>svg,
+.alert button,
+.panel-head button{
+  color:#078c94;
+}
+
+
+/* =========================================================
+   CARDS E PAINÉIS
+   ========================================================= */
+
+.kpis article,
+.panel,
+.bank-option,
+.access-card,
+.requests-list article,
+.plan-summary article,
+.ledger-summary article{
+  background:#fbfefd;
+  border-color:#cfe1df;
+  box-shadow:0 5px 18px #063c4409;
+}
+
+
+/* =========================================================
+   GRÁFICOS
+   ========================================================= */
+
+.bar i{
+  background:#0aa7a4;
+}
+
+.lg-in,
+.bars .in{
+  background:#0aa7a4;
+}
+
+.lg-out,
+.bars .out{
+  background:#e46f61;
+}
+
+.lg-proj{
+  background:#d7a63d;
+}
+
+.plot path{
+  stroke:#d7a63d;
+}
+
+.donut{
+  background:conic-gradient(
+    #078c94 0 32%,
+    #27c5bb 32% 55%,
+    #d7a63d 55% 73%,
+    #497c9c 73% 87%,
+    #e46f61 87%
+  );
+}
+
+.donut:before{
+  background:#fbfefd;
+}
+
+
+/* =========================================================
+   LANÇAMENTOS
+   ========================================================= */
+
+.ledger-heading>div:first-child>span{
+  color:#078c94;
+}
+
+.ledger-green{
+  color:#078c82!important;
+}
+
+.ledger-red{
+  color:#c95c52!important;
+}
+
+.category-manager{
+  background:
+    linear-gradient(
+      135deg,
+      #06353c,
+      #07575e
+    );
+}
+
+.category-manager p{
+  color:#abd4d2;
+}
+
+.category-chips small{
+  color:#74ddd4;
+}
+
+.category-manager form button{
+  background:#0aa7a4;
+}
+
+.ledger-tabs button.active{
+  color:#075c62;
+  border-bottom-color:#0aa7a4;
+}
+
+.ledger-category{
+  background:#e2f4f2;
+  color:#087a7f;
+}
+
+
+/* =========================================================
+   CORREÇÃO DA TABELA DE LANÇAMENTOS
+   ========================================================= */
+
+.ledger-row{
+  min-width:1020px;
+
+  grid-template-columns:
+    75px
+    1.5fr
+    1fr
+    1.2fr
+    1fr
+    110px
+    48px;
+}
+
+
+/* BOTÃO EXCLUIR LANÇAMENTO */
+
+.ledger-row > button{
+  width:34px;
+  height:34px;
+  border:0;
+  border-radius:9px;
+  background:transparent;
+  color:#b85652;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  transition:.18s;
+}
+
+.ledger-row > button:hover{
+  background:#fbe9e7;
+  color:#a83f3b;
+}
+
+.ledger-row > button svg{
+  width:16px;
+  height:16px;
+}
+
+
+/* =========================================================
+   PLANEJAMENTO
+   ========================================================= */
+
+.planning-top{
+  background:
+    radial-gradient(
+      circle at 84% 18%,
+      #27c5bb36,
+      transparent 28%
+    ),
+    linear-gradient(
+      120deg,
+      #052f37,
+      #075159 62%,
+      #08777a
+    );
+}
+
+.planning-kicker{
+  color:#78ddd5;
+}
+
+.planning-top p{
+  color:#b4d9d7;
+}
+
+.planning-score>span{
+  color:#8bd2cf;
+}
+
+.planning-score i{
+  background:linear-gradient(
+    90deg,
+    #0aa7a4,
+    #40d2c6
+  );
+}
+
+.plan-summary span svg{
+  color:#078c94;
+}
+
+.plan-summary .free-card{
+  background:linear-gradient(
+    145deg,
+    #ddf4f1,
+    #c8e9e5
+  );
+
+  border-color:#9ed7d2;
+}
+
+.plan-check{
+  color:#078c94;
+}
+
+.add-commitment{
+  border-color:#78bbb8;
+  color:#087c82;
+  background:#edf9f8;
+}
+
+.planning-tip{
+  background:#e4f5f3;
+  border-color:#baddda;
+}
+
+.planning-tip svg{
+  color:#078c94;
+}
+
+
+/* =========================================================
+   CARTÕES E CONTAS
+   ========================================================= */
+
+.bank-kicker{
+  color:#078c94;
+}
+
+.bank-option:hover,
+.bank-option.chosen{
+  border-color:#20aaa5;
+  box-shadow:0 5px 16px #078c941c;
+}
+
+.bank-option>svg{
+  color:#078c94;
+}
+
+.custom-bank .bank-logo{
+  background:#e1f3f1;
+  color:#07787e;
+}
+
+.empty-cards{
+  background:#edf7f6;
+  border-color:#9fc8c5;
+  color:#496e70;
+}
+
+
+/* =========================================================
+   MODAIS
+   ========================================================= */
+
+.modal-icon{
+  background:#e1f4f2;
+  color:#087e84;
+}
+
+.modal-foot>button{
+  border-color:#cedfdd;
+}
+
+.form-grid input,
+.form-grid select,
+.ledger-form input,
+.ledger-form select,
+.card-form input{
+  border-color:#c7dcda;
+}
+
+.form-grid input:focus,
+.form-grid select:focus,
+.ledger-form input:focus,
+.ledger-form select:focus,
+.card-form input:focus{
+  outline:2px solid #0aa7a425;
+  border-color:#0aa7a4;
+}
+
+
+/* =========================================================
+   LOGIN
+   ========================================================= */
+
+.auth-loading{
+  background:#042d34;
+  color:#dff5f3;
+}
+
+.access-page{
+  background:#052c33;
+}
+
+.access-brand{
+  background:
+    radial-gradient(
+      circle at 15% 15%,
+      #22bcb941,
+      transparent 30%
+    ),
+    linear-gradient(
+      145deg,
+      #042b32,
+      #06434a 58%,
+      #075d61
+    );
+}
+
+.access-brand>p{
+  color:#bddcda;
+}
+
+.access-points svg{
+  color:#57d5cb;
+}
+
+.access-box{
+  background:linear-gradient(
+    145deg,
+    #edf6f5,
+    #dceae8
+  );
+}
+
+.access-tabs button.active{
+  color:#07858c;
+  border-bottom-color:#0aa7a4;
+}
+
+.access-icon{
+  background:#e0f4f2;
+  color:#07858c;
+}
+
+.access-message{
+  background:#e4f6f4;
+  color:#06767c;
+}
+
+
+/* =========================================================
+   ADMIN
+   ========================================================= */
+
+.admin-page{
+  background:#edf5f4;
+}
+
+.admin-head a,
+.admin-head>div>span{
+  color:#07858c;
+}
+
+.request-avatar{
+  background:#e0f3f1;
+  color:#07787e;
+}
+
+.key-result{
+  background:#e1f5f2;
+  border-color:#b6ded9;
+}
+
+
+/* =========================================================
+   LOGO
+   ========================================================= */
+
+.has-logo{
+  background:#063f46!important;
+}
+
+.brand .has-logo{
+  box-shadow:0 8px 22px #001f2360;
+}
+
+
+/* =========================================================
+   RESPONSIVO
+   ========================================================= */
+
+@media(max-width:760px){
+
+  .ledger-row{
+    min-width:1000px;
+  }
+
+  .access-brand{
+    background:linear-gradient(
+      135deg,
+      #042d34,
+      #087478
+    );
+  }
+}

@@ -935,15 +935,14 @@ const categorySeed = [
   const frequency = String(fd.get("frequency")) as Ledger["frequency"];
   const total = Math.max(1, Number(fd.get("parts")) || 1);
   const value = Math.abs(Number(fd.get("value")) || 0);
-
   const destination = String(fd.get("account"));
 
   let accountLabel = "Dinheiro";
+  let sourceType: "account" | "card" | "cash" = "cash";
+  let sourceId: number | undefined;
 
   // CONTA BANCÁRIA
   if (destination.startsWith("account:")) {
-    sourceType = "account";
-sourceId = accountId;
     const accountId = Number(destination.replace("account:", ""));
 
     const selectedAccount = accounts.find(
@@ -954,6 +953,9 @@ sourceId = accountId;
       alert("Conta não encontrada.");
       return;
     }
+
+    sourceType = "account";
+    sourceId = accountId;
 
     accountLabel = `${selectedAccount.name} · ${selectedAccount.bank}`;
 
@@ -969,10 +971,8 @@ sourceId = accountId;
         : account
     );
 
-    // Atualiza a interface
     setAccounts(updatedAccounts);
 
-    // Salva imediatamente no Supabase
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -1005,22 +1005,22 @@ sourceId = accountId;
 
   // CARTÃO
   if (destination.startsWith("card:")) {
-    sourceType = "card";
-sourceId = cardId;
     const cardId = Number(destination.replace("card:", ""));
 
     const selectedCard = cards.find(
       (card) => card.id === cardId
     );
 
-    if (selectedCard) {
-      accountLabel = `${selectedCard.bank} • ${selectedCard.last4}`;
+    if (!selectedCard) {
+      alert("Cartão não encontrado.");
+      return;
     }
+
+    sourceType = "card";
+    sourceId = cardId;
+
+    accountLabel = `${selectedCard.bank} • ${selectedCard.last4}`;
   }
-
-  let sourceType: "account" | "card" | "cash" = "cash";
-let sourceId: number | undefined;
-
 
   const newEntry: Ledger = {
     id: Date.now(),
@@ -1033,24 +1033,22 @@ let sourceId: number | undefined;
     account: accountLabel,
     frequency,
     installment:
-      frequency === "Parcelado"
-        ? `1/${total}`
-        : undefined,
+      frequency === "Parcelado" ? `1/${total}` : undefined,
     remaining:
-      frequency === "Parcelado"
-        ? total - 1
-        : undefined,
+      frequency === "Parcelado" ? total - 1 : undefined,
     status: "Previsto",
     sourceType,
-sourceId,
+    sourceId,
   };
 
   setEntries((list) => [newEntry, ...list]);
 
   setForm(false);
 }
+
+
 function deleteEntry(entry: Ledger) {
-  if (!confirm(`Excluir "${entry.name}"?`)) return;
+  if (!window.confirm(`Excluir "${entry.name}"?`)) return;
 
   if (entry.sourceType === "account" && entry.sourceId) {
     setAccounts((list) =>
@@ -1225,15 +1223,15 @@ function deleteEntry(entry: Ledger) {
           </label>
         </div>
 
-        <div className="ledger-list">
-          <div className="ledger-row ledger-labels">
-            <span>Data</span>
-            <span>Lançamento</span>
-            <span>Categoria</span>
-            <span>Conta ou cartão</span>
-            <span>Repetição</span>
-            <span>Valor</span>
-          </div>
+        <div className="ledger-row ledger-labels">
+  <span>Data</span>
+  <span>Lançamento</span>
+  <span>Categoria</span>
+  <span>Conta ou cartão</span>
+  <span>Repetição</span>
+  <span>Valor</span>
+  <span>Ações</span>
+</div>
 
           {shown.map((e) => (
             <article className="ledger-row" key={e.id}>
@@ -1262,21 +1260,30 @@ function deleteEntry(entry: Ledger) {
               </div>
 
               <strong
-                className={
-                  e.type === "Receita"
-                    ? "ledger-green"
-                    : "ledger-red"
-                }
-              >
-                {e.type === "Receita" ? "+" : "−"} {fmt(e.value)}
-              </strong>
-              <button
+  className={
+    e.type === "Receita"
+      ? "ledger-green"
+      : "ledger-red"
+  }
+>
+  {e.type === "Receita" ? "+" : "−"} {fmt(e.value)}
+</strong>
+
+<button
   type="button"
-  className="delete-card"
   onClick={() => deleteEntry(e)}
   title="Excluir lançamento"
+  style={{
+    border: "none",
+    background: "transparent",
+    cursor: "pointer",
+    padding: "8px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  }}
 >
-  <Trash2 />
+  <Trash2 size={18} />
 </button>
             </article>
           ))}
