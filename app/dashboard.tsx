@@ -1,5 +1,5 @@
 "use client";
-
+import { supabase } from "../lib/supabase";
 import { useMemo, useState } from "react";
 import {
   ArrowDownLeft,
@@ -866,6 +866,22 @@ const categorySeed = [
   ["Assinaturas", "🎵", "Despesa"],
   ["Transporte", "🚗", "Despesa"],
 ];
+
+function TransactionsWorkspace() {
+  const [accounts, setAccounts] = usePersistedFinance<FinanceAccount[]>(
+    "accounts",
+    initialAccounts
+  );
+
+  const [cards] = usePersistedFinance<FinanceCard[]>(
+    "cards",
+    initialCards
+  );
+
+  const [entries, setEntries] = usePersistedFinance<Ledger[]>(
+    "ledger",
+    ledgerSeed
+  );
 
 const [accounts, setAccounts] = usePersistedFinance<FinanceAccount[]>(
   "accounts",
