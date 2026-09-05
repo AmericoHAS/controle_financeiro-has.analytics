@@ -1377,19 +1377,19 @@ function TransactionsWorkspace({
       0
     );
 
-  const futureInstallments = monthEntries
-    .filter(
-      (entry) =>
-        entry.frequency === "Parcelado"
-    )
-    .reduce(
-      (total, entry) =>
-        total +
-        entry.value *
-          (entry.remaining || 0),
-      0
-    );
+  const futureInstallments = entries
+  .filter(
+    (entry) =>
+      entry.frequency === "Parcelado" &&
+      entry.date > `${selectedMonth}-31`
+  )
+  .reduce(
+    (total, entry) =>
+      total + entry.value,
+    0
+  );
 
+  
   async function saveNamespace(
     namespace: string,
     payload: unknown
@@ -1426,187 +1426,301 @@ function TransactionsWorkspace({
   }
 
   async function submit(
-    event: React.FormEvent<HTMLFormElement>
+  event: React.FormEvent<HTMLFormElement>
+) {
+  event.preventDefault();
+
+  const fd = new FormData(
+    event.currentTarget
+  );
+
+  const type = String(
+    fd.get("type")
+  ) as "Receita" | "Despesa";
+
+  const frequency = String(
+    fd.get("frequency")
+  ) as Ledger["frequency"];
+
+  const total = Math.max(
+    1,
+    Number(fd.get("parts")) || 1
+  );
+
+  const value = Math.abs(
+    Number(fd.get("value")) || 0
+  );
+
+  const destination = String(
+    fd.get("account")
+  );
+
+  const baseDate = String(
+    fd.get("date")
+  );
+
+  let accountLabel = "Dinheiro";
+
+  let sourceType:
+    | "account"
+    | "card"
+    | "cash" = "cash";
+
+  let sourceId:
+    | number
+    | undefined;
+
+  /* =====================================================
+     CONTA
+     ===================================================== */
+
+  if (
+    destination.startsWith(
+      "account:"
+    )
   ) {
-    event.preventDefault();
-
-    const fd = new FormData(
-      event.currentTarget
-    );
-
-    const type = String(
-      fd.get("type")
-    ) as "Receita" | "Despesa";
-
-    const frequency = String(
-      fd.get("frequency")
-    ) as Ledger["frequency"];
-
-    const total = Math.max(
-      1,
-      Number(fd.get("parts")) || 1
-    );
-
-    const value = Math.abs(
-      Number(fd.get("value")) || 0
-    );
-
-    const destination = String(
-      fd.get("account")
-    );
-
-    let accountLabel = "Dinheiro";
-
-    let sourceType:
-      | "account"
-      | "card"
-      | "cash" = "cash";
-
-    let sourceId:
-      | number
-      | undefined;
-
-    if (
-      destination.startsWith(
-        "account:"
+    const accountId = Number(
+      destination.replace(
+        "account:",
+        ""
       )
-    ) {
-      const accountId = Number(
-        destination.replace(
-          "account:",
-          ""
-        )
-      );
+    );
 
-      const selectedAccount =
-        accounts.find(
-          (account) =>
-            account.id === accountId
-        );
-
-      if (!selectedAccount) {
-        alert("Conta não encontrada.");
-        return;
-      }
-
-      sourceType = "account";
-      sourceId = accountId;
-
-      accountLabel = `${selectedAccount.name} · ${selectedAccount.bank}`;
-
-      const updatedAccounts =
-        accounts.map((account) =>
+    const selectedAccount =
+      accounts.find(
+        (account) =>
           account.id === accountId
-            ? {
-                ...account,
-                balance:
-                  type === "Receita"
-                    ? account.balance +
-                      value
-                    : account.balance -
-                      value,
-              }
-            : account
-        );
-
-      try {
-        await saveNamespace(
-          "accounts",
-          updatedAccounts
-        );
-
-        setAccounts(updatedAccounts);
-      } catch (error) {
-        console.error(error);
-
-        alert(
-          "Erro ao atualizar o saldo da conta."
-        );
-
-        return;
-      }
-    }
-
-    if (
-      destination.startsWith("card:")
-    ) {
-      const cardId = Number(
-        destination.replace(
-          "card:",
-          ""
-        )
       );
 
-      const selectedCard =
-        cards.find(
-          (card) =>
-            card.id === cardId
-        );
-
-      if (!selectedCard) {
-        alert(
-          "Cartão não encontrado."
-        );
-
-        return;
-      }
-
-      sourceType = "card";
-      sourceId = cardId;
-
-      accountLabel = `${selectedCard.bank} • ${selectedCard.last4}`;
+    if (!selectedAccount) {
+      alert("Conta não encontrada.");
+      return;
     }
 
-    const newEntry: Ledger = {
-      id: Date.now(),
-      type,
-      name: String(fd.get("name")),
-      category: String(
-        fd.get("category")
-      ),
-      icon:
-        type === "Receita"
-          ? "💰"
-          : "✨",
-      date: String(fd.get("date")),
-      value,
-      account: accountLabel,
-      frequency,
-      installment:
-        frequency === "Parcelado"
-          ? `1/${total}`
-          : undefined,
-      remaining:
-        frequency === "Parcelado"
-          ? total - 1
-          : undefined,
-      status: "Confirmado",
-      sourceType,
-      sourceId,
-    };
+    sourceType = "account";
+    sourceId = accountId;
 
-    const updatedEntries = [
-      newEntry,
-      ...entries,
-    ];
+    accountLabel = `${selectedAccount.name} · ${selectedAccount.bank}`;
+
+    /*
+      Em compra parcelada, apenas a primeira parcela
+      afeta imediatamente o saldo da conta.
+    */
+
+    const amountToApply =
+      frequency === "Parcelado"
+        ? value
+        : value;
+
+    const updatedAccounts =
+      accounts.map((account) =>
+        account.id === accountId
+          ? {
+              ...account,
+              balance:
+                type === "Receita"
+                  ? account.balance +
+                    amountToApply
+                  : account.balance -
+                    amountToApply,
+            }
+          : account
+      );
 
     try {
       await saveNamespace(
-        "ledger",
-        updatedEntries
+        "accounts",
+        updatedAccounts
       );
 
-      setEntries(updatedEntries);
-      setForm(false);
+      setAccounts(updatedAccounts);
     } catch (error) {
       console.error(error);
 
       alert(
-        "Erro ao salvar o lançamento."
+        "Erro ao atualizar o saldo da conta."
       );
+
+      return;
     }
   }
 
+  /* =====================================================
+     CARTÃO
+     ===================================================== */
+
+  if (
+    destination.startsWith(
+      "card:"
+    )
+  ) {
+    const cardId = Number(
+      destination.replace(
+        "card:",
+        ""
+      )
+    );
+
+    const selectedCard =
+      cards.find(
+        (card) =>
+          card.id === cardId
+      );
+
+    if (!selectedCard) {
+      alert(
+        "Cartão não encontrado."
+      );
+
+      return;
+    }
+
+    sourceType = "card";
+    sourceId = cardId;
+
+    accountLabel = `${selectedCard.bank} • ${selectedCard.last4}`;
+  }
+
+  /* =====================================================
+     CRIA OS LANÇAMENTOS
+     ===================================================== */
+
+  let newEntries: Ledger[] = [];
+
+  if (
+    frequency === "Parcelado"
+  ) {
+    const [year, month, day] =
+      baseDate
+        .split("-")
+        .map(Number);
+
+    newEntries = Array.from(
+      { length: total },
+      (_, index) => {
+        const parcelDate = new Date(
+          year,
+          month - 1 + index,
+          day
+        );
+
+        const parcelDateKey =
+          `${parcelDate.getFullYear()}-${String(
+            parcelDate.getMonth() + 1
+          ).padStart(2, "0")}-${String(
+            parcelDate.getDate()
+          ).padStart(2, "0")}`;
+
+        return {
+          id:
+            Date.now() +
+            index,
+
+          type,
+
+          name: String(
+            fd.get("name")
+          ),
+
+          category: String(
+            fd.get("category")
+          ),
+
+          icon:
+            type === "Receita"
+              ? "💰"
+              : "✨",
+
+          date: parcelDateKey,
+
+          value,
+
+          account:
+            accountLabel,
+
+          frequency:
+            "Parcelado",
+
+          installment:
+            `${index + 1}/${total}`,
+
+          remaining:
+            total -
+            index -
+            1,
+
+          status:
+            index === 0
+              ? "Confirmado"
+              : "Previsto",
+
+          sourceType,
+          sourceId,
+        };
+      }
+    );
+  } else {
+    newEntries = [
+      {
+        id: Date.now(),
+
+        type,
+
+        name: String(
+          fd.get("name")
+        ),
+
+        category: String(
+          fd.get("category")
+        ),
+
+        icon:
+          type === "Receita"
+            ? "💰"
+            : "✨",
+
+        date: baseDate,
+
+        value,
+
+        account:
+          accountLabel,
+
+        frequency,
+
+        status:
+          "Confirmado",
+
+        sourceType,
+        sourceId,
+      },
+    ];
+  }
+
+  const updatedEntries = [
+    ...newEntries,
+    ...entries,
+  ];
+
+  try {
+    await saveNamespace(
+      "ledger",
+      updatedEntries
+    );
+
+    setEntries(
+      updatedEntries
+    );
+
+    setForm(false);
+  } catch (error) {
+    console.error(error);
+
+    alert(
+      "Erro ao salvar o lançamento."
+    );
+  }
+}
   async function deleteEntry(
     entry: Ledger
   ) {
