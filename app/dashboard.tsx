@@ -867,8 +867,7 @@ const categorySeed = [
   ["Transporte", "🚗", "Despesa"],
 ];
 
-function TransactionsWorkspace() {
-    const [accounts] = usePersistedFinance<FinanceAccount[]>(
+const [accounts, setAccounts] = usePersistedFinance<FinanceAccount[]>(
   "accounts",
   initialAccounts
 );
@@ -922,36 +921,57 @@ const [cards] = usePersistedFinance<FinanceCard[]>(
     .reduce((a, e) => a + e.value * (e.remaining || 0), 0);
 
   function submit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  e.preventDefault();
 
-    const fd = new FormData(e.currentTarget);
+  const fd = new FormData(e.currentTarget);
 
-    const type = String(fd.get("type")) as "Receita" | "Despesa";
+  const type = String(fd.get("type")) as "Receita" | "Despesa";
+  const frequency = String(fd.get("frequency")) as Ledger["frequency"];
+  const total = Math.max(1, Number(fd.get("parts")) || 1);
+  const value = Math.abs(Number(fd.get("value")));
+  const accountName = String(fd.get("account"));
 
-    const frequency = String(fd.get("frequency")) as Ledger["frequency"];
+  const newEntry: Ledger = {
+    id: Date.now(),
+    type,
+    name: String(fd.get("name")),
+    category: String(fd.get("category")),
+    icon: type === "Receita" ? "💰" : "✨",
+    date: String(fd.get("date") || "Hoje"),
+    value,
+    account: accountName,
+    frequency,
+    installment: frequency === "Parcelado" ? `1/${total}` : undefined,
+    remaining: frequency === "Parcelado" ? total - 1 : undefined,
+    status: "Previsto",
+  };
 
-    const total = Math.max(1, Number(fd.get("parts")) || 1);
+  setEntries((list) => [newEntry, ...list]);
 
-    setEntries((list) => [
-      {
-        id: Date.now(),
-        type,
-        name: String(fd.get("name")),
-        category: String(fd.get("category")),
-        icon: type === "Receita" ? "💰" : "✨",
-        date: String(fd.get("date") || "Hoje"),
-        value: Math.abs(Number(fd.get("value"))),
-        account: String(fd.get("account")),
-        frequency,
-        installment: frequency === "Parcelado" ? `1/${total}` : undefined,
-        remaining: frequency === "Parcelado" ? total - 1 : undefined,
-        status: "Previsto",
-      },
-      ...list,
-    ]);
+  const selectedAccount = accounts.find(
+    (account) =>
+      account.name === accountName ||
+      `${account.name} · ${account.bank}` === accountName
+  );
 
-    setForm(false);
+  if (selectedAccount) {
+    setAccounts((list) =>
+      list.map((account) =>
+        account.id === selectedAccount.id
+          ? {
+              ...account,
+              balance:
+                type === "Receita"
+                  ? account.balance + value
+                  : account.balance - value,
+            }
+          : account
+      )
+    );
   }
+
+  setForm(false);
+}
 
   return (
     <div className="ledger-page">
