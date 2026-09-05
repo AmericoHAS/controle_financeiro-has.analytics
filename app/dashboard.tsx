@@ -1047,28 +1047,94 @@ const categorySeed = [
 }
 
 
-function deleteEntry(entry: Ledger) {
+async function deleteEntry(entry: Ledger) {
   if (!window.confirm(`Excluir "${entry.name}"?`)) return;
 
+  let updatedAccounts = accounts;
+
   if (entry.sourceType === "account" && entry.sourceId) {
-    setAccounts((list) =>
-      list.map((account) =>
-        account.id === entry.sourceId
-          ? {
-              ...account,
-              balance:
-                entry.type === "Despesa"
-                  ? account.balance + entry.value
-                  : account.balance - entry.value,
-            }
-          : account
-      )
+    updatedAccounts = accounts.map((account) =>
+      account.id === entry.sourceId
+        ? {
+            ...account,
+            balance:
+              entry.type === "Despesa"
+                ? account.balance + entry.value
+                : account.balance - entry.value,
+          }
+        : account
     );
+
+    setAccounts(updatedAccounts);
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      alert("Usuário não autenticado.");
+      return;
+    }
+
+    const { error: accountError } = await supabase
+      .from("finance_records")
+      .upsert(
+        {
+          user_id: user.id,
+          namespace: "accounts",
+          payload: updatedAccounts,
+          updated_at: new Date().toISOString(),
+        },
+        {
+          onConflict: "user_id,namespace",
+        }
+      );
+
+    if (accountError) {
+      console.error(
+        "Erro ao devolver valor para a conta:",
+        accountError
+      );
+
+      alert("Erro ao devolver o valor para a conta.");
+      return;
+    }
   }
 
-  setEntries((list) =>
-    list.filter((item) => item.id !== entry.id)
+  const updatedEntries = entries.filter(
+    (item) => item.id !== entry.id
   );
+
+  setEntries(updatedEntries);
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return;
+
+  const { error: ledgerError } = await supabase
+    .from("finance_records")
+    .upsert(
+      {
+        user_id: user.id,
+        namespace: "ledger",
+        payload: updatedEntries,
+        updated_at: new Date().toISOString(),
+      },
+      {
+        onConflict: "user_id,namespace",
+      }
+    );
+
+  if (ledgerError) {
+    console.error(
+      "Erro ao excluir lançamento:",
+      ledgerError
+    );
+
+    alert("Erro ao excluir o lançamento.");
+  }
 }
   return (
     <div className="ledger-page">
