@@ -333,13 +333,15 @@ export default function Home({
           </div>
         </header>
 
-        {section === "Cartões" ? (
-          <BankCatalog />
-        ) : section === "Planejamento" ? (
-          <Planning />
-        ) : section === "Lançamentos" ? (
-          <TransactionsWorkspace />
-        ) : section !== "Visão geral" ? (
+       {section === "Cartões" ? (
+  <BankCatalog />
+) : section === "Contas" ? (
+  <AccountsWorkspace />
+) : section === "Planejamento" ? (
+  <Planning />
+) : section === "Lançamentos" ? (
+  <TransactionsWorkspace />
+) : section !== "Visão geral" ? (
           <div className="section-placeholder">
             <div className="placeholder-icon">
               <Sparkles />
@@ -1998,6 +2000,190 @@ function BankCatalog() {
               <button className="primary" type="submit">
                 <Check />
                 Salvar cartão
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+    </div>
+  );
+}
+
+type FinanceAccount = {
+  id: number;
+  name: string;
+  bank: string;
+  type: "Corrente" | "Poupança" | "Dinheiro" | "Investimento";
+  balance: number;
+};
+
+const initialAccounts: FinanceAccount[] = [];
+
+function AccountsWorkspace() {
+  const [accounts, setAccounts] = usePersistedFinance<FinanceAccount[]>(
+    "accounts",
+    initialAccounts
+  );
+
+  const [formOpen, setFormOpen] = useState(false);
+
+  function saveAccount(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+
+    const fd = new FormData(e.currentTarget);
+
+    const account: FinanceAccount = {
+      id: Date.now(),
+      name: String(fd.get("name")),
+      bank: String(fd.get("bank")),
+      type: String(fd.get("type")) as FinanceAccount["type"],
+      balance: Number(fd.get("balance")) || 0,
+    };
+
+    setAccounts((list) => [...list, account]);
+    setFormOpen(false);
+  }
+
+  return (
+    <div className="bank-page">
+      <div className="bank-title">
+        <div>
+          <span className="bank-kicker">CONTAS FINANCEIRAS</span>
+          <h2>Minhas contas</h2>
+          <p>
+            Cadastre contas bancárias, dinheiro, poupança e investimentos.
+          </p>
+        </div>
+
+        <button
+          className="primary"
+          onClick={() => setFormOpen(true)}
+        >
+          <Plus />
+          Adicionar conta
+        </button>
+      </div>
+
+      <div className="selected-banks">
+        <div className="selected-heading">
+          <h3>Contas cadastradas</h3>
+
+          <small>
+            {accounts.length}{" "}
+            {accounts.length === 1 ? "conta" : "contas"}
+          </small>
+        </div>
+
+        {accounts.length ? (
+          <div className="account-list">
+            {accounts.map((account) => (
+              <article className="panel" key={account.id}>
+                <div>
+                  <Landmark />
+                  <h3>{account.name}</h3>
+                  <p>{account.bank}</p>
+                  <small>{account.type}</small>
+                </div>
+
+                <strong>{fmt(account.balance)}</strong>
+
+                <button
+                  className="delete-card"
+                  onClick={() =>
+                    setAccounts((list) =>
+                      list.filter((a) => a.id !== account.id)
+                    )
+                  }
+                >
+                  <Trash2 />
+                  Excluir
+                </button>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <div className="empty-cards">
+            <Landmark />
+            <b>Nenhuma conta cadastrada</b>
+            <span>
+              Adicione sua primeira conta para organizar seus saldos.
+            </span>
+
+            <button
+              className="primary"
+              onClick={() => setFormOpen(true)}
+            >
+              <Plus />
+              Adicionar conta
+            </button>
+          </div>
+        )}
+      </div>
+
+      {formOpen && (
+        <div className="modal-bg">
+          <form
+            className="modal small"
+            onSubmit={saveAccount}
+          >
+            <ModalHead
+              title="Nova conta"
+              sub="Cadastre uma conta financeira."
+              close={() => setFormOpen(false)}
+              icon={<Landmark />}
+            />
+
+            <div className="form-grid">
+              <label className="wide">
+                Nome da conta
+                <input
+                  name="name"
+                  required
+                  placeholder="Ex.: Conta principal"
+                />
+              </label>
+
+              <label className="wide">
+                Banco / instituição
+                <input
+                  name="bank"
+                  required
+                  placeholder="Ex.: Nubank"
+                />
+              </label>
+
+              <label>
+                Tipo
+                <select name="type">
+                  <option>Corrente</option>
+                  <option>Poupança</option>
+                  <option>Dinheiro</option>
+                  <option>Investimento</option>
+                </select>
+              </label>
+
+              <label>
+                Saldo atual
+                <input
+                  name="balance"
+                  type="number"
+                  step="0.01"
+                  defaultValue="0"
+                />
+              </label>
+            </div>
+
+            <div className="modal-foot">
+              <button
+                type="button"
+                onClick={() => setFormOpen(false)}
+              >
+                Cancelar
+              </button>
+
+              <button className="primary" type="submit">
+                <Check />
+                Salvar conta
               </button>
             </div>
           </form>
