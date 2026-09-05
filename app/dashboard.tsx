@@ -1223,17 +1223,18 @@ function deleteEntry(entry: Ledger) {
           </label>
         </div>
 
-        <div className="ledger-row ledger-labels">
-  <span>Data</span>
-  <span>Lançamento</span>
-  <span>Categoria</span>
-  <span>Conta ou cartão</span>
-  <span>Repetição</span>
-  <span>Valor</span>
-  <span>Ações</span>
-</div>
+<div className="ledger-list">
+  <div className="ledger-row ledger-labels">
+    <span>Data</span>
+    <span>Lançamento</span>
+    <span>Categoria</span>
+    <span>Conta ou cartão</span>
+    <span>Repetição</span>
+    <span>Valor</span>
+    <span>Ações</span>
+  </div>
 
-          {shown.map((e) => (
+  {shown.map((e) => (
             <article className="ledger-row" key={e.id}>
               <span>{e.date}</span>
 

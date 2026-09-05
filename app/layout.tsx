@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "HAS Analytics — Inteligência Financeira",
+  title: "HAS Finanças — Inteligência Financeira",
   description: "Planejamento financeiro pessoal orientado por dados.",
   icons: {
     icon: "/favicon.svg",
