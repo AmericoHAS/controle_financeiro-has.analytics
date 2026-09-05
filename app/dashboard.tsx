@@ -851,6 +851,8 @@ type Ledger = {
   installment?: string;
   remaining?: number;
   status: "Confirmado" | "Previsto";
+   sourceType?: "account" | "card" | "cash";
+  sourceId?: number;
 };
 
 const ledgerSeed: Ledger[] = [];
@@ -940,6 +942,8 @@ const categorySeed = [
 
   // CONTA BANCÁRIA
   if (destination.startsWith("account:")) {
+    sourceType = "account";
+sourceId = accountId;
     const accountId = Number(destination.replace("account:", ""));
 
     const selectedAccount = accounts.find(
@@ -1001,6 +1005,8 @@ const categorySeed = [
 
   // CARTÃO
   if (destination.startsWith("card:")) {
+    sourceType = "card";
+sourceId = cardId;
     const cardId = Number(destination.replace("card:", ""));
 
     const selectedCard = cards.find(
@@ -1011,6 +1017,10 @@ const categorySeed = [
       accountLabel = `${selectedCard.bank} • ${selectedCard.last4}`;
     }
   }
+
+  let sourceType: "account" | "card" | "cash" = "cash";
+let sourceId: number | undefined;
+
 
   const newEntry: Ledger = {
     id: Date.now(),
@@ -1031,13 +1041,37 @@ const categorySeed = [
         ? total - 1
         : undefined,
     status: "Previsto",
+    sourceType,
+sourceId,
   };
 
   setEntries((list) => [newEntry, ...list]);
 
   setForm(false);
 }
+function deleteEntry(entry: Ledger) {
+  if (!confirm(`Excluir "${entry.name}"?`)) return;
 
+  if (entry.sourceType === "account" && entry.sourceId) {
+    setAccounts((list) =>
+      list.map((account) =>
+        account.id === entry.sourceId
+          ? {
+              ...account,
+              balance:
+                entry.type === "Despesa"
+                  ? account.balance + entry.value
+                  : account.balance - entry.value,
+            }
+          : account
+      )
+    );
+  }
+
+  setEntries((list) =>
+    list.filter((item) => item.id !== entry.id)
+  );
+}
   return (
     <div className="ledger-page">
       <section className="ledger-heading">
@@ -1236,6 +1270,14 @@ const categorySeed = [
               >
                 {e.type === "Receita" ? "+" : "−"} {fmt(e.value)}
               </strong>
+              <button
+  type="button"
+  className="delete-card"
+  onClick={() => deleteEntry(e)}
+  title="Excluir lançamento"
+>
+  <Trash2 />
+</button>
             </article>
           ))}
         </div>
