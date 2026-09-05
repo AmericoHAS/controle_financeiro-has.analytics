@@ -14,22 +14,19 @@ export function usePersistedFinance<T>(
   const [saveState, setSaveState] =
     useState<SaveState>("carregando");
 
-  const loaded = useRef(false);
+  const firstRender = useRef(true);
 
   useEffect(() => {
     let active = true;
 
-    async function loadData() {
-      setReady(false);
+    async function load() {
       setSaveState("carregando");
 
       const {
         data: { user },
       } = await supabase.auth.getUser();
 
-      if (!active) return;
-
-      if (!user) {
+      if (!user || !active) {
         setSaveState("erro");
         return;
       }
@@ -44,25 +41,21 @@ export function usePersistedFinance<T>(
       if (!active) return;
 
       if (error) {
-        console.error(
-          `Erro ao carregar ${namespace}:`,
-          error
-        );
-
+        console.error(`Erro ao carregar ${namespace}:`, error);
         setSaveState("erro");
         return;
       }
 
-      if (data?.payload !== null && data?.payload !== undefined) {
+      if (data?.payload !== undefined && data?.payload !== null) {
         setValue(data.payload as T);
       }
 
-      loaded.current = true;
+      firstRender.current = true;
       setReady(true);
       setSaveState("salvo");
     }
 
-    loadData();
+    load();
 
     return () => {
       active = false;
@@ -70,9 +63,14 @@ export function usePersistedFinance<T>(
   }, [namespace]);
 
   useEffect(() => {
-    if (!ready || !loaded.current) return;
+    if (!ready) return;
 
-    const timer = window.setTimeout(async () => {
+    if (firstRender.current) {
+      firstRender.current = false;
+      return;
+    }
+
+    async function save() {
       setSaveState("salvando");
 
       const {
@@ -99,21 +97,15 @@ export function usePersistedFinance<T>(
         );
 
       if (error) {
-        console.error(
-          `Erro ao salvar ${namespace}:`,
-          error
-        );
-
+        console.error(`Erro ao salvar ${namespace}:`, error);
         setSaveState("erro");
         return;
       }
 
       setSaveState("salvo");
-    }, 500);
+    }
 
-    return () => {
-      window.clearTimeout(timer);
-    };
+    save();
   }, [value, namespace, ready]);
 
   return [value, setValue, saveState] as const;
