@@ -1,3 +1,2 @@
-import {desc} from "drizzle-orm";import {headers} from "next/headers";import {env} from "cloudflare:workers";import {getDb} from "../../../db";import {accessRequests} from "../../../db/schema";import AdminRequests from "./requests-client";import {chatGPTSignInPath} from "../../chatgpt-auth";
-export const dynamic="force-dynamic";
-export default async function Page(){const email=(await headers()).get("oai-authenticated-user-email");if(email!==(env.OWNER_EMAIL||"amefell.colab@gmail.com"))return <main className="admin-login"><h1>Área do administrador</h1><p>Entre com a conta proprietária para analisar as solicitações.</p><a href={chatGPTSignInPath("/admin/requests")} target="_top">Entrar com ChatGPT</a></main>;const rows=await getDb().select().from(accessRequests).orderBy(desc(accessRequests.createdAt));return <AdminRequests initial={rows}/>}
+import AdminRequests from "./requests-client";
+export default function Page(){return <AdminRequests/>}

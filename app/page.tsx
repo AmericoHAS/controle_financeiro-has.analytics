@@ -1,17 +1,13 @@
-import { cookies, headers } from "next/headers";
-import { and, eq, gt } from "drizzle-orm";
+"use client";
+import {useEffect,useState} from "react";
+import type {Session} from "@supabase/supabase-js";
 import Dashboard from "./dashboard";
 import AccessGate from "./access-gate";
-import { getDb } from "../db";
-import { accessSessions } from "../db/schema";
-import { hashValue } from "./access-utils";
-import { env } from "cloudflare:workers";
-export const dynamic="force-dynamic";
-export default async function Page(){
-  const h=await headers();
-  const owner=h.get("oai-authenticated-user-email")===(env.OWNER_EMAIL||"amefell.colab@gmail.com");
-  if(owner)return <Dashboard/>;
-  const token=(await cookies()).get("clareza_session")?.value;
-  if(token){const rows=await getDb().select().from(accessSessions).where(and(eq(accessSessions.tokenHash,await hashValue(token)),gt(accessSessions.expiresAt,new Date().toISOString()))).limit(1);if(rows.length)return <Dashboard/>}
-  return <AccessGate/>;
+import {supabase} from "../lib/supabase";
+export default function Page(){
+ const [session,setSession]=useState<Session|null|undefined>(undefined);
+ useEffect(()=>{supabase.auth.getSession().then(({data})=>setSession(data.session));const {data}=supabase.auth.onAuthStateChange((_event,next)=>setSession(next));return()=>data.subscription.unsubscribe()},[]);
+ if(session===undefined)return <main className="auth-loading">Carregando…</main>;
+ if(!session)return <AccessGate/>;
+ return <Dashboard userEmail={session.user.email||""} onLogout={()=>supabase.auth.signOut()}/>;
 }
