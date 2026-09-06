@@ -6,7 +6,6 @@ import { supabase } from "../lib/supabase";
 import {
   ArrowDownLeft,
   ArrowUpRight,
-  Bell,
   CalendarDays,
   Check,
   ChevronDown,
@@ -947,41 +946,53 @@ export default function Home({
       monthEntries,
     ]);
 
-    const categoryTotal =
-  cats.reduce(
+   const categoryColors = [
+  "#118f8b",
+  "#4c73c9",
+  "#d6a63b",
+  "#d76b61",
+  "#7c6db0",
+];
+
+const topCategories =
+  cats.slice(0, 5);
+
+const categoryTotal =
+  topCategories.reduce(
     (total, [, value]) =>
       total + value,
     0
   );
 
 const donutBackground =
-  cats.length && categoryTotal > 0
-    ? `conic-gradient(${cats
-        .slice(0, 5)
-        .map(([_, value], index) => {
-          const colors = [
-            "#118f8b",
-            "#4c73c9",
-            "#d6a63b",
-            "#d76b61",
-            "#7c6db0",
-          ];
+  categoryTotal > 0
+    ? `conic-gradient(${topCategories
+        .map(
+          ([, value], index) => {
+            const previous =
+              topCategories
+                .slice(0, index)
+                .reduce(
+                  (
+                    sum,
+                    [, current]
+                  ) =>
+                    sum +
+                    current,
+                  0
+                ) /
+              categoryTotal *
+              100;
 
-          const previous =
-            cats
-              .slice(0, index)
-              .reduce(
-                (sum, [, current]) =>
-                  sum + current,
-                0
-              ) / categoryTotal * 100;
+            const current =
+              previous +
+              (value /
+                categoryTotal) *
+                100;
 
-          const current =
-            previous +
-            (value / categoryTotal) * 100;
-
-          return `${colors[index]} ${previous}% ${current}%`;
-        })
+            return `${categoryColors[index]} ${previous}% ${current}%`;
+          }
+        )
         .join(", ")})`
     : "#edf2f2";
 
@@ -1001,189 +1012,7 @@ const donutBackground =
           )
     );
 
-  /* =======================================================
-     GRÁFICO DE FLUXO
-     ======================================================= */
-
-  const flowData =
-    useMemo(() => {
-      const buckets = [
-        {
-          label: "01",
-          from: 1,
-          to: 5,
-        },
-        {
-          label: "06",
-          from: 6,
-          to: 11,
-        },
-        {
-          label: "12",
-          from: 12,
-          to: 17,
-        },
-        {
-          label: "18",
-          from: 18,
-          to: 23,
-        },
-        {
-          label: "24",
-          from: 24,
-          to: 29,
-        },
-        {
-          label: "30",
-          from: 30,
-          to: 31,
-        },
-      ];
-
-      let cumulative =
-        0;
-
-      const raw =
-        buckets.map(
-          (bucket) => {
-            const records =
-              monthEntries.filter(
-                (entry) => {
-                  if (
-                    !/^\d{4}-\d{2}-\d{2}$/.test(
-                      entry.date
-                    )
-                  ) {
-                    return false;
-                  }
-
-                  const day =
-                    Number(
-                      entry.date.split(
-                        "-"
-                      )[2]
-                    );
-
-                  return (
-                    day >=
-                      bucket.from &&
-                    day <=
-                      bucket.to
-                  );
-                }
-              );
-
-            const bucketIncome =
-              records
-                .filter(
-                  (entry) =>
-                    entry.type ===
-                    "Receita"
-                )
-                .reduce(
-                  (
-                    total,
-                    entry
-                  ) =>
-                    total +
-                    entry.value,
-                  0
-                );
-
-            const bucketExpense =
-              records
-                .filter(
-                  (entry) =>
-                    entry.type ===
-                    "Despesa"
-                )
-                .reduce(
-                  (
-                    total,
-                    entry
-                  ) =>
-                    total +
-                    entry.value,
-                  0
-                );
-
-            const bucketInvestment =
-              records
-                .filter(
-                  (entry) =>
-                    entry.type ===
-                    "Investimento"
-                )
-                .reduce(
-                  (
-                    total,
-                    entry
-                  ) =>
-                    total +
-                    entry.value,
-                  0
-                );
-
-            cumulative +=
-              bucketIncome -
-              bucketExpense -
-              bucketInvestment;
-
-            return {
-              label:
-                bucket.label,
-
-              income:
-                bucketIncome,
-
-              expense:
-                bucketExpense,
-
-              balance:
-                cumulative,
-            };
-          }
-        );
-
-      const maximum =
-        Math.max(
-          1,
-          ...raw.flatMap(
-            (item) => [
-              item.income,
-              item.expense,
-              Math.abs(
-                item.balance
-              ),
-            ]
-          )
-        );
-
-      return raw.map(
-        (item) => ({
-          ...item,
-
-          incomeHeight:
-            (item.income /
-              maximum) *
-            100,
-
-          expenseHeight:
-            (item.expense /
-              maximum) *
-            100,
-
-          balanceHeight:
-            (Math.abs(
-              item.balance
-            ) /
-              maximum) *
-            100,
-        })
-      );
-    }, [
-      monthEntries,
-    ]);
+  
 
   /* =======================================================
      ALTERAR STATUS CLICANDO
@@ -1801,7 +1630,6 @@ const donutBackground =
           </div>
 
           <div className="header-actions">
-            <div className="header-actions">
   <div className="month-navigation">
     <button
       type="button"
@@ -1821,9 +1649,7 @@ const donutBackground =
         type="month"
         value={month}
         onChange={(event) =>
-          setMonth(
-            event.target.value
-          )
+          setMonth(event.target.value)
         }
       />
     </label>
@@ -1859,62 +1685,6 @@ const donutBackground =
     <LogOut />
   </button>
 </div>
-            </div>
-
-            <button
-              className="iconbtn"
-              onClick={() =>
-                setMonth(
-                  currentMonthKey()
-                )
-              }
-              title="Mês atual"
-            >
-              <CalendarDays />
-            </button>
-
-            <button
-              className="iconbtn"
-              title={
-                userEmail
-              }
-            >
-              <Bell />
-            </button>
-
-            <button
-              className="primary"
-              onClick={() =>
-                setImportOpen(
-                  true
-                )
-              }
-            >
-              <Upload />
-
-              Importar extrato
-            </button>
-
-            <button
-              className="add"
-              onClick={() =>
-                setSection(
-                  "Lançamentos"
-                )
-              }
-            >
-              <Plus />
-            </button>
-
-            <button
-              className="iconbtn"
-              onClick={
-                onLogout
-              }
-            >
-              <LogOut />
-            </button>
-          </div>
         </header>
 
         {section ===
@@ -2372,12 +2142,7 @@ const donutBackground =
                   </div>
 
                   <div className="cat-list">
-                    {cats
-                      .slice(
-                        0,
-                        5
-                      )
-                      .map(
+                   {topCategories.map(
                         (
                           [
                             category,
@@ -2394,14 +2159,9 @@ const donutBackground =
                               <i
   className={`c${index}`}
   style={{
-    background: [
-      "#118f8b",
-      "#4c73c9",
-      "#d6a63b",
-      "#d76b61",
-      "#7c6db0",
-    ][index],
-  }}
+  background:
+    categoryColors[index],
+}}
 />
 
                               <span className="category-emoji">
