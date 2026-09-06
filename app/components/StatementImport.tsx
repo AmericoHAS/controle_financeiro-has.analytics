@@ -446,9 +446,7 @@ function getCardStatementDate(
   ] =
     purchaseDate
       .split("-")
-      .map(
-        Number
-      );
+      .map(Number);
 
   if (
     !year ||
@@ -458,26 +456,36 @@ function getCardStatementDate(
     return purchaseDate;
   }
 
-  let statementMonth =
-    month +
-    (
-      day <=
-      closingDay
-        ? 1
-        : 2
-    );
-
   let statementYear =
     year;
 
-  while (
+  let statementMonth =
+    month;
+
+  /*
+    Se a compra ocorreu até o fechamento,
+    permanece na fatura do mesmo mês.
+
+    Se ocorreu após o fechamento,
+    vai para a fatura do mês seguinte.
+  */
+  if (
+    day >
+    closingDay
+  ) {
+    statementMonth +=
+      1;
+  }
+
+  if (
     statementMonth >
     12
   ) {
-    statementMonth -=
-      12;
+    statementMonth =
+      1;
 
-    statementYear++;
+    statementYear +=
+      1;
   }
 
   return `${statementYear}-${String(
