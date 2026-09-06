@@ -1973,8 +1973,9 @@ const donutBackground =
           GUARDAR SALDO
           =================================================== */}
 
-      {investOpen && (
-       <div className="modal-bg">
+      
+{investOpen && (
+  <div className="modal-bg">
     {investmentAccounts.length === 0 ? (
       <div className="modal small investment-modal">
         <ModalHead
@@ -1987,9 +1988,7 @@ const donutBackground =
         <div className="empty-cards">
           <Landmark />
 
-          <b>
-            Crie uma conta primeiro
-          </b>
+          <b>Crie uma conta primeiro</b>
 
           <span>
             Para guardar dinheiro, você precisa ter pelo menos uma conta cadastrada.
@@ -2009,123 +2008,81 @@ const donutBackground =
         </div>
       </div>
     ) : (
-          <form
-            className="modal small investment-modal"
-            onSubmit={
-              submitInvestment
-            }
-          >
-            <ModalHead
-              title="Guardar saldo"
-              sub={`Disponível previsto em ${monthLabel(
-                month
-              )}: ${
-                projectedBalance <
-                0
-                  ? "− "
-                  : ""
-              }${fmt(
-                projectedBalance
-              )}`}
-              close={() =>
-                setInvestOpen(
-                  false
-                )
-              }
-              icon={
-                <PiggyBank />
-              }
+      <form
+        className="modal small investment-modal"
+        onSubmit={submitInvestment}
+      >
+        <ModalHead
+          title="Guardar saldo"
+          sub={`Disponível previsto em ${monthLabel(month)}: ${
+            projectedBalance < 0 ? "− " : ""
+          }${fmt(projectedBalance)}`}
+          close={() => setInvestOpen(false)}
+          icon={<PiggyBank />}
+        />
+
+        <div className="form-grid">
+          <label className="wide">
+            Valor para guardar
+
+            <input
+              name="investmentValue"
+              type="number"
+              step="0.01"
+              min="0.01"
+              max={projectedBalance}
+              defaultValue={projectedBalance.toFixed(2)}
+              required
             />
+          </label>
 
-            <div className="form-grid">
-              <label className="wide">
-                Valor para guardar
+          <label className="wide">
+            Conta de destino
 
-                <input
-                  name="investmentValue"
-                  type="number"
-                  step="0.01"
-                  min="0.01"
-                  max={
-                    projectedBalance
-                  }
-                  defaultValue={projectedBalance.toFixed(
-                    2
-                  )}
-                  required
-                />
-              </label>
+            <select
+              name="investmentAccount"
+              required
+            >
+              <option value="">
+                Selecione
+              </option>
 
-              <label className="wide">
-                Conta de destino
-
-                <select
-                  name="investmentAccount"
-                  required
+              {investmentAccounts.map((account) => (
+                <option
+                  key={account.id}
+                  value={account.id}
                 >
-                  <option value="">
-                    Selecione
-                  </option>
-
-                  {investmentAccounts.map(
-                    (
-                      account
-                    ) => (
-                      <option
-                        key={
-                          account.id
-                        }
-                        value={
-                          account.id
-                        }
-                      >
-                        {
-                          account.name
-                        }{" "}
-                        ·{" "}
-                        {
-                          account.bank
-                        }{" "}
-                        ·{" "}
-                        {fmt(
-                          account.balance
-                        )}
-                      </option>
-                    )
-                  )}
-                </select>
-              </label>
-            </div>
-
-            <div className="modal-foot investment-modal-foot">
-              <button
-                type="button"
-                onClick={() =>
-                  setInvestOpen(
-                    false
-                  )
-                }
-              >
-                Cancelar
-              </button>
-
-              <button
-                className="primary"
-                type="submit"
-              >
-                <PiggyBank />
-
-                Guardar dinheiro
-              </button>
-            </div>
-          </form>
+                  {account.name}
+                  {" · "}
+                  {account.bank}
+                  {" · "}
+                  {fmt(account.balance)}
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
-      )}
-    </div>
-  );
-}
 
+        <div className="modal-foot investment-modal-foot">
+          <button
+            type="button"
+            onClick={() => setInvestOpen(false)}
+          >
+            Cancelar
+          </button>
 
+          <button
+            className="primary"
+            type="submit"
+          >
+            <PiggyBank />
+            Guardar dinheiro
+          </button>
+        </div>
+      </form>
+    )}
+  </div>
+)}
 
 
 
