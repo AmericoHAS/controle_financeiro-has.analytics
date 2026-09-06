@@ -512,12 +512,7 @@ const bankCatalog = [
     "#187c31",
     "PagBank",
   ],
-  [
-    "Neon",
-    "#00b8e6",
-    "#006ed0",
-    "neon",
-  ],
+  
 ] as const;
 
 /* =========================================================
@@ -5765,7 +5760,7 @@ function BankCatalog({
               : "Adicionar cartão"}
           </small>
 
-          {added && <Check />}
+          
         </button>
       );
     })}
