@@ -350,9 +350,8 @@
 }
 
 .month-current{
-  min-width:180px;
+  min-width:125px;
   height:42px;
-
   padding:0 12px;
 
   border:1px solid var(--line);
@@ -362,22 +361,16 @@
 
   display:flex;
   align-items:center;
+  justify-content:center;
   gap:8px;
 }
 
-.month-current input{
-  width:145px;
-  min-width:145px;
-
-  border:0;
-  outline:0;
-
-  background:transparent;
-  color:var(--ink);
-
+.month-current span{
+  white-space:nowrap;
+  font-size:12px;
   font-weight:700;
+  text-transform:capitalize;
 }
-
 
 /* =========================================================
    BOTÕES GERAIS
@@ -884,17 +877,18 @@
 }
 
 
-/* =========================================================
-   VISÃO GERAL — GRÁFICOS COM A MESMA ALTURA
-   ========================================================= */
+/* VISÃO GERAL — GRÁFICOS LADO A LADO E COM MESMA ALTURA */
 
 .grid-main{
+  display:grid;
+  grid-template-columns:minmax(0,1.35fr) minmax(320px,.65fr);
+  gap:16px;
   align-items:stretch;
 }
 
 .grid-main > .panel{
-  height:100%;
   min-height:420px;
+  height:100%;
 }
 
 .grid-main > .panel.categories{
@@ -904,9 +898,16 @@
 
 .grid-main > .panel.categories .donut-wrap{
   flex:1;
-  display:flex;
-  align-items:center;
-  justify-content:center;
+}
+
+@media(max-width:900px){
+  .grid-main{
+    grid-template-columns:1fr;
+  }
+
+  .grid-main > .panel{
+    min-height:auto;
+  }
 }
 
 

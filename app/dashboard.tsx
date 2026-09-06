@@ -1283,17 +1283,24 @@ const donutBackground =
         ‹
       </button>
 
-      <label className="month-current">
-        <CalendarDays />
+      <div className="month-current">
+  <CalendarDays />
 
-        <input
-          type="month"
-          value={month}
-          onChange={(event) =>
-            setMonth(event.target.value)
-          }
-        />
-      </label>
+  <span>
+    {new Intl.DateTimeFormat("pt-BR", {
+      month: "short",
+      year: "numeric",
+    })
+      .format(
+        new Date(
+          Number(month.split("-")[0]),
+          Number(month.split("-")[1]) - 1,
+          1
+        )
+      )
+      .replace(".", "")}
+  </span>
+</div>
 
       <button
         type="button"
