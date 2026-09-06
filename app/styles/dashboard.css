@@ -3354,24 +3354,24 @@ textarea:focus{
 
 .category-manager form{
   display:grid;
-  grid-template-columns:minmax(220px, 1.6fr) minmax(150px, .8fr) minmax(160px, .8fr) auto;
-  gap:12px;
+  grid-template-columns:minmax(150px,1.2fr) 95px 120px auto;
+  gap:8px;
   width:100%;
   align-items:center;
-  margin-top:16px;
+  margin-top:12px;
 }
 
 .category-manager form input,
 .category-manager form select{
   width:100%;
   min-width:0;
-  height:44px;
-  padding:0 14px;
+  height:38px;
+  padding:0 10px;
   border:1px solid #d8e2e3;
-  border-radius:12px;
+  border-radius:10px;
   background:#ffffff;
   color:#17383b;
-  font-size:14px;
+  font-size:13px;
   outline:none;
   box-sizing:border-box;
 }
@@ -3400,18 +3400,19 @@ textarea:focus{
 }
 
 .category-manager form button{
-  height:44px;
-  min-width:165px;
-  padding:0 18px;
+  height:38px;
+  min-width:130px;
+  padding:0 12px;
   border:0;
-  border-radius:12px;
+  border-radius:10px;
   background:#078c94;
   color:#ffffff;
+  font-size:13px;
   font-weight:700;
   display:flex;
   align-items:center;
   justify-content:center;
-  gap:8px;
+  gap:6px;
   cursor:pointer;
   white-space:nowrap;
 }
@@ -3610,11 +3611,12 @@ textarea:focus{
 
 @media(max-width:800px){
 
-  .category-manager form{
-    grid-template-columns:1fr 1fr;
+   .category-manager form{
+    grid-template-columns:1fr 90px 110px;
   }
 
   .category-manager form button{
+    grid-column:1 / -1;
     width:100%;
   }
 
