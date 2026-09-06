@@ -1626,6 +1626,7 @@ export default function Home({
   entries={entries}
   cards={cards}
   setCards={setCards}
+  selectedMonth={month}
 />
         ) : section ===
           "Contas" ? (
@@ -5293,16 +5294,17 @@ function BankCatalog({
   entries,
   cards,
   setCards,
+  selectedMonth,
 }: {
   entries: Ledger[];
   cards: FinanceCard[];
-
   setCards:
     React.Dispatch<
       React.SetStateAction<
         FinanceCard[]
       >
     >;
+  selectedMonth: string;
 }) {
 
   const [
@@ -5373,54 +5375,56 @@ function BankCatalog({
   }
 
   function getCardLimitInfo(
-    card: FinanceCard
-  ) {
-    const totalLimit =
-      Number(
-        card.limit ||
-          0
-      );
+  card: FinanceCard
+) {
+  const totalLimit =
+    Number(card.limit || 0);
 
-    const usedLimit =
-      entries
-        .filter(
-          (
-            entry
-          ) =>
-            entry.type ===
-              "Despesa" &&
-            entry.sourceType ===
-              "card" &&
-            entry.sourceId ===
-              card.id &&
-            normalizedStatus(
-              entry
-            ) ===
-              "A pagar"
+  const cardMonthEntries =
+    entries.filter(
+      (entry) =>
+        entry.type === "Despesa" &&
+        entry.sourceType === "card" &&
+        entry.sourceId === card.id &&
+        dateBelongsToMonth(
+          entry.date,
+          selectedMonth
         )
-        .reduce(
-          (
-            total,
-            entry
-          ) =>
-            total +
-            entry.value,
-          0
-        );
+    );
 
-    const availableLimit =
-      Math.max(
-        0,
-        totalLimit -
-          usedLimit
+  const usedLimit =
+    cardMonthEntries
+      .filter(
+        (entry) =>
+          normalizedStatus(entry) ===
+          "A pagar"
+      )
+      .reduce(
+        (total, entry) =>
+          total + entry.value,
+        0
       );
 
-    return {
-      totalLimit,
-      usedLimit,
-      availableLimit,
-    };
-  }
+  const monthInvoice =
+    cardMonthEntries.reduce(
+      (total, entry) =>
+        total + entry.value,
+      0
+    );
+
+  const availableLimit =
+    Math.max(
+      0,
+      totalLimit - usedLimit
+    );
+
+  return {
+    totalLimit,
+    usedLimit,
+    availableLimit,
+    monthInvoice,
+  };
+}
 
   function saveCard(
     event:
@@ -5615,28 +5619,13 @@ function BankCatalog({
     <div className="selected-cards-grid">
       {cards.map((card) => {
         const {
-          totalLimit,
-          usedLimit,
-          availableLimit,
-        } = getCardLimitInfo(card);
+  totalLimit,
+  usedLimit,
+  availableLimit,
+  monthInvoice,
+} = getCardLimitInfo(card);
 
-        const monthInvoice =
-  entries
-    .filter(
-      (entry) =>
-        entry.type === "Despesa" &&
-        entry.sourceType === "card" &&
-        entry.sourceId === card.id &&
-        dateBelongsToMonth(
-          entry.date,
-          currentMonthKey()
-        )
-    )
-    .reduce(
-      (total, entry) =>
-        total + entry.value,
-      0
-    );
+        
         return (
           <article
             className="credit-visual"
