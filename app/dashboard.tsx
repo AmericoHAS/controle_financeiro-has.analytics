@@ -3931,7 +3931,54 @@ sourceId,
         return;
       }
     }
+if (
+  entry.type ===
+    "Receita" &&
+  normalizedStatus(
+    entry
+  ) ===
+    "Recebido" &&
+  entry.sourceType ===
+    "account" &&
+  entry.sourceId !=
+    null
+) {
+  const updatedAccounts =
+    accounts.map(
+      account =>
+        account.id ===
+        entry.sourceId
+          ? {
+              ...account,
 
+              balance:
+                account.balance -
+                entry.value,
+            }
+          : account
+    );
+
+  try {
+    await saveFinanceNamespace(
+      "accounts",
+      updatedAccounts
+    );
+
+    setAccounts(
+      updatedAccounts
+    );
+  } catch (error) {
+    console.error(
+      error
+    );
+
+    alert(
+      "Erro ao remover o valor recebido da conta."
+    );
+
+    return;
+  }
+}
     if (
       entry.type ===
         "Investimento" &&
