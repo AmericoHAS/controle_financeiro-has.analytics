@@ -13,7 +13,7 @@ import {
 import { supabase } from "../lib/supabase";
 
 type AccessGateProps = {
-  onAuthenticated: () => void;
+  onAuthenticated: () => void | Promise<void>;
 };
 
 export default function AccessGate({
@@ -33,6 +33,10 @@ export default function AccessGate({
 
   const [error, setError] =
     useState("");
+
+  /* =========================================================
+     LOGIN
+     ========================================================= */
 
   async function handleLogin(
     event: React.FormEvent<HTMLFormElement>
@@ -54,26 +58,43 @@ export default function AccessGate({
     const password =
       String(data.get("password") || "");
 
-    const {
-      error: signInError,
-    } =
-      await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+    try {
+      const {
+        error: signInError,
+      } =
+        await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
 
-    if (signInError) {
+      if (signInError) {
+        setError(
+          "Não foi possível entrar. Verifique o e-mail e a senha."
+        );
+
+        return;
+      }
+
+      setError("");
+      setMessage("");
+
+      await onAuthenticated();
+    } catch (loginError) {
+      console.error(loginError);
+
+      setMessage("");
+
       setError(
-        "Não foi possível entrar. Verifique o e-mail e a senha."
+        "Não foi possível entrar agora. Tente novamente."
       );
-
+    } finally {
       setLoading(false);
-      return;
     }
-
-    setLoading(false);
-    onAuthenticated();
   }
+
+  /* =========================================================
+     SOLICITAÇÃO DE ACESSO
+     ========================================================= */
 
   async function handleRequest(
     event: React.FormEvent<HTMLFormElement>
@@ -84,8 +105,11 @@ export default function AccessGate({
     setMessage("");
     setError("");
 
+    const form =
+      event.currentTarget;
+
     const data =
-      new FormData(event.currentTarget);
+      new FormData(form);
 
     const name =
       String(data.get("name") || "")
@@ -97,6 +121,8 @@ export default function AccessGate({
         .toLowerCase();
 
     if (!name || !email) {
+      setMessage("");
+
       setError(
         "Preencha seu nome e e-mail."
       );
@@ -124,8 +150,19 @@ export default function AccessGate({
           }
         );
 
-      const result =
-        await response.json();
+      let result:
+        | {
+            error?: string;
+            message?: string;
+          }
+        | null = null;
+
+      try {
+        result =
+          await response.json();
+      } catch {
+        result = null;
+      }
 
       if (!response.ok) {
         throw new Error(
@@ -134,15 +171,18 @@ export default function AccessGate({
         );
       }
 
+      setError("");
+
       setMessage(
-        "Solicitação enviada. Você receberá um e-mail quando o acesso for aprovado."
+        result?.message ||
+          "Solicitação enviada. Você receberá um e-mail quando o acesso for aprovado."
       );
 
-      event.currentTarget.reset();
+      form.reset();
     } catch (requestError) {
-      console.error(
-        requestError
-      );
+      console.error(requestError);
+
+      setMessage("");
 
       setError(
         "Não foi possível enviar sua solicitação agora."
@@ -152,9 +192,28 @@ export default function AccessGate({
     }
   }
 
+  /* =========================================================
+     TROCA DE TELA
+     ========================================================= */
+
+  function changeMode(
+    nextMode: "login" | "request"
+  ) {
+    setMode(nextMode);
+
+    setError("");
+    setMessage("");
+    setLoading(false);
+  }
+
   return (
     <main className="access-page">
       <section className="access-shell">
+
+        {/* ===================================================
+            ÁREA INSTITUCIONAL
+            =================================================== */}
+
         <div className="access-brand-panel">
           <div className="access-brand">
             <img
@@ -180,14 +239,13 @@ export default function AccessGate({
             </span>
 
             <h1>
-              Organize sua vida
-              financeira em um só lugar.
+              Organize sua vida financeira
+              em um só lugar.
             </h1>
 
             <p>
-              Acompanhe receitas,
-              despesas, cartões,
-              contas, planejamento,
+              Acompanhe receitas, despesas,
+              cartões, contas, planejamento,
               metas e reservas.
             </p>
           </div>
@@ -202,15 +260,19 @@ export default function AccessGate({
               target="_blank"
               rel="noreferrer"
             >
-              Desenvolvido por
-              Haward Antunny ·
+              Desenvolvido por Haward Antunny ·
               HAS Analytics
             </a>
           </div>
         </div>
 
+        {/* ===================================================
+            FORMULÁRIO
+            =================================================== */}
+
         <div className="access-form-panel">
           <div className="access-form-card">
+
             <div className="access-form-head">
               <span className="access-form-icon">
                 {mode === "login" ? (
@@ -234,6 +296,10 @@ export default function AccessGate({
                 </p>
               </div>
             </div>
+
+            {/* =================================================
+                LOGIN
+                ================================================= */}
 
             {mode === "login" ? (
               <form
@@ -305,17 +371,15 @@ export default function AccessGate({
                   Esqueci minha senha
                 </a>
 
-                {error && (
+                {error ? (
                   <p className="access-message error">
                     {error}
                   </p>
-                )}
-
-                {message && (
+                ) : message ? (
                   <p className="access-message success">
                     {message}
                   </p>
-                )}
+                ) : null}
 
                 <button
                   type="submit"
@@ -332,6 +396,11 @@ export default function AccessGate({
                 </button>
               </form>
             ) : (
+
+              /* ===============================================
+                 SOLICITAÇÃO DE ACESSO
+                 =============================================== */
+
               <form
                 className="access-form"
                 onSubmit={handleRequest}
@@ -345,6 +414,7 @@ export default function AccessGate({
                     <input
                       name="name"
                       type="text"
+                      autoComplete="name"
                       placeholder="Seu nome"
                       required
                     />
@@ -360,23 +430,22 @@ export default function AccessGate({
                     <input
                       name="email"
                       type="email"
+                      autoComplete="email"
                       placeholder="seuemail@exemplo.com"
                       required
                     />
                   </div>
                 </label>
 
-                {error && (
+                {error ? (
                   <p className="access-message error">
                     {error}
                   </p>
-                )}
-
-                {message && (
+                ) : message ? (
                   <p className="access-message success">
                     {message}
                   </p>
-                )}
+                ) : null}
 
                 <button
                   type="submit"
@@ -394,6 +463,10 @@ export default function AccessGate({
               </form>
             )}
 
+            {/* =================================================
+                TROCA LOGIN / SOLICITAÇÃO
+                ================================================= */}
+
             <div className="access-switch">
               <span>
                 {mode === "login"
@@ -403,16 +476,13 @@ export default function AccessGate({
 
               <button
                 type="button"
-                onClick={() => {
-                  setMode(
+                onClick={() =>
+                  changeMode(
                     mode === "login"
                       ? "request"
                       : "login"
-                  );
-
-                  setError("");
-                  setMessage("");
-                }}
+                  )
+                }
               >
                 {mode === "login"
                   ? "Solicitar acesso"

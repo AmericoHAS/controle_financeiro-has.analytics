@@ -25,7 +25,7 @@ import {
   KeyRound,
   Landmark,
   LayoutDashboard,
-  LogOut,
+  
   Menu,
   PanelLeftClose,
   PanelLeftOpen,
@@ -1308,24 +1308,7 @@ const donutBackground =
       </button>
     </div>
 
-    <button
-      className="primary"
-      onClick={() => {
-  setSection("Lançamentos");
-  setImportOpen(true);
-}}
-    >
-      <Upload />
-      Importar extrato
-    </button>
-
-    <button
-      className="iconbtn"
-      onClick={onLogout}
-      title="Sair"
-    >
-      <LogOut />
-    </button>
+    
   </div>
 </header>
 
