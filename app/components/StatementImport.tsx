@@ -1030,8 +1030,14 @@ export default function StatementImport({
             return {
               id,
 
-              date:
-                entry.date,
+              ate:
+  isCard &&
+  card
+    ? getCardStatementDate(
+        entry.date,
+        card.closing
+      )
+    : entry.date,
 
               name:
                 entry.name,
@@ -2068,4 +2074,71 @@ export default function StatementImport({
       </div>
     </div>
   );
+}
+
+
+
+function getCardStatementDate(
+  purchaseDate: string,
+  closingDay: number
+) {
+  const [
+    year,
+    month,
+    day,
+  ] =
+    purchaseDate
+      .split("-")
+      .map(Number);
+
+  if (
+    !year ||
+    !month ||
+    !day
+  ) {
+    return purchaseDate;
+  }
+
+  let statementYear =
+    year;
+
+  let statementMonth =
+    month;
+
+  /*
+    Compra realizada até o fechamento:
+    pertence à fatura do mês seguinte.
+
+    Compra após o fechamento:
+    pertence à fatura subsequente.
+  */
+
+  if (
+    day <=
+    closingDay
+  ) {
+    statementMonth +=
+      1;
+  } else {
+    statementMonth +=
+      2;
+  }
+
+  while (
+    statementMonth >
+    12
+  ) {
+    statementMonth -=
+      12;
+
+    statementYear +=
+      1;
+  }
+
+  return `${statementYear}-${String(
+    statementMonth
+  ).padStart(
+    2,
+    "0"
+  )}-01`;
 }
