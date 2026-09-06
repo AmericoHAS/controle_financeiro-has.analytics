@@ -1,9 +1,435 @@
 "use client";
-import {useState} from "react";
-import {KeyRound,Mail,ShieldCheck,Sparkles} from "lucide-react";
-import {supabase} from "../lib/supabase";
-export default function AccessGate(){
- const [tab,setTab]=useState<"enter"|"request">("enter"),[message,setMessage]=useState(""),[loading,setLoading]=useState(false);
- async function submit(e:React.FormEvent<HTMLFormElement>,path:string){e.preventDefault();setLoading(true);setMessage("");const data=Object.fromEntries(new FormData(e.currentTarget));if(path.includes("verify")){const {error}=await supabase.auth.signInWithPassword({email:String(data.email),password:String(data.key)});setLoading(false);if(error)setMessage("E-mail ou chave inválidos.");return}const r=await fetch(path,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(data)});const j=await r.json();setLoading(false);setMessage(j.message||j.error||"Não foi possível concluir.");}
- return <main className="access-page"><section className="access-brand"><img className="access-logo has-logo" src="/has-analytics-logo.png" alt="HAS Analytics"/><span>HAS <b>ANALYTICS</b></span><small className="brand-discipline">FINANCIAL INTELLIGENCE</small><h1>Dados claros.<br/>Decisões melhores.</h1><p>Planejamento financeiro pessoal orientado por dados, com visão mensal, cartões, metas e importação inteligente de extratos.</p><div className="access-points"><span><Sparkles/>Mês planejado antes de começar</span><span><ShieldCheck/>Dados separados e acesso protegido</span></div></section><section className="access-box"><div className="access-card"><div className="access-tabs"><button className={tab==="enter"?"active":""} onClick={()=>{setTab("enter");setMessage("")}}>Entrar</button><button className={tab==="request"?"active":""} onClick={()=>{setTab("request");setMessage("")}}>Solicitar acesso</button></div>{tab==="enter"?<form onSubmit={e=>submit(e,"/api/access/verify")}><div className="access-icon"><KeyRound/></div><h2>Bem-vindo de volta</h2><p>Informe o e-mail aprovado e sua chave de acesso.</p><label>E-mail<input name="email" type="email" required placeholder="voce@email.com"/></label><label>Chave de acesso<input name="key" required placeholder="XXXXXXXXXX" autoCapitalize="characters"/></label><button className="access-submit" disabled={loading}>{loading?"Validando...":"Acessar minhas finanças"}</button></form>:<form onSubmit={e=>submit(e,"/api/access/request")}><div className="access-icon"><Mail/></div><h2>Solicitar cadastro</h2><p>Seu pedido será enviado ao administrador. Após a aprovação, você receberá uma chave pessoal.</p><label>Nome<input name="name" required placeholder="Seu nome"/></label><label>E-mail<input name="email" type="email" required placeholder="voce@email.com"/></label><button className="access-submit" disabled={loading}>{loading?"Enviando...":"Enviar solicitação"}</button></form>}{message&&<div className="access-message">{message}</div>}<small className="access-privacy">Nunca compartilhe sua chave. A HAS Analytics não solicita senha bancária.</small></div></section></main>
+
+import { useState } from "react";
+import {
+  ArrowRight,
+  Eye,
+  EyeOff,
+  LockKeyhole,
+  Mail,
+  UserPlus,
+} from "lucide-react";
+
+import { supabase } from "../lib/supabase";
+
+type AccessGateProps = {
+  onAuthenticated: () => void;
+};
+
+export default function AccessGate({
+  onAuthenticated,
+}: AccessGateProps) {
+  const [mode, setMode] =
+    useState<"login" | "request">("login");
+
+  const [showPassword, setShowPassword] =
+    useState(false);
+
+  const [loading, setLoading] =
+    useState(false);
+
+  const [message, setMessage] =
+    useState("");
+
+  const [error, setError] =
+    useState("");
+
+  async function handleLogin(
+    event: React.FormEvent<HTMLFormElement>
+  ) {
+    event.preventDefault();
+
+    setLoading(true);
+    setMessage("");
+    setError("");
+
+    const data =
+      new FormData(event.currentTarget);
+
+    const email =
+      String(data.get("email") || "")
+        .trim()
+        .toLowerCase();
+
+    const password =
+      String(data.get("password") || "");
+
+    const {
+      error: signInError,
+    } =
+      await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+    if (signInError) {
+      setError(
+        "Não foi possível entrar. Verifique o e-mail e a senha."
+      );
+
+      setLoading(false);
+      return;
+    }
+
+    setLoading(false);
+    onAuthenticated();
+  }
+
+  async function handleRequest(
+    event: React.FormEvent<HTMLFormElement>
+  ) {
+    event.preventDefault();
+
+    setLoading(true);
+    setMessage("");
+    setError("");
+
+    const data =
+      new FormData(event.currentTarget);
+
+    const name =
+      String(data.get("name") || "")
+        .trim();
+
+    const email =
+      String(data.get("email") || "")
+        .trim()
+        .toLowerCase();
+
+    if (!name || !email) {
+      setError(
+        "Preencha seu nome e e-mail."
+      );
+
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const response =
+        await fetch(
+          "/api/access/request",
+          {
+            method: "POST",
+
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+
+            body: JSON.stringify({
+              name,
+              email,
+            }),
+          }
+        );
+
+      const result =
+        await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          result?.error ||
+            "Não foi possível enviar a solicitação."
+        );
+      }
+
+      setMessage(
+        "Solicitação enviada. Você receberá um e-mail quando o acesso for aprovado."
+      );
+
+      event.currentTarget.reset();
+    } catch (requestError) {
+      console.error(
+        requestError
+      );
+
+      setError(
+        "Não foi possível enviar sua solicitação agora."
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <main className="access-page">
+      <section className="access-shell">
+        <div className="access-brand-panel">
+          <div className="access-brand">
+            <img
+              src="/has-financial-logo.png"
+              alt="HAS Financial"
+              className="access-logo"
+            />
+
+            <div>
+              <strong>
+                HAS Financial
+              </strong>
+
+              <span>
+                Inteligência financeira
+              </span>
+            </div>
+          </div>
+
+          <div className="access-brand-copy">
+            <span className="access-kicker">
+              CONTROLE FINANCEIRO
+            </span>
+
+            <h1>
+              Organize sua vida
+              financeira em um só lugar.
+            </h1>
+
+            <p>
+              Acompanhe receitas,
+              despesas, cartões,
+              contas, planejamento,
+              metas e reservas.
+            </p>
+          </div>
+
+          <div className="access-brand-footer">
+            <span>
+              HAS Financial
+            </span>
+
+            <a
+              href="https://hasanalytics.com.br"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Desenvolvido por
+              Haward Antunny ·
+              HAS Analytics
+            </a>
+          </div>
+        </div>
+
+        <div className="access-form-panel">
+          <div className="access-form-card">
+            <div className="access-form-head">
+              <span className="access-form-icon">
+                {mode === "login" ? (
+                  <LockKeyhole />
+                ) : (
+                  <UserPlus />
+                )}
+              </span>
+
+              <div>
+                <h2>
+                  {mode === "login"
+                    ? "Acessar sua conta"
+                    : "Solicitar acesso"}
+                </h2>
+
+                <p>
+                  {mode === "login"
+                    ? "Entre com seu e-mail e senha."
+                    : "Preencha seus dados para solicitar acesso à plataforma."}
+                </p>
+              </div>
+            </div>
+
+            {mode === "login" ? (
+              <form
+                className="access-form"
+                onSubmit={handleLogin}
+              >
+                <label>
+                  E-mail
+
+                  <div className="access-input">
+                    <Mail />
+
+                    <input
+                      name="email"
+                      type="email"
+                      autoComplete="email"
+                      placeholder="seuemail@exemplo.com"
+                      required
+                    />
+                  </div>
+                </label>
+
+                <label>
+                  Senha
+
+                  <div className="access-input">
+                    <LockKeyhole />
+
+                    <input
+                      name="password"
+                      type={
+                        showPassword
+                          ? "text"
+                          : "password"
+                      }
+                      autoComplete="current-password"
+                      placeholder="Digite sua senha"
+                      required
+                    />
+
+                    <button
+                      type="button"
+                      className="password-toggle"
+                      onClick={() =>
+                        setShowPassword(
+                          (current) =>
+                            !current
+                        )
+                      }
+                      aria-label={
+                        showPassword
+                          ? "Ocultar senha"
+                          : "Mostrar senha"
+                      }
+                    >
+                      {showPassword ? (
+                        <EyeOff />
+                      ) : (
+                        <Eye />
+                      )}
+                    </button>
+                  </div>
+                </label>
+
+                <a
+                  className="forgot-password"
+                  href="mailto:antunnyamerico@gmail.com?subject=Solicitação%20de%20troca%20de%20senha%20-%20HAS%20Financial"
+                >
+                  Esqueci minha senha
+                </a>
+
+                {error && (
+                  <p className="access-message error">
+                    {error}
+                  </p>
+                )}
+
+                {message && (
+                  <p className="access-message success">
+                    {message}
+                  </p>
+                )}
+
+                <button
+                  type="submit"
+                  className="access-submit"
+                  disabled={loading}
+                >
+                  {loading
+                    ? "Entrando..."
+                    : "Entrar"}
+
+                  {!loading && (
+                    <ArrowRight />
+                  )}
+                </button>
+              </form>
+            ) : (
+              <form
+                className="access-form"
+                onSubmit={handleRequest}
+              >
+                <label>
+                  Nome completo
+
+                  <div className="access-input">
+                    <UserPlus />
+
+                    <input
+                      name="name"
+                      type="text"
+                      placeholder="Seu nome"
+                      required
+                    />
+                  </div>
+                </label>
+
+                <label>
+                  E-mail
+
+                  <div className="access-input">
+                    <Mail />
+
+                    <input
+                      name="email"
+                      type="email"
+                      placeholder="seuemail@exemplo.com"
+                      required
+                    />
+                  </div>
+                </label>
+
+                {error && (
+                  <p className="access-message error">
+                    {error}
+                  </p>
+                )}
+
+                {message && (
+                  <p className="access-message success">
+                    {message}
+                  </p>
+                )}
+
+                <button
+                  type="submit"
+                  className="access-submit"
+                  disabled={loading}
+                >
+                  {loading
+                    ? "Enviando..."
+                    : "Enviar solicitação"}
+
+                  {!loading && (
+                    <ArrowRight />
+                  )}
+                </button>
+              </form>
+            )}
+
+            <div className="access-switch">
+              <span>
+                {mode === "login"
+                  ? "Ainda não possui acesso?"
+                  : "Já possui uma conta?"}
+              </span>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setMode(
+                    mode === "login"
+                      ? "request"
+                      : "login"
+                  );
+
+                  setError("");
+                  setMessage("");
+                }}
+              >
+                {mode === "login"
+                  ? "Solicitar acesso"
+                  : "Voltar ao login"}
+              </button>
+            </div>
+
+            <div className="access-support">
+              Problemas para acessar?{" "}
+
+              <a href="mailto:antunnyamerico@gmail.com?subject=Suporte%20HAS%20Financial">
+                Fale com o suporte
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  );
 }

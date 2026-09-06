@@ -1,4 +1,389 @@
-import {getSupabaseAdmin} from "../../../../lib/supabase-admin";import {makeAccessKey} from "../../../access-utils";
-async function authorize(req:Request){const token=req.headers.get("authorization")?.replace(/^Bearer\s+/i,"");if(!token)return null;const admin=getSupabaseAdmin(),{data}=await admin.auth.getUser(token);return data.user?.email===process.env.ADMIN_EMAIL?admin:null}
-export async function GET(req:Request){const admin=await authorize(req);if(!admin)return Response.json({error:"Não autorizado."},{status:403});const {data,error}=await admin.from("access_requests").select("*").order("created_at",{ascending:false});return error?Response.json({error:error.message},{status:500}):Response.json({rows:data})}
-export async function POST(req:Request){const admin=await authorize(req);if(!admin)return Response.json({error:"Não autorizado."},{status:403});const p=await req.json() as {id?:number,type?:string};if(!p.id||!["approve","reject"].includes(p.type||""))return Response.json({error:"Solicitação inválida."},{status:400});const {data:row}=await admin.from("access_requests").select("*").eq("id",p.id).single();if(!row)return Response.json({error:"Pedido não encontrado."},{status:404});if(p.type==="reject"){await admin.from("access_requests").update({status:"rejected",updated_at:new Date().toISOString()}).eq("id",p.id);return Response.json({ok:true})}const key=makeAccessKey()+"a1!";const existing=await admin.auth.admin.listUsers();const found=existing.data.users.find(u=>u.email===row.email);const result=found?await admin.auth.admin.updateUserById(found.id,{password:key,email_confirm:true}):await admin.auth.admin.createUser({email:row.email,password:key,email_confirm:true});if(result.error)return Response.json({error:result.error.message},{status:500});await admin.from("access_requests").update({status:"approved",approved_at:new Date().toISOString(),updated_at:new Date().toISOString()}).eq("id",p.id);if(process.env.RESEND_API_KEY)await fetch("https://api.resend.com/emails",{method:"POST",headers:{Authorization:`Bearer ${process.env.RESEND_API_KEY}`,"Content-Type":"application/json"},body:JSON.stringify({from:process.env.RESEND_FROM_EMAIL||"HAS Analytics <onboarding@resend.dev>",to:[row.email],subject:"Seu acesso à HAS Analytics foi aprovado",html:`<h2>Acesso aprovado</h2><p>Sua chave temporária é:</p><p style="font-size:24px;font-weight:bold;letter-spacing:3px">${key}</p><p>Use seu e-mail e esta chave para entrar.</p>`})});return Response.json({ok:true,key,email:row.email})}
+import { getSupabaseAdmin } from "../../../../lib/supabase-admin";
+
+async function authorize(req: Request) {
+  const token = req.headers
+    .get("authorization")
+    ?.replace(/^Bearer\s+/i, "");
+
+  if (!token) {
+    return null;
+  }
+
+  const admin = getSupabaseAdmin();
+
+  const {
+    data,
+    error,
+  } = await admin.auth.getUser(token);
+
+  if (
+    error ||
+    !data.user ||
+    data.user.email !== process.env.ADMIN_EMAIL
+  ) {
+    return null;
+  }
+
+  return admin;
+}
+
+export async function GET(req: Request) {
+  const admin = await authorize(req);
+
+  if (!admin) {
+    return Response.json(
+      {
+        error: "Não autorizado.",
+      },
+      {
+        status: 403,
+      }
+    );
+  }
+
+  const {
+    data,
+    error,
+  } = await admin
+    .from("access_requests")
+    .select("*")
+    .order("created_at", {
+      ascending: false,
+    });
+
+  if (error) {
+    return Response.json(
+      {
+        error: error.message,
+      },
+      {
+        status: 500,
+      }
+    );
+  }
+
+  return Response.json({
+    rows: data ?? [],
+  });
+}
+
+export async function POST(req: Request) {
+  const admin = await authorize(req);
+
+  if (!admin) {
+    return Response.json(
+      {
+        error: "Não autorizado.",
+      },
+      {
+        status: 403,
+      }
+    );
+  }
+
+  const body = (await req.json()) as {
+    id?: number;
+    type?: "approve" | "reject" | "resend";
+  };
+
+  if (
+    !body.id ||
+    !["approve", "reject", "resend"].includes(
+      body.type || ""
+    )
+  ) {
+    return Response.json(
+      {
+        error: "Solicitação inválida.",
+      },
+      {
+        status: 400,
+      }
+    );
+  }
+
+  const {
+    data: requestRow,
+    error: requestError,
+  } = await admin
+    .from("access_requests")
+    .select("*")
+    .eq("id", body.id)
+    .single();
+
+  if (
+    requestError ||
+    !requestRow
+  ) {
+    return Response.json(
+      {
+        error:
+          "Pedido não encontrado.",
+      },
+      {
+        status: 404,
+      }
+    );
+  }
+
+  /* =======================================================
+     RECUSAR
+     ======================================================= */
+
+  if (body.type === "reject") {
+    const {
+      error: updateError,
+    } = await admin
+      .from("access_requests")
+      .update({
+        status: "rejected",
+        updated_at:
+          new Date().toISOString(),
+      })
+      .eq("id", body.id);
+
+    if (updateError) {
+      return Response.json(
+        {
+          error:
+            updateError.message,
+        },
+        {
+          status: 500,
+        }
+      );
+    }
+
+    return Response.json({
+      ok: true,
+      status: "rejected",
+    });
+  }
+
+  /* =======================================================
+     APROVAR OU REENVIAR CONVITE
+     ======================================================= */
+
+  const email =
+    String(requestRow.email || "")
+      .trim()
+      .toLowerCase();
+
+  if (!email) {
+    return Response.json(
+      {
+        error:
+          "A solicitação não possui e-mail válido.",
+      },
+      {
+        status: 400,
+      }
+    );
+  }
+
+  const baseUrl =
+  process.env
+    .NEXT_PUBLIC_APP_URL ||
+  "https://financial.hasanalytics.com.br";
+
+const redirectTo =
+  `${baseUrl}/definir-senha`;
+
+  /*
+    O inviteUserByEmail cria o usuário
+    e envia o convite pelo próprio
+    sistema de autenticação do Supabase.
+  */
+  const {
+    data: inviteData,
+    error: inviteError,
+  } =
+    await admin.auth.admin
+      .inviteUserByEmail(
+        email,
+        {
+          redirectTo,
+
+          data: {
+            name:
+              requestRow.name ||
+              "",
+          },
+        }
+      );
+
+  /*
+    Se o usuário já existir,
+    um novo invite tradicional
+    pode falhar. Nesse caso,
+    tratamos abaixo.
+  */
+  if (inviteError) {
+    const message =
+      inviteError.message
+        .toLowerCase();
+
+    const alreadyExists =
+      message.includes(
+        "already"
+      ) ||
+      message.includes(
+        "registered"
+      ) ||
+      message.includes(
+        "exists"
+      );
+
+    if (!alreadyExists) {
+      return Response.json(
+        {
+          error:
+            inviteError.message,
+        },
+        {
+          status: 500,
+        }
+      );
+    }
+
+    /*
+      Busca o usuário existente.
+    */
+    const {
+      data: usersData,
+      error: usersError,
+    } =
+      await admin.auth.admin
+        .listUsers({
+          page: 1,
+          perPage: 1000,
+        });
+
+    if (usersError) {
+      return Response.json(
+        {
+          error:
+            usersError.message,
+        },
+        {
+          status: 500,
+        }
+      );
+    }
+
+    const existingUser =
+      usersData.users.find(
+        (user) =>
+          user.email
+            ?.toLowerCase() ===
+          email
+      );
+
+    if (!existingUser) {
+      return Response.json(
+        {
+          error:
+            "O usuário já existe, mas não foi localizado para atualização.",
+        },
+        {
+          status: 500,
+        }
+      );
+    }
+
+    /*
+      Se o usuário já existe,
+      não alteramos senha automaticamente.
+      Apenas confirmamos o cadastro
+      administrativo.
+    */
+    const {
+      error: updateUserError,
+    } =
+      await admin.auth.admin
+        .updateUserById(
+          existingUser.id,
+          {
+            email_confirm: true,
+
+            user_metadata: {
+              ...existingUser
+                .user_metadata,
+
+              name:
+                requestRow.name ||
+                existingUser
+                  .user_metadata
+                  ?.name ||
+                "",
+            },
+          }
+        );
+
+    if (updateUserError) {
+      return Response.json(
+        {
+          error:
+            updateUserError.message,
+        },
+        {
+          status: 500,
+        }
+      );
+    }
+  }
+
+  /* =======================================================
+     ATUALIZA SOLICITAÇÃO
+     ======================================================= */
+
+  const now =
+    new Date().toISOString();
+
+  const updatePayload =
+    body.type === "approve"
+      ? {
+          status:
+            "approved",
+
+          approved_at:
+            now,
+
+          updated_at:
+            now,
+        }
+      : {
+          updated_at:
+            now,
+        };
+
+  const {
+    error: updateRequestError,
+  } = await admin
+    .from("access_requests")
+    .update(updatePayload)
+    .eq("id", body.id);
+
+  if (updateRequestError) {
+    return Response.json(
+      {
+        error:
+          updateRequestError.message,
+      },
+      {
+        status: 500,
+      }
+    );
+  }
+
+  return Response.json({
+    ok: true,
+    email,
+    status:
+      body.type === "approve"
+        ? "approved"
+        : requestRow.status,
+    invited:
+      Boolean(inviteData?.user),
+  });
+}

@@ -34,16 +34,16 @@ export default function ProfileMenu({
         className="profile"
         aria-label="Abrir menu da conta"
       >
-        <div>
+        <div className="profile-avatar">
           {name.slice(0, 2).toUpperCase()}
         </div>
 
-        <span>
+        <span className="profile-info">
           <b>{name}</b>
           <small>Minha conta</small>
         </span>
 
-        <ChevronDown />
+        <ChevronDown className="profile-chevron" />
       </summary>
 
       <div className="profile-popover">
