@@ -7,16 +7,22 @@ import type {
   FinanceAccount,
 } from "../lib/finance-types";
 
-import { useMemo, useState } from "react";
+import {
+  useMemo,
+  useState,
+} from "react";
+
 import { supabase } from "../lib/supabase";
 import { usePersistedFinance } from "../lib/use-persisted-finance";
 
 import OverviewChart from "./components/OverviewChart";
 import StatementImport from "./components/StatementImport";
 import ProfileMenu from "./components/ProfileMenu";
+
 import PreferencesWorkspace, {
   defaultPreferences,
 } from "./components/PreferencesWorkspace";
+
 import ModalHead from "./components/ModalHead";
 import PlanningWorkspace from "./components/PlanningWorkspace";
 import AccountsWorkspace from "./components/AccountsWorkspace";
@@ -81,25 +87,30 @@ function changeMonth(
   current: string,
   amount: number
 ) {
-  const [year, month] = current
-    .split("-")
-    .map(Number);
+  const [year, month] =
+    current
+      .split("-")
+      .map(Number);
 
-  const date = new Date(
-    year,
-    month - 1 + amount,
-    1
-  );
+  const date =
+    new Date(
+      year,
+      month - 1 + amount,
+      1
+    );
 
   return `${date.getFullYear()}-${String(
     date.getMonth() + 1
   ).padStart(2, "0")}`;
 }
 
-function monthLabel(key: string) {
-  const [year, month] = key
-    .split("-")
-    .map(Number);
+function monthLabel(
+  key: string
+) {
+  const [year, month] =
+    key
+      .split("-")
+      .map(Number);
 
   return new Intl.DateTimeFormat(
     "pt-BR",
@@ -120,7 +131,8 @@ function defaultDateForMonth(
   month: string
 ) {
   if (
-    month === currentMonthKey()
+    month ===
+    currentMonthKey()
   ) {
     return currentDateKey();
   }
@@ -139,7 +151,11 @@ function formatDate(
     return date;
   }
 
-  const [year, month, day] =
+  const [
+    year,
+    month,
+    day,
+  ] =
     date
       .split("-")
       .map(Number);
@@ -174,16 +190,21 @@ function addMonthsToDateKey(
   dateKey: string,
   amount: number
 ) {
-  const [year, month, day] =
+  const [
+    year,
+    month,
+    day,
+  ] =
     dateKey
       .split("-")
       .map(Number);
 
-  const target = new Date(
-    year,
-    month - 1 + amount,
-    1
-  );
+  const target =
+    new Date(
+      year,
+      month - 1 + amount,
+      1
+    );
 
   const targetYear =
     target.getFullYear();
@@ -216,7 +237,9 @@ async function saveFinanceNamespace(
   payload: unknown
 ) {
   const {
-    data: { user },
+    data: {
+      user,
+    },
   } =
     await supabase.auth.getUser();
 
@@ -226,9 +249,13 @@ async function saveFinanceNamespace(
     );
   }
 
-  const { error } =
+  const {
+    error,
+  } =
     await supabase
-      .from("finance_records")
+      .from(
+        "finance_records"
+      )
       .upsert(
         {
           user_id:
@@ -239,7 +266,8 @@ async function saveFinanceNamespace(
           payload,
 
           updated_at:
-            new Date().toISOString(),
+            new Date()
+              .toISOString(),
         },
         {
           onConflict:
@@ -318,107 +346,27 @@ const initialAccounts:
   FinanceAccount[] = [];
 
 const categorySeed = [
-  [
-    "Salário",
-    "💼",
-    "Receita",
-  ],
-  [
-    "Bolsa",
-    "🎓",
-    "Receita",
-  ],
-  [
-    "Freelance",
-    "💻",
-    "Receita",
-  ],
-  [
-    "Renda extra",
-    "📈",
-    "Receita",
-  ],
-  [
-    "Investimentos",
-    "💰",
-    "Receita",
-  ],
-  [
-    "Reembolso",
-    "↩️",
-    "Receita",
-  ],
-  [
-    "Outras receitas",
-    "✨",
-    "Receita",
-  ],
+  ["Salário", "💼", "Receita"],
+  ["Bolsa", "🎓", "Receita"],
+  ["Freelance", "💻", "Receita"],
+  ["Renda extra", "📈", "Receita"],
+  ["Investimentos", "💰", "Receita"],
+  ["Reembolso", "↩️", "Receita"],
+  ["Outras receitas", "✨", "Receita"],
 
-  [
-    "Moradia",
-    "🏠",
-    "Despesa",
-  ],
-  [
-    "Mercado",
-    "🛒",
-    "Despesa",
-  ],
-  [
-    "Alimentação",
-    "🍽️",
-    "Despesa",
-  ],
-  [
-    "Transporte",
-    "🚗",
-    "Despesa",
-  ],
-  [
-    "Combustível",
-    "⛽",
-    "Despesa",
-  ],
-  [
-    "Saúde",
-    "❤️",
-    "Despesa",
-  ],
-  [
-    "Educação",
-    "📚",
-    "Despesa",
-  ],
-  [
-    "Lazer",
-    "🎮",
-    "Despesa",
-  ],
-  [
-    "Compras",
-    "🛍️",
-    "Despesa",
-  ],
-  [
-    "Assinaturas",
-    "🎵",
-    "Despesa",
-  ],
-  [
-    "Contas da casa",
-    "💡",
-    "Despesa",
-  ],
-  [
-    "Impostos",
-    "🧾",
-    "Despesa",
-  ],
-  [
-    "Outras despesas",
-    "✨",
-    "Despesa",
-  ],
+  ["Moradia", "🏠", "Despesa"],
+  ["Mercado", "🛒", "Despesa"],
+  ["Alimentação", "🍽️", "Despesa"],
+  ["Transporte", "🚗", "Despesa"],
+  ["Combustível", "⛽", "Despesa"],
+  ["Saúde", "❤️", "Despesa"],
+  ["Educação", "📚", "Despesa"],
+  ["Lazer", "🎮", "Despesa"],
+  ["Compras", "🛍️", "Despesa"],
+  ["Assinaturas", "🎵", "Despesa"],
+  ["Contas da casa", "💡", "Despesa"],
+  ["Impostos", "🧾", "Despesa"],
+  ["Outras despesas", "✨", "Despesa"],
 ];
 
 const bankCatalog = [
@@ -512,7 +460,6 @@ const bankCatalog = [
     "#187c31",
     "PagBank",
   ],
-  
 ] as const;
 
 /* =========================================================
@@ -579,15 +526,15 @@ export default function Home({
     );
 
   const [
-  cards,
-  setCards,
-] =
-  usePersistedFinance<
-    FinanceCard[]
-  >(
-    "cards",
-    initialCards
-  );
+    cards,
+    setCards,
+  ] =
+    usePersistedFinance<
+      FinanceCard[]
+    >(
+      "cards",
+      initialCards
+    );
 
   const [
     homeCategories,
@@ -666,9 +613,7 @@ export default function Home({
     useMemo(
       () =>
         entries.filter(
-          (
-            entry
-          ) =>
+          entry =>
             dateBelongsToMonth(
               entry.date,
               month
@@ -680,16 +625,10 @@ export default function Home({
       ]
     );
 
-  /* =======================================================
-     RESUMO
-     ======================================================= */
-
   const income =
     monthEntries
       .filter(
-        (
-          entry
-        ) =>
+        entry =>
           entry.type ===
           "Receita"
       )
@@ -706,9 +645,7 @@ export default function Home({
   const spent =
     monthEntries
       .filter(
-        (
-          entry
-        ) =>
+        entry =>
           entry.type ===
           "Despesa"
       )
@@ -725,9 +662,7 @@ export default function Home({
   const invested =
     monthEntries
       .filter(
-        (
-          entry
-        ) =>
+        entry =>
           entry.type ===
           "Investimento"
       )
@@ -749,9 +684,7 @@ export default function Home({
   const received =
     monthEntries
       .filter(
-        (
-          entry
-        ) =>
+        entry =>
           entry.type ===
             "Receita" &&
           normalizedStatus(
@@ -772,9 +705,7 @@ export default function Home({
   const toReceive =
     monthEntries
       .filter(
-        (
-          entry
-        ) =>
+        entry =>
           entry.type ===
             "Receita" &&
           normalizedStatus(
@@ -795,9 +726,7 @@ export default function Home({
   const paid =
     monthEntries
       .filter(
-        (
-          entry
-        ) =>
+        entry =>
           entry.type ===
             "Despesa" &&
           normalizedStatus(
@@ -818,9 +747,7 @@ export default function Home({
   const toPay =
     monthEntries
       .filter(
-        (
-          entry
-        ) =>
+        entry =>
           entry.type ===
             "Despesa" &&
           normalizedStatus(
@@ -846,9 +773,7 @@ export default function Home({
   const cardExpenses =
     monthEntries
       .filter(
-        (
-          entry
-        ) =>
+        entry =>
           entry.type ===
             "Despesa" &&
           entry.sourceType ===
@@ -866,9 +791,7 @@ export default function Home({
 
   const cardEntryCount =
     monthEntries.filter(
-      (
-        entry
-      ) =>
+      entry =>
         entry.type ===
           "Despesa" &&
         entry.sourceType ===
@@ -890,29 +813,34 @@ export default function Home({
     );
 
   const usedCardLimit =
-  monthEntries
-    .filter(
-      (entry) =>
-        entry.type === "Despesa" &&
-        entry.sourceType === "card" &&
-        normalizedStatus(entry) === "A pagar"
-    )
-    .reduce(
-      (total, entry) =>
-        total + entry.value,
-      0
+    monthEntries
+      .filter(
+        entry =>
+          entry.type ===
+            "Despesa" &&
+          entry.sourceType ===
+            "card" &&
+          normalizedStatus(
+            entry
+          ) ===
+            "A pagar"
+      )
+      .reduce(
+        (
+          total,
+          entry
+        ) =>
+          total +
+          entry.value,
+        0
+      );
+
+  const availableCardLimit =
+    Math.max(
+      0,
+      totalCardLimit -
+        usedCardLimit
     );
-
-const availableCardLimit =
-  Math.max(
-    0,
-    totalCardLimit -
-      usedCardLimit
-  );
-
-  /* =======================================================
-     KPI
-     ======================================================= */
 
   const kpiMaximum =
     Math.max(
@@ -924,23 +852,31 @@ const availableCardLimit =
     );
 
   const incomeProgress =
-    (income /
-      kpiMaximum) *
+    (
+      income /
+      kpiMaximum
+    ) *
     100;
 
   const expenseProgress =
-    (spent /
-      kpiMaximum) *
+    (
+      spent /
+      kpiMaximum
+    ) *
     100;
 
   const cardProgress =
-    (cardExpenses /
-      kpiMaximum) *
+    (
+      cardExpenses /
+      kpiMaximum
+    ) *
     100;
 
   const reserveProgress =
-    (invested /
-      kpiMaximum) *
+    (
+      invested /
+      kpiMaximum
+    ) *
     100;
 
   function getCategoryIcon(
@@ -948,9 +884,7 @@ const availableCardLimit =
   ) {
     const category =
       homeCategories.find(
-        (
-          item
-        ) =>
+        item =>
           item[0] ===
           categoryName
       );
@@ -966,9 +900,7 @@ const availableCardLimit =
       const totals =
         monthEntries
           .filter(
-            (
-              entry
-            ) =>
+            entry =>
               entry.type ===
               "Despesa"
           )
@@ -1073,8 +1005,10 @@ const availableCardLimit =
 
               const current =
                 previous +
-                (value /
-                  categoryTotal) *
+                (
+                  value /
+                  categoryTotal
+                ) *
                   100;
 
               return `${categoryColors[index]} ${previous}% ${current}%`;
@@ -1087,9 +1021,7 @@ const availableCardLimit =
 
   const filtered =
     monthEntries.filter(
-      (
-        entry
-      ) =>
+      entry =>
         entry.type ===
           "Despesa" &&
         (
@@ -1138,9 +1070,7 @@ const availableCardLimit =
 
     const updatedEntries =
       entries.map(
-        (
-          item
-        ) =>
+        item =>
           item.id ===
           entry.id
             ? {
@@ -1160,7 +1090,9 @@ const availableCardLimit =
       setEntries(
         updatedEntries
       );
-    } catch (error) {
+    } catch (
+      error
+    ) {
       console.error(
         error
       );
@@ -1206,6 +1138,7 @@ const availableCardLimit =
       alert(
         "Informe um valor válido."
       );
+
       return;
     }
 
@@ -1216,14 +1149,13 @@ const availableCardLimit =
       alert(
         "O valor não pode ser maior que o saldo previsto."
       );
+
       return;
     }
 
     const account =
       investmentAccounts.find(
-        (
-          item
-        ) =>
+        item =>
           item.id ===
           accountId
       );
@@ -1232,18 +1164,18 @@ const availableCardLimit =
       alert(
         "Selecione uma conta."
       );
+
       return;
     }
 
     const updatedAccounts =
       investmentAccounts.map(
-        (
-          item
-        ) =>
+        item =>
           item.id ===
           accountId
             ? {
                 ...item,
+
                 balance:
                   item.balance +
                   amount,
@@ -1320,7 +1252,9 @@ const availableCardLimit =
       setInvestOpen(
         false
       );
-    } catch (error) {
+    } catch (
+      error
+    ) {
       console.error(
         error
       );
@@ -1358,9 +1292,7 @@ const availableCardLimit =
           className="collapse-sidebar"
           onClick={() =>
             setCollapsed(
-              (
-                value
-              ) =>
+              value =>
                 !value
             )
           }
@@ -1540,9 +1472,7 @@ const availableCardLimit =
                 type="button"
                 onClick={() =>
                   setMonth(
-                    (
-                      current
-                    ) =>
+                    current =>
                       changeMonth(
                         current,
                         -1
@@ -1562,6 +1492,7 @@ const availableCardLimit =
                     {
                       month:
                         "short",
+
                       year:
                         "numeric",
                     }
@@ -1573,12 +1504,14 @@ const availableCardLimit =
                             "-"
                           )[0]
                         ),
+
                         Number(
                           month.split(
                             "-"
                           )[1]
                         ) -
                           1,
+
                         1
                       )
                     )
@@ -1593,9 +1526,7 @@ const availableCardLimit =
                 type="button"
                 onClick={() =>
                   setMonth(
-                    (
-                      current
-                    ) =>
+                    current =>
                       changeMonth(
                         current,
                         1
@@ -1612,11 +1543,19 @@ const availableCardLimit =
         {section ===
         "Cartões" ? (
           <BankCatalog
-  entries={entries}
-  cards={cards}
-  setCards={setCards}
-  selectedMonth={month}
-/>
+            entries={
+              entries
+            }
+            cards={
+              cards
+            }
+            setCards={
+              setCards
+            }
+            selectedMonth={
+              month
+            }
+          />
         ) : section ===
           "Contas" ? (
           <AccountsWorkspace
@@ -1654,18 +1593,36 @@ const availableCardLimit =
         ) : section ===
           "Lançamentos" ? (
           <TransactionsWorkspace
-  importReady={
-    saveState === "salvo" &&
-    accountsSaveState === "salvo"
-  }
-  accounts={investmentAccounts}
-  setAccounts={setInvestmentAccounts}
-  cards={cards}
-  onImport={() => setImportOpen(true)}
-  selectedMonth={month}
-  entries={entries}
-  setEntries={setEntries}
-/>
+            importReady={
+              saveState ===
+                "salvo" &&
+              accountsSaveState ===
+                "salvo"
+            }
+            accounts={
+              investmentAccounts
+            }
+            setAccounts={
+              setInvestmentAccounts
+            }
+            cards={
+              cards
+            }
+            onImport={() =>
+              setImportOpen(
+                true
+              )
+            }
+            selectedMonth={
+              month
+            }
+            entries={
+              entries
+            }
+            setEntries={
+              setEntries
+            }
+          />
         ) : section ===
           "Metas e reservas" ? (
           <GoalsWorkspace
@@ -1759,8 +1716,8 @@ const availableCardLimit =
                 </h2>
 
                 <p>
-                  Valor previsto após considerar todas as receitas,
-                  despesas e reservas do mês.
+                  Valor previsto após considerar todas as receitas, despesas e
+                  reservas do mês.
                 </p>
 
                 {projectedBalance >
@@ -1904,8 +1861,8 @@ const availableCardLimit =
                 </b>
 
                 <span>
-                  O saldo projetado considera também valores ainda não
-                  pagos ou recebidos.
+                  O saldo projetado considera também valores ainda não pagos ou
+                  recebidos.
                 </span>
               </div>
 
@@ -1930,9 +1887,7 @@ const availableCardLimit =
                   month
                 )}
                 foot={`${monthEntries.filter(
-                  (
-                    entry
-                  ) =>
+                  entry =>
                     entry.type ===
                     "Receita"
                 ).length} lançamentos`}
@@ -1951,9 +1906,7 @@ const availableCardLimit =
                   month
                 )}
                 foot={`${monthEntries.filter(
-                  (
-                    entry
-                  ) =>
+                  entry =>
                     entry.type ===
                     "Despesa"
                 ).length} lançamentos`}
@@ -2112,14 +2065,13 @@ const availableCardLimit =
                       value={
                         query
                       }
-                      onChange={(
-                        event
-                      ) =>
-                        setQuery(
-                          event
-                            .target
-                            .value
-                        )
+                      onChange={
+                        event =>
+                          setQuery(
+                            event
+                              .target
+                              .value
+                          )
                       }
                     />
                   </label>
@@ -2144,18 +2096,23 @@ const availableCardLimit =
                       <th>
                         Data
                       </th>
+
                       <th>
                         Descrição
                       </th>
+
                       <th>
                         Categoria
                       </th>
+
                       <th>
-                        Conta / cartão
+                        Forma de pagamento
                       </th>
+
                       <th>
                         Status
                       </th>
+
                       <th>
                         Valor
                       </th>
@@ -2164,9 +2121,7 @@ const availableCardLimit =
 
                   <tbody>
                     {filtered.map(
-                      (
-                        entry
-                      ) => (
+                      entry => (
                         <tr
                           key={
                             entry.id
@@ -2299,7 +2254,9 @@ const availableCardLimit =
             accounts={
               investmentAccounts
             }
-            cards={cards}
+            cards={
+              cards
+            }
             entries={
               entries
             }
@@ -2308,9 +2265,7 @@ const availableCardLimit =
                 false
               )
             }
-            onImport={async (
-              rows
-            ) => {
+            onImport={async rows => {
               const updated =
                 [
                   ...rows,
@@ -2355,8 +2310,8 @@ const availableCardLimit =
                 </b>
 
                 <span>
-                  Para guardar dinheiro, você precisa ter pelo menos uma
-                  conta cadastrada.
+                  Para guardar dinheiro, você precisa ter pelo menos uma conta
+                  cadastrada.
                 </span>
 
                 <button
@@ -2437,9 +2392,7 @@ const availableCardLimit =
                     </option>
 
                     {investmentAccounts.map(
-                      (
-                        account
-                      ) => (
+                      account => (
                         <option
                           key={
                             account.id
@@ -2627,9 +2580,7 @@ function CardSourceBadge({
   const card =
     entry.sourceId != null
       ? cards.find(
-          (
-            item
-          ) =>
+          item =>
             item.id ===
             entry.sourceId
         )
@@ -2681,6 +2632,7 @@ function TransactionsWorkspace({
   setEntries,
 }: {
   accounts: FinanceAccount[];
+
   importReady: boolean;
 
   setAccounts:
@@ -2692,11 +2644,14 @@ function TransactionsWorkspace({
 
   cards: FinanceCard[];
 
-  onImport: () => void;
+  onImport:
+    () => void;
 
-  selectedMonth: string;
+  selectedMonth:
+    string;
 
-  entries: Ledger[];
+  entries:
+    Ledger[];
 
   setEntries:
     React.Dispatch<
@@ -2705,8 +2660,6 @@ function TransactionsWorkspace({
       >
     >;
 }) {
-  
-
   const [
     categories,
     setCategories,
@@ -2771,7 +2724,8 @@ function TransactionsWorkspace({
     setEditingEntry,
   ] =
     useState<
-      Ledger | null
+      Ledger |
+      null
     >(
       null
     );
@@ -2820,9 +2774,7 @@ function TransactionsWorkspace({
 
   const monthEntries =
     entries.filter(
-      (
-        entry
-      ) =>
+      entry =>
         dateBelongsToMonth(
           entry.date,
           selectedMonth
@@ -2833,9 +2785,7 @@ function TransactionsWorkspace({
     Array.from(
       new Set(
         monthEntries.map(
-          (
-            entry
-          ) =>
+          entry =>
             entry.category
         )
       )
@@ -2846,9 +2796,7 @@ function TransactionsWorkspace({
       new Set(
         monthEntries
           .map(
-            (
-              entry
-            ) =>
+            entry =>
               entry.account
           )
           .filter(
@@ -2859,9 +2807,7 @@ function TransactionsWorkspace({
 
   const shown =
     monthEntries.filter(
-      (
-        entry
-      ) => {
+      entry => {
         const matchesView =
           view ===
             "Todos" ||
@@ -2924,9 +2870,7 @@ function TransactionsWorkspace({
   const revenues =
     monthEntries
       .filter(
-        (
-          entry
-        ) =>
+        entry =>
           entry.type ===
           "Receita"
       )
@@ -2943,9 +2887,7 @@ function TransactionsWorkspace({
   const expenses =
     monthEntries
       .filter(
-        (
-          entry
-        ) =>
+        entry =>
           entry.type ===
           "Despesa"
       )
@@ -2962,9 +2904,7 @@ function TransactionsWorkspace({
   const investments =
     monthEntries
       .filter(
-        (
-          entry
-        ) =>
+        entry =>
           entry.type ===
           "Investimento"
       )
@@ -2981,9 +2921,7 @@ function TransactionsWorkspace({
   const toReceive =
     monthEntries
       .filter(
-        (
-          entry
-        ) =>
+        entry =>
           entry.type ===
             "Receita" &&
           normalizedStatus(
@@ -3004,9 +2942,7 @@ function TransactionsWorkspace({
   const received =
     monthEntries
       .filter(
-        (
-          entry
-        ) =>
+        entry =>
           entry.type ===
             "Receita" &&
           normalizedStatus(
@@ -3027,9 +2963,7 @@ function TransactionsWorkspace({
   const toPay =
     monthEntries
       .filter(
-        (
-          entry
-        ) =>
+        entry =>
           entry.type ===
             "Despesa" &&
           normalizedStatus(
@@ -3050,9 +2984,7 @@ function TransactionsWorkspace({
   const paid =
     monthEntries
       .filter(
-        (
-          entry
-        ) =>
+        entry =>
           entry.type ===
             "Despesa" &&
           normalizedStatus(
@@ -3073,9 +3005,7 @@ function TransactionsWorkspace({
   const futureInstallments =
     entries
       .filter(
-        (
-          entry
-        ) =>
+        entry =>
           entry.frequency ===
             "Parcelado" &&
           entry.date >
@@ -3096,9 +3026,7 @@ function TransactionsWorkspace({
   ) {
     const category =
       categories.find(
-        (
-          item
-        ) =>
+        item =>
           item[0] ===
           categoryName
       );
@@ -3134,6 +3062,10 @@ function TransactionsWorkspace({
       "Todos" ||
     search.trim() !==
       "";
+
+  /* =======================================================
+     NOVO LANÇAMENTO
+     ======================================================= */
 
   async function submit(
     event:
@@ -3201,20 +3133,23 @@ function TransactionsWorkspace({
     const seriesId =
       Date.now();
 
-   let accountLabel =
-  type === "Receita"
-    ? "Receita"
-    : "💵 Dinheiro";
+    let accountLabel =
+      type ===
+      "Receita"
+        ? "Receita"
+        : "💵 Dinheiro";
 
-let sourceType:
-  | "account"
-  | "card"
-  | "cash" =
-  "cash";
+    let sourceType:
+      | "account"
+      | "card"
+      | "cash" =
+      "cash";
 
     let sourceId:
       | number
       | undefined;
+
+    /* CONTA */
 
     if (
       type ===
@@ -3233,9 +3168,7 @@ let sourceType:
 
       const selectedAccount =
         accounts.find(
-          (
-            account
-          ) =>
+          account =>
             account.id ===
             accountId
         );
@@ -3246,6 +3179,7 @@ let sourceType:
         alert(
           "Conta não encontrada."
         );
+
         return;
       }
 
@@ -3258,6 +3192,8 @@ let sourceType:
       accountLabel =
         `${selectedAccount.name} · ${selectedAccount.bank}`;
     }
+
+    /* CARTÃO */
 
     if (
       type ===
@@ -3276,9 +3212,7 @@ let sourceType:
 
       const selectedCard =
         cards.find(
-          (
-            card
-          ) =>
+          card =>
             card.id ===
             cardId
         );
@@ -3289,6 +3223,7 @@ let sourceType:
         alert(
           "Cartão não encontrado."
         );
+
         return;
       }
 
@@ -3302,8 +3237,64 @@ let sourceType:
         `${selectedCard.bank} • ${selectedCard.last4}`;
     }
 
+    /* PIX */
+
+    if (
+      type ===
+        "Despesa" &&
+      destination ===
+        "pix"
+    ) {
+      sourceType =
+        "cash";
+
+      sourceId =
+        undefined;
+
+      accountLabel =
+        "📱 Pix";
+    }
+
+    /* BOLETO */
+
+    if (
+      type ===
+        "Despesa" &&
+      destination ===
+        "boleto"
+    ) {
+      sourceType =
+        "cash";
+
+      sourceId =
+        undefined;
+
+      accountLabel =
+        "🧾 Boleto";
+    }
+
+    /* DINHEIRO */
+
+    if (
+      type ===
+        "Despesa" &&
+      destination ===
+        "cash"
+    ) {
+      sourceType =
+        "cash";
+
+      sourceId =
+        undefined;
+
+      accountLabel =
+        "💵 Dinheiro";
+    }
+
     let newEntries:
       Ledger[] = [];
+
+    /* RECEITA MENSAL */
 
     if (
       type ===
@@ -3386,34 +3377,11 @@ let sourceType:
               "cash",
           })
         );
+    }
 
-        if (
-  type === "Despesa" &&
-  destination === "pix"
-) {
-  sourceType = "cash";
-  sourceId = undefined;
-  accountLabel = "📱 Pix";
-}
+    /* DESPESA PARCELADA */
 
-if (
-  type === "Despesa" &&
-  destination === "boleto"
-) {
-  sourceType = "cash";
-  sourceId = undefined;
-  accountLabel = "🧾 Boleto";
-}
-
-if (
-  type === "Despesa" &&
-  destination === "cash"
-) {
-  sourceType = "cash";
-  sourceId = undefined;
-  accountLabel = "💵 Dinheiro";
-}
-    } else if (
+    else if (
       type ===
         "Despesa" &&
       selectedFrequency ===
@@ -3491,7 +3459,11 @@ if (
             sourceId,
           })
         );
-    } else if (
+    }
+
+    /* DESPESA MENSAL */
+
+    else if (
       type ===
         "Despesa" &&
       selectedFrequency ===
@@ -3573,7 +3545,11 @@ if (
             sourceId,
           })
         );
-    } else {
+    }
+
+    /* LANÇAMENTO ÚNICO */
+
+    else {
       newEntries = [
         {
           id:
@@ -3663,7 +3639,9 @@ if (
       setFrequency(
         "Único"
       );
-    } catch (error) {
+    } catch (
+      error
+    ) {
       console.error(
         error
       );
@@ -3699,13 +3677,12 @@ if (
     ) {
       const updatedAccounts =
         accounts.map(
-          (
-            account
-          ) =>
+          account =>
             account.id ===
             entry.sourceId
               ? {
                   ...account,
+
                   balance:
                     account.balance +
                     entry.value,
@@ -3722,7 +3699,9 @@ if (
         setAccounts(
           updatedAccounts
         );
-      } catch (error) {
+      } catch (
+        error
+      ) {
         console.error(
           error
         );
@@ -3745,13 +3724,12 @@ if (
     ) {
       const updatedAccounts =
         accounts.map(
-          (
-            account
-          ) =>
+          account =>
             account.id ===
             entry.sourceId
               ? {
                   ...account,
+
                   balance:
                     account.balance -
                     entry.value,
@@ -3768,7 +3746,9 @@ if (
         setAccounts(
           updatedAccounts
         );
-      } catch (error) {
+      } catch (
+        error
+      ) {
         console.error(
           error
         );
@@ -3783,9 +3763,7 @@ if (
 
     const updatedEntries =
       entries.filter(
-        (
-          item
-        ) =>
+        item =>
           item.id !==
           entry.id
       );
@@ -3799,7 +3777,9 @@ if (
       setEntries(
         updatedEntries
       );
-    } catch (error) {
+    } catch (
+      error
+    ) {
       console.error(
         error
       );
@@ -3881,9 +3861,7 @@ if (
 
     const updatedEntries =
       entries.map(
-        (
-          entry
-        ) =>
+        entry =>
           entry.id ===
           editingEntry.id
             ? updatedEntry
@@ -3903,7 +3881,9 @@ if (
       setEditingEntry(
         null
       );
-    } catch (error) {
+    } catch (
+      error
+    ) {
       console.error(
         error
       );
@@ -3963,9 +3943,7 @@ if (
 
       const updatedAccounts =
         accounts.map(
-          (
-            account
-          ) =>
+          account =>
             account.id ===
             entry.sourceId
               ? {
@@ -3990,7 +3968,9 @@ if (
         setAccounts(
           updatedAccounts
         );
-      } catch (error) {
+      } catch (
+        error
+      ) {
         console.error(
           error
         );
@@ -4005,13 +3985,12 @@ if (
 
     const updatedEntries =
       entries.map(
-        (
-          item
-        ) =>
+        item =>
           item.id ===
           entry.id
             ? {
                 ...item,
+
                 status:
                   next,
               }
@@ -4027,7 +4006,9 @@ if (
       setEntries(
         updatedEntries
       );
-    } catch (error) {
+    } catch (
+      error
+    ) {
       console.error(
         error
       );
@@ -4055,8 +4036,7 @@ if (
           </h2>
 
           <p>
-            Cadastre receitas, despesas, recorrências e compras
-            parceladas.
+            Cadastre receitas, despesas, recorrências e compras parceladas.
           </p>
         </div>
 
@@ -4079,9 +4059,7 @@ if (
             className="category-btn"
             onClick={() =>
               setCatOpen(
-                (
-                  value
-                ) =>
+                value =>
                   !value
               )
             }
@@ -4229,9 +4207,7 @@ if (
                     type="button"
                     onClick={() =>
                       setCategories(
-                        (
-                          list
-                        ) =>
+                        list =>
                           list.filter(
                             (
                               _,
@@ -4251,45 +4227,43 @@ if (
           </div>
 
           <form
-            onSubmit={(
-              event
-            ) => {
-              event.preventDefault();
+            onSubmit={
+              event => {
+                event.preventDefault();
 
-              if (
-                !newCat.trim()
-              ) {
-                return;
+                if (
+                  !newCat.trim()
+                ) {
+                  return;
+                }
+
+                setCategories(
+                  list => [
+                    ...list,
+
+                    [
+                      newCat,
+                      "✨",
+                      "Despesa",
+                    ],
+                  ]
+                );
+
+                setNewCat("");
               }
-
-              setCategories(
-                (
-                  list
-                ) => [
-                  ...list,
-                  [
-                    newCat,
-                    "✨",
-                    "Despesa",
-                  ],
-                ]
-              );
-
-              setNewCat("");
-            }}
+            }
           >
             <input
               value={
                 newCat
               }
-              onChange={(
-                event
-              ) =>
-                setNewCat(
-                  event
-                    .target
-                    .value
-                )
+              onChange={
+                event =>
+                  setNewCat(
+                    event
+                      .target
+                      .value
+                  )
               }
               placeholder="Nova categoria"
             />
@@ -4310,9 +4284,7 @@ if (
               "Receitas",
               "Despesas",
             ].map(
-              (
-                tab
-              ) => (
+              tab => (
                 <button
                   key={
                     tab
@@ -4341,16 +4313,12 @@ if (
                       : tab ===
                         "Receitas"
                       ? monthEntries.filter(
-                          (
-                            entry
-                          ) =>
+                          entry =>
                             entry.type ===
                             "Receita"
                         ).length
                       : monthEntries.filter(
-                          (
-                            entry
-                          ) =>
+                          entry =>
                             entry.type ===
                             "Despesa"
                         ).length}
@@ -4368,14 +4336,13 @@ if (
                 value={
                   search
                 }
-                onChange={(
-                  event
-                ) =>
-                  setSearch(
-                    event
-                      .target
-                      .value
-                  )
+                onChange={
+                  event =>
+                    setSearch(
+                      event
+                        .target
+                        .value
+                    )
                 }
                 placeholder="Buscar"
               />
@@ -4390,9 +4357,7 @@ if (
               }
               onClick={() =>
                 setFiltersOpen(
-                  (
-                    current
-                  ) =>
+                  current =>
                     !current
                 )
               }
@@ -4425,14 +4390,13 @@ if (
                 value={
                   filterCategory
                 }
-                onChange={(
-                  event
-                ) =>
-                  setFilterCategory(
-                    event
-                      .target
-                      .value
-                  )
+                onChange={
+                  event =>
+                    setFilterCategory(
+                      event
+                        .target
+                        .value
+                    )
                 }
               >
                 <option value="Todas">
@@ -4440,9 +4404,7 @@ if (
                 </option>
 
                 {availableCategories.map(
-                  (
-                    category
-                  ) => (
+                  category => (
                     <option
                       key={
                         category
@@ -4451,11 +4413,9 @@ if (
                         category
                       }
                     >
-                      {
-                        getCategoryIcon(
-                          category
-                        )
-                      }{" "}
+                      {getCategoryIcon(
+                        category
+                      )}{" "}
                       {
                         category
                       }
@@ -4466,20 +4426,19 @@ if (
             </label>
 
             <label>
-              Conta / cartão
+              Forma de pagamento
 
               <select
                 value={
                   filterSource
                 }
-                onChange={(
-                  event
-                ) =>
-                  setFilterSource(
-                    event
-                      .target
-                      .value
-                  )
+                onChange={
+                  event =>
+                    setFilterSource(
+                      event
+                        .target
+                        .value
+                    )
                 }
               >
                 <option value="Todos">
@@ -4487,9 +4446,7 @@ if (
                 </option>
 
                 {availableSources.map(
-                  (
-                    source
-                  ) => (
+                  source => (
                     <option
                       key={
                         source
@@ -4514,14 +4471,13 @@ if (
                 value={
                   filterStatus
                 }
-                onChange={(
-                  event
-                ) =>
-                  setFilterStatus(
-                    event
-                      .target
-                      .value
-                  )
+                onChange={
+                  event =>
+                    setFilterStatus(
+                      event
+                        .target
+                        .value
+                    )
                 }
               >
                 <option value="Todos">
@@ -4553,33 +4509,38 @@ if (
             <span>
               Data
             </span>
+
             <span>
               Lançamento
             </span>
+
             <span>
               Categoria
             </span>
+
             <span>
-              Conta / cartão
+              Forma de pagamento
             </span>
+
             <span>
               Repetição
             </span>
+
             <span>
               Status
             </span>
+
             <span>
               Valor
             </span>
+
             <span>
               Ações
             </span>
           </div>
 
           {shown.map(
-            (
-              entry
-            ) => (
+            entry => (
               <article
                 className="ledger-row ledger-row-new"
                 key={
@@ -4899,9 +4860,7 @@ if (
 
                   {categories
                     .filter(
-                      (
-                        category
-                      ) =>
+                      category =>
                         category[2] ===
                         entryType
                     )
@@ -4939,16 +4898,15 @@ if (
                       value={
                         frequency
                       }
-                      onChange={(
-                        event
-                      ) =>
-                        setFrequency(
-                          event
-                            .target
-                            .value as
-                            | "Único"
-                            | "Mensal até dezembro"
-                        )
+                      onChange={
+                        event =>
+                          setFrequency(
+                            event
+                              .target
+                              .value as
+                              | "Único"
+                              | "Mensal até dezembro"
+                          )
                       }
                     >
                       <option>
@@ -4976,7 +4934,7 @@ if (
               ) : (
                 <>
                   <label>
-                    Conta ou cartão
+                    Forma de pagamento
 
                     <select
                       name="account"
@@ -4987,13 +4945,12 @@ if (
                       </option>
 
                       {accounts.map(
-                        (
-                          account
-                        ) => (
+                        account => (
                           <option
                             key={`account-${account.id}`}
                             value={`account:${account.id}`}
                           >
+                            🏦{" "}
                             {
                               account.name
                             }
@@ -5010,13 +4967,12 @@ if (
                       )}
 
                       {cards.map(
-                        (
-                          card
-                        ) => (
+                        card => (
                           <option
                             key={`card-${card.id}`}
                             value={`card:${card.id}`}
                           >
+                            💳{" "}
                             {
                               card.bank
                             }
@@ -5029,16 +4985,16 @@ if (
                       )}
 
                       <option value="pix">
-  📱 Pix
-</option>
+                        📱 Pix
+                      </option>
 
-<option value="boleto">
-  🧾 Boleto
-</option>
+                      <option value="boleto">
+                        🧾 Boleto
+                      </option>
 
-<option value="cash">
-  💵 Dinheiro
-</option>
+                      <option value="cash">
+                        💵 Dinheiro
+                      </option>
                     </select>
                   </label>
 
@@ -5050,17 +5006,16 @@ if (
                       value={
                         frequency
                       }
-                      onChange={(
-                        event
-                      ) =>
-                        setFrequency(
-                          event
-                            .target
-                            .value as
-                            | "Único"
-                            | "Mensal"
-                            | "Parcelado"
-                        )
+                      onChange={
+                        event =>
+                          setFrequency(
+                            event
+                              .target
+                              .value as
+                              | "Único"
+                              | "Mensal"
+                              | "Parcelado"
+                          )
                       }
                     >
                       <option>
@@ -5205,9 +5160,7 @@ if (
                 >
                   {categories
                     .filter(
-                      (
-                        category
-                      ) =>
+                      category =>
                         category[2] ===
                         editingEntry.type
                     )
@@ -5322,15 +5275,16 @@ function BankCatalog({
 }: {
   entries: Ledger[];
   cards: FinanceCard[];
+
   setCards:
     React.Dispatch<
       React.SetStateAction<
         FinanceCard[]
       >
     >;
+
   selectedMonth: string;
 }) {
-
   const [
     q,
     setQ,
@@ -5342,16 +5296,15 @@ function BankCatalog({
     setEditing,
   ] =
     useState<
-      FinanceCard | null
+      FinanceCard |
+      null
     >(
       null
     );
 
   const banks =
     bankCatalog.filter(
-      (
-        bank
-      ) =>
+      bank =>
         bank[0]
           .toLowerCase()
           .includes(
@@ -5399,56 +5352,73 @@ function BankCatalog({
   }
 
   function getCardLimitInfo(
-  card: FinanceCard
-) {
-  const totalLimit =
-    Number(card.limit || 0);
+    card: FinanceCard
+  ) {
+    const totalLimit =
+      Number(
+        card.limit ||
+          0
+      );
 
-  const cardMonthEntries =
-    entries.filter(
-      (entry) =>
-        entry.type === "Despesa" &&
-        entry.sourceType === "card" &&
-        entry.sourceId === card.id &&
-        dateBelongsToMonth(
-          entry.date,
-          selectedMonth
+    const cardMonthEntries =
+      entries.filter(
+        entry =>
+          entry.type ===
+            "Despesa" &&
+          entry.sourceType ===
+            "card" &&
+          entry.sourceId ===
+            card.id &&
+          dateBelongsToMonth(
+            entry.date,
+            selectedMonth
+          )
+      );
+
+    const usedLimit =
+      cardMonthEntries
+        .filter(
+          entry =>
+            normalizedStatus(
+              entry
+            ) ===
+            "A pagar"
         )
-    );
+        .reduce(
+          (
+            total,
+            entry
+          ) =>
+            total +
+            entry.value,
+          0
+        );
 
-  const usedLimit =
-    cardMonthEntries
-      .filter(
-        (entry) =>
-          normalizedStatus(entry) ===
-          "A pagar"
-      )
-      .reduce(
-        (total, entry) =>
-          total + entry.value,
+    const monthInvoice =
+      cardMonthEntries.reduce(
+        (
+          total,
+          entry
+        ) =>
+          total +
+          entry.value,
         0
       );
 
-  const monthInvoice =
-    cardMonthEntries.reduce(
-      (total, entry) =>
-        total + entry.value,
-      0
-    );
+    const availableLimit =
+      Math.max(
+        0,
+        totalLimit -
+          usedLimit
+      );
 
-  const availableLimit =
-    Math.max(
-      0,
-      totalLimit - usedLimit
-    );
-
-  return {
-    totalLimit,
-    usedLimit,
-    availableLimit,
-    monthInvoice,
-  };
-}
+    return {
+      totalLimit,
+      usedLimit,
+      availableLimit,
+      monthInvoice,
+    };
+  }
 
   function saveCard(
     event:
@@ -5456,7 +5426,9 @@ function BankCatalog({
   ) {
     event.preventDefault();
 
-    if (!editing) {
+    if (
+      !editing
+    ) {
       return;
     }
 
@@ -5544,20 +5516,14 @@ function BankCatalog({
     };
 
     setCards(
-      (
-        list
-      ) =>
+      list =>
         list.some(
-          (
-            card
-          ) =>
+          card =>
             card.id ===
             next.id
         )
           ? list.map(
-              (
-                card
-              ) =>
+              card =>
                 card.id ===
                 next.id
                   ? next
@@ -5599,14 +5565,13 @@ function BankCatalog({
               value={
                 q
               }
-              onChange={(
-                event
-              ) =>
-                setQ(
-                  event
-                    .target
-                    .value
-                )
+              onChange={
+                event =>
+                  setQ(
+                    event
+                      .target
+                      .value
+                  )
               }
               placeholder="Buscar instituição"
             />
@@ -5626,199 +5591,252 @@ function BankCatalog({
       </div>
 
       <div className="selected-banks">
-  <div className="selected-heading">
-    <h3>
-      Seus cartões
-    </h3>
-
-    <small>
-      {cards.length}{" "}
-      {cards.length === 1
-        ? "cartão cadastrado"
-        : "cartões cadastrados"}
-    </small>
-  </div>
-
-  {cards.length ? (
-    <div className="selected-cards-grid">
-      {cards.map((card) => {
-        const {
-  totalLimit,
-  usedLimit,
-  availableLimit,
-  monthInvoice,
-} = getCardLimitInfo(card);
-
-        
-        return (
-          <article
-            className="credit-visual"
-            key={card.id}
-            style={{
-              background: `linear-gradient(135deg, ${card.color}, ${card.color2})`,
-            }}
-          >
-            <div className="card-shine" />
-
-            <div className="card-top">
-              <span>{card.logo}</span>
-              <CreditCard />
-            </div>
-
-            <b className="card-number">
-              ••••&nbsp; {card.last4}
-            </b>
-
-            <small className="card-dates">
-              Fechamento dia {card.closing}
-              {" · "}
-              Vencimento dia {card.due}
-            </small>
-
-            <div className="card-limit-info">
-              <span>
-                Disponível
-                <b>{fmt(availableLimit)}</b>
-              </span>
-
-              <span>
-                Utilizado
-                <b>{fmt(usedLimit)}</b>
-              </span>
-
-              <span>
-                Limite
-                <b>{fmt(totalLimit)}</b>
-              </span>
-            </div>
-
-            <strong className="card-bank-name">
-              {card.bank}
-            </strong>
-
-<div className="card-invoice">
-  <span>Fatura do mês</span>
-  <b>{fmt(monthInvoice)}</b>
-</div>
-
-            <button
-              type="button"
-              className="edit-card"
-              onClick={() =>
-                setEditing(card)
-              }
-            >
-              <Pencil />
-              Editar
-            </button>
-          </article>
-        );
-      })}
-    </div>
-  ) : (
-    <div className="empty-cards">
-      <CreditCard />
-
-      <b>
-        Nenhum cartão cadastrado
-      </b>
-
-      <span>
-        Adicione seu primeiro cartão.
-      </span>
-
-      <button
-        className="primary"
-        type="button"
-        onClick={() => openCard()}
-      >
-        <Plus />
-        Adicionar cartão
-      </button>
-    </div>
-  )}
-</div>
-
-<div className="bank-catalog-section">
-  <h3>
-    Catálogo de instituições
-  </h3>
-
-  <div className="bank-grid">
-    {banks.map((bank) => {
-      const added =
-        cards.some(
-          (card) =>
-            card.bank === bank[0]
-        );
-
-      return (
-        <button
-          type="button"
-          key={bank[0]}
-          className={
-            added
-              ? "bank-option chosen"
-              : "bank-option"
-          }
-          onClick={() =>
-            added
-              ? setEditing(
-                  cards.find(
-                    (card) =>
-                      card.bank ===
-                      bank[0]
-                  )!
-                )
-              : openCard(bank)
-          }
-        >
-          <span
-            className="bank-logo"
-            style={{
-              background: `linear-gradient(135deg, ${bank[1]}, ${bank[2]})`,
-              color:
-                bank[0] ===
-                "Banco do Brasil"
-                  ? "#173863"
-                  : "white",
-            }}
-          >
-            {bank[3]}
-          </span>
-
-          <b>{bank[0]}</b>
+        <div className="selected-heading">
+          <h3>
+            Seus cartões
+          </h3>
 
           <small>
-            {added
-              ? "Editar cartão"
-              : "Adicionar cartão"}
+            {cards.length}{" "}
+            {cards.length ===
+            1
+              ? "cartão cadastrado"
+              : "cartões cadastrados"}
           </small>
+        </div>
 
-          
-        </button>
-      );
-    })}
+        {cards.length ? (
+          <div className="selected-cards-grid">
+            {cards.map(
+              card => {
+                const {
+                  totalLimit,
+                  usedLimit,
+                  availableLimit,
+                  monthInvoice,
+                } =
+                  getCardLimitInfo(
+                    card
+                  );
 
-    <button
-      type="button"
-      className="bank-option custom-bank"
-      onClick={() => openCard()}
-    >
-      <span className="bank-logo">
-        <Plus />
-      </span>
+                return (
+                  <article
+                    className="credit-visual"
+                    key={
+                      card.id
+                    }
+                    style={{
+                      background:
+                        `linear-gradient(135deg, ${card.color}, ${card.color2})`,
+                    }}
+                  >
+                    <div className="card-shine" />
 
-      <b>
-        Outra instituição
-      </b>
+                    <div className="card-top">
+                      <span>
+                        {card.logo}
+                      </span>
 
-      <small>
-        Cadastrar manualmente
-      </small>
-    </button>
-  </div>
-</div>
+                      <CreditCard />
+                    </div>
+
+                    <b className="card-number">
+                      ••••&nbsp;{" "}
+                      {card.last4}
+                    </b>
+
+                    <small className="card-dates">
+                      Fechamento dia{" "}
+                      {card.closing}
+                      {" · "}
+                      Vencimento dia{" "}
+                      {card.due}
+                    </small>
+
+                    <div className="card-limit-info">
+                      <span>
+                        Disponível
+
+                        <b>
+                          {fmt(
+                            availableLimit
+                          )}
+                        </b>
+                      </span>
+
+                      <span>
+                        Utilizado
+
+                        <b>
+                          {fmt(
+                            usedLimit
+                          )}
+                        </b>
+                      </span>
+
+                      <span>
+                        Limite
+
+                        <b>
+                          {fmt(
+                            totalLimit
+                          )}
+                        </b>
+                      </span>
+                    </div>
+
+                    <strong className="card-bank-name">
+                      {
+                        card.bank
+                      }
+                    </strong>
+
+                    <div className="card-invoice">
+                      <span>
+                        Fatura do mês
+                      </span>
+
+                      <b>
+                        {fmt(
+                          monthInvoice
+                        )}
+                      </b>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="edit-card"
+                      onClick={() =>
+                        setEditing(
+                          card
+                        )
+                      }
+                    >
+                      <Pencil />
+                      Editar
+                    </button>
+                  </article>
+                );
+              }
+            )}
+          </div>
+        ) : (
+          <div className="empty-cards">
+            <CreditCard />
+
+            <b>
+              Nenhum cartão cadastrado
+            </b>
+
+            <span>
+              Adicione seu primeiro cartão.
+            </span>
+
+            <button
+              className="primary"
+              type="button"
+              onClick={() =>
+                openCard()
+              }
+            >
+              <Plus />
+              Adicionar cartão
+            </button>
+          </div>
+        )}
+      </div>
+
+      <div className="bank-catalog-section">
+        <h3>
+          Catálogo de instituições
+        </h3>
+
+        <div className="bank-grid">
+          {banks.map(
+            bank => {
+              const added =
+                cards.some(
+                  card =>
+                    card.bank ===
+                    bank[0]
+                );
+
+              return (
+                <button
+                  type="button"
+                  key={
+                    bank[0]
+                  }
+                  className={
+                    added
+                      ? "bank-option chosen"
+                      : "bank-option"
+                  }
+                  onClick={() =>
+                    added
+                      ? setEditing(
+                          cards.find(
+                            card =>
+                              card.bank ===
+                              bank[0]
+                          )!
+                        )
+                      : openCard(
+                          bank
+                        )
+                  }
+                >
+                  <span
+                    className="bank-logo"
+                    style={{
+                      background:
+                        `linear-gradient(135deg, ${bank[1]}, ${bank[2]})`,
+
+                      color:
+                        bank[0] ===
+                        "Banco do Brasil"
+                          ? "#173863"
+                          : "white",
+                    }}
+                  >
+                    {bank[3]}
+                  </span>
+
+                  <b>
+                    {bank[0]}
+                  </b>
+
+                  <small>
+                    {added
+                      ? "Editar cartão"
+                      : "Adicionar cartão"}
+                  </small>
+                </button>
+              );
+            }
+          )}
+
+          <button
+            type="button"
+            className="bank-option custom-bank"
+            onClick={() =>
+              openCard()
+            }
+          >
+            <span className="bank-logo">
+              <Plus />
+            </span>
+
+            <b>
+              Outra instituição
+            </b>
+
+            <small>
+              Cadastrar manualmente
+            </small>
+          </button>
+        </div>
+      </div>
 
       {editing && (
         <div className="modal-bg">
@@ -5831,9 +5849,7 @@ function BankCatalog({
             <ModalHead
               title={
                 cards.some(
-                  (
-                    card
-                  ) =>
+                  card =>
                     card.id ===
                     editing.id
                 )
@@ -5892,40 +5908,42 @@ function BankCatalog({
                   value={
                     editing.bank
                   }
-                  onChange={(
-                    event
-                  ) => {
-                    const match =
-                      bankCatalog.find(
-                        (
-                          bank
-                        ) =>
-                          bank[0].toLowerCase() ===
-                          event.target.value.toLowerCase()
-                      );
+                  onChange={
+                    event => {
+                      const match =
+                        bankCatalog.find(
+                          bank =>
+                            bank[0]
+                              .toLowerCase() ===
+                            event
+                              .target
+                              .value
+                              .toLowerCase()
+                        );
 
-                    setEditing({
-                      ...editing,
+                      setEditing({
+                        ...editing,
 
-                      bank:
-                        event
-                          .target
-                          .value,
+                        bank:
+                          event
+                            .target
+                            .value,
 
-                      ...(match
-                        ? {
-                            logo:
-                              match[3],
+                        ...(match
+                          ? {
+                              logo:
+                                match[3],
 
-                            color:
-                              match[1],
+                              color:
+                                match[1],
 
-                            color2:
-                              match[2],
-                          }
-                        : {}),
-                    });
-                  }}
+                              color2:
+                                match[2],
+                            }
+                          : {}),
+                      });
+                    }
+                  }
                 />
               </label>
 
@@ -5937,17 +5955,16 @@ function BankCatalog({
                   value={
                     editing.logo
                   }
-                  onChange={(
-                    event
-                  ) =>
-                    setEditing({
-                      ...editing,
+                  onChange={
+                    event =>
+                      setEditing({
+                        ...editing,
 
-                      logo:
-                        event
-                          .target
-                          .value,
-                    })
+                        logo:
+                          event
+                            .target
+                            .value,
+                      })
                   }
                   maxLength={
                     12
@@ -5965,25 +5982,24 @@ function BankCatalog({
                   value={
                     editing.last4
                   }
-                  onChange={(
-                    event
-                  ) =>
-                    setEditing({
-                      ...editing,
+                  onChange={
+                    event =>
+                      setEditing({
+                        ...editing,
 
-                      last4:
-                        event
-                          .target
-                          .value
-                          .replace(
-                            /\D/g,
-                            ""
-                          )
-                          .slice(
-                            0,
-                            4
-                          ),
-                    })
+                        last4:
+                          event
+                            .target
+                            .value
+                            .replace(
+                              /\D/g,
+                              ""
+                            )
+                            .slice(
+                              0,
+                              4
+                            ),
+                      })
                   }
                   maxLength={
                     4
@@ -6003,19 +6019,18 @@ function BankCatalog({
                   value={
                     editing.closing
                   }
-                  onChange={(
-                    event
-                  ) =>
-                    setEditing({
-                      ...editing,
+                  onChange={
+                    event =>
+                      setEditing({
+                        ...editing,
 
-                      closing:
-                        Number(
-                          event
-                            .target
-                            .value
-                        ),
-                    })
+                        closing:
+                          Number(
+                            event
+                              .target
+                              .value
+                          ),
+                      })
                   }
                 />
               </label>
@@ -6032,19 +6047,18 @@ function BankCatalog({
                   value={
                     editing.due
                   }
-                  onChange={(
-                    event
-                  ) =>
-                    setEditing({
-                      ...editing,
+                  onChange={
+                    event =>
+                      setEditing({
+                        ...editing,
 
-                      due:
-                        Number(
-                          event
-                            .target
-                            .value
-                        ),
-                    })
+                        due:
+                          Number(
+                            event
+                              .target
+                              .value
+                          ),
+                      })
                   }
                 />
               </label>
@@ -6062,20 +6076,19 @@ function BankCatalog({
                     editing.limit ??
                     0
                   }
-                  onChange={(
-                    event
-                  ) =>
-                    setEditing({
-                      ...editing,
+                  onChange={
+                    event =>
+                      setEditing({
+                        ...editing,
 
-                      limit:
-                        Number(
-                          event
-                            .target
-                            .value
-                        ) ||
-                        0,
-                    })
+                        limit:
+                          Number(
+                            event
+                              .target
+                              .value
+                          ) ||
+                          0,
+                      })
                   }
                 />
               </label>
@@ -6089,17 +6102,16 @@ function BankCatalog({
                   value={
                     editing.color
                   }
-                  onChange={(
-                    event
-                  ) =>
-                    setEditing({
-                      ...editing,
+                  onChange={
+                    event =>
+                      setEditing({
+                        ...editing,
 
-                      color:
-                        event
-                          .target
-                          .value,
-                    })
+                        color:
+                          event
+                            .target
+                            .value,
+                      })
                   }
                 />
               </label>
@@ -6113,17 +6125,16 @@ function BankCatalog({
                   value={
                     editing.color2
                   }
-                  onChange={(
-                    event
-                  ) =>
-                    setEditing({
-                      ...editing,
+                  onChange={
+                    event =>
+                      setEditing({
+                        ...editing,
 
-                      color2:
-                        event
-                          .target
-                          .value,
-                    })
+                        color2:
+                          event
+                            .target
+                            .value,
+                      })
                   }
                 />
               </label>
@@ -6131,9 +6142,7 @@ function BankCatalog({
 
             <div className="modal-foot card-modal-foot">
               {cards.some(
-                (
-                  card
-                ) =>
+                card =>
                   card.id ===
                   editing.id
               ) && (
@@ -6142,13 +6151,9 @@ function BankCatalog({
                   type="button"
                   onClick={() => {
                     setCards(
-                      (
-                        list
-                      ) =>
+                      list =>
                         list.filter(
-                          (
-                            card
-                          ) =>
+                          card =>
                             card.id !==
                             editing.id
                         )
