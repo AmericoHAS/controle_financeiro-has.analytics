@@ -29,6 +29,12 @@ import {
   money,
 } from "../../lib/finance-summary";
 
+
+import { usePersistedFinance } from "../../lib/use-persisted-finance";
+import { categorySeed } from "../../lib/finance-categories";
+
+
+
 import ModalHead from "./ModalHead";
 
 type InputMode =
@@ -49,6 +55,30 @@ type RowOverride = {
   type?: ReviewType;
   category?: string;
 };
+
+const defaultCategories = [
+  ["Salário", "💼", "Receita"],
+  ["Bolsa", "🎓", "Receita"],
+  ["Freelance", "💻", "Receita"],
+  ["Renda extra", "📈", "Receita"],
+  ["Investimentos", "💰", "Receita"],
+  ["Reembolso", "↩️", "Receita"],
+  ["Outras receitas", "✨", "Receita"],
+
+  ["Moradia", "🏠", "Despesa"],
+  ["Mercado", "🛒", "Despesa"],
+  ["Alimentação", "🍽️", "Despesa"],
+  ["Transporte", "🚗", "Despesa"],
+  ["Combustível", "⛽", "Despesa"],
+  ["Saúde", "❤️", "Despesa"],
+  ["Educação", "📚", "Despesa"],
+  ["Lazer", "🎮", "Despesa"],
+  ["Compras", "🛍️", "Despesa"],
+  ["Assinaturas", "🎵", "Despesa"],
+  ["Contas da casa", "💡", "Despesa"],
+  ["Impostos", "🧾", "Despesa"],
+  ["Outras despesas", "✨", "Despesa"],
+];
 
 type PastedRow = {
   row: number;
@@ -262,11 +292,50 @@ function guessCategory(
   type: ReviewType
 ) {
   if (
-    type ===
-    "Receita"
+  type ===
+  "Receita"
+) {
+  const text =
+    normalizeText(
+      name
+    );
+
+  if (
+    text.includes("salario") ||
+    text.includes("pagamento salario")
   ) {
-    return "Outras receitas";
+    return "Salário";
   }
+
+  if (
+    text.includes("bolsa")
+  ) {
+    return "Bolsa";
+  }
+
+  if (
+    text.includes("freelance") ||
+    text.includes("servico") ||
+    text.includes("cliente")
+  ) {
+    return "Freelance";
+  }
+
+  if (
+    text.includes("reembolso")
+  ) {
+    return "Reembolso";
+  }
+
+  if (
+    text.includes("investimento") ||
+    text.includes("rendimento")
+  ) {
+    return "Investimentos";
+  }
+
+  return "Outras receitas";
+}
 
   if (
     type ===
@@ -553,6 +622,16 @@ export default function StatementImport({
   ) => Promise<void>;
   onClose: () => void;
 }) {
+  const [
+  categories,
+] =
+  usePersistedFinance<
+    string[][]
+  >(
+    "categories",
+    categorySeed
+  );
+
   const [
     inputMode,
     setInputMode,
@@ -2591,30 +2670,54 @@ export default function StatementImport({
                           </option>
                         </select>
 
-                        <input
-                          className="statement-category-input"
-                          value={
-                            entry.category
-                          }
-                          disabled={
-                            busy ||
-                            entry.type ===
-                              "Ignorar"
-                          }
-                          onChange={
-                            event =>
-                              updateRow(
-                                entry.row,
-                                {
-                                  category:
-                                    event
-                                      .target
-                                      .value,
-                                }
-                              )
-                          }
-                          placeholder="Categoria"
-                        />
+                        <select
+  className="statement-category-input"
+  value={
+    entry.category
+  }
+  disabled={
+    busy ||
+    entry.type ===
+      "Ignorar"
+  }
+  onChange={
+    event =>
+      updateRow(
+        entry.row,
+        {
+          category:
+            event.target.value,
+        }
+      )
+  }
+>
+  <option value="">
+    Selecione a categoria
+  </option>
+
+  {categories
+    .filter(
+      category =>
+        category[2] ===
+        entry.type
+    )
+    .map(
+      (
+        category,
+        index
+      ) => (
+        <option
+          key={`${entry.row}-${category[0]}-${index}`}
+          value={
+            category[0]
+          }
+        >
+          {category[1]}{" "}
+          {category[0]}
+        </option>
+      )
+    )}
+</select>
 
                         <b>
                           {money(

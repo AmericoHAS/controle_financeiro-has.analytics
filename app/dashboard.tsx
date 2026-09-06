@@ -15,7 +15,7 @@ import {
 
 import { supabase } from "../lib/supabase";
 import { usePersistedFinance } from "../lib/use-persisted-finance";
-
+import { categorySeed } from "../lib/finance-categories";
 import OverviewChart from "./components/OverviewChart";
 import StatementImport from "./components/StatementImport";
 import ProfileMenu from "./components/ProfileMenu";
@@ -448,29 +448,7 @@ const initialCards:
 const initialAccounts:
   FinanceAccount[] = [];
 
-const categorySeed = [
-  ["Salário", "💼", "Receita"],
-  ["Bolsa", "🎓", "Receita"],
-  ["Freelance", "💻", "Receita"],
-  ["Renda extra", "📈", "Receita"],
-  ["Investimentos", "💰", "Receita"],
-  ["Reembolso", "↩️", "Receita"],
-  ["Outras receitas", "✨", "Receita"],
 
-  ["Moradia", "🏠", "Despesa"],
-  ["Mercado", "🛒", "Despesa"],
-  ["Alimentação", "🍽️", "Despesa"],
-  ["Transporte", "🚗", "Despesa"],
-  ["Combustível", "⛽", "Despesa"],
-  ["Saúde", "❤️", "Despesa"],
-  ["Educação", "📚", "Despesa"],
-  ["Lazer", "🎮", "Despesa"],
-  ["Compras", "🛍️", "Despesa"],
-  ["Assinaturas", "🎵", "Despesa"],
-  ["Contas da casa", "💡", "Despesa"],
-  ["Impostos", "🧾", "Despesa"],
-  ["Outras despesas", "✨", "Despesa"],
-];
 
 const bankCatalog = [
   [

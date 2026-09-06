@@ -1,0 +1,23 @@
+export const categorySeed = [
+  ["Salário", "💼", "Receita"],
+  ["Bolsa", "🎓", "Receita"],
+  ["Freelance", "💻", "Receita"],
+  ["Renda extra", "📈", "Receita"],
+  ["Investimentos", "💰", "Receita"],
+  ["Reembolso", "↩️", "Receita"],
+  ["Outras receitas", "✨", "Receita"],
+
+  ["Moradia", "🏠", "Despesa"],
+  ["Mercado", "🛒", "Despesa"],
+  ["Alimentação", "🍽️", "Despesa"],
+  ["Transporte", "🚗", "Despesa"],
+  ["Combustível", "⛽", "Despesa"],
+  ["Saúde", "❤️", "Despesa"],
+  ["Educação", "📚", "Despesa"],
+  ["Lazer", "🎮", "Despesa"],
+  ["Compras", "🛍️", "Despesa"],
+  ["Assinaturas", "🎵", "Despesa"],
+  ["Contas da casa", "💡", "Despesa"],
+  ["Impostos", "🧾", "Despesa"],
+  ["Outras despesas", "✨", "Despesa"],
+] as string[][];
