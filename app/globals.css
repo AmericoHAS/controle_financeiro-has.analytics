@@ -2369,3 +2369,611 @@ textarea:focus {
   background:var(--hf-50);
   font-size:15px;
 }
+
+
+/* =========================================================
+   AJUSTES - VISÃO GERAL, KPIs, STATUS, FILTROS E TABELAS
+   ========================================================= */
+
+/* =========================================================
+   PAINEL PRINCIPAL DA VISÃO GERAL
+   ========================================================= */
+
+.forecast-new{
+  display:grid;
+  grid-template-columns:minmax(260px, .9fr) minmax(0, 1.6fr);
+  gap:24px;
+  align-items:stretch;
+}
+
+.forecast-main{
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  min-width:0;
+}
+
+.forecast-main .eyebrow{
+  display:block;
+  margin-bottom:8px;
+}
+
+.forecast-main h2{
+  margin:0 0 8px;
+  font-size:clamp(30px, 4vw, 48px);
+  line-height:1;
+}
+
+.forecast-main p{
+  max-width:520px;
+  margin:0;
+  line-height:1.5;
+}
+
+.forecast-stats{
+  display:grid;
+  grid-template-columns:repeat(4, minmax(0, 1fr));
+  gap:10px;
+  align-content:center;
+}
+
+.forecast-stats article{
+  min-width:0;
+  padding:13px 14px;
+  border:1px solid rgba(255,255,255,.14);
+  border-radius:12px;
+  background:rgba(255,255,255,.07);
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+}
+
+.forecast-stats article span{
+  font-size:11px;
+  line-height:1.25;
+  opacity:.8;
+}
+
+.forecast-stats article b{
+  font-size:15px;
+  line-height:1.2;
+  white-space:nowrap;
+}
+
+.forecast-stats .green{
+  color:#91f0d4;
+}
+
+.forecast-stats .red{
+  color:#ffc0b9;
+}
+
+.forecast-highlight{
+  background:rgba(255,255,255,.14) !important;
+  border-color:rgba(255,255,255,.3) !important;
+}
+
+/* =========================================================
+   BOTÃO GUARDAR SALDO
+   ========================================================= */
+
+.invest-balance{
+  width:max-content;
+  max-width:100%;
+  min-height:40px;
+  margin-top:16px;
+  padding:0 14px;
+  border:1px solid rgba(255,255,255,.28);
+  border-radius:10px;
+  background:rgba(255,255,255,.1);
+  color:#fff;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  font-weight:700;
+  line-height:1;
+  white-space:nowrap;
+}
+
+.invest-balance svg{
+  width:17px;
+  height:17px;
+  flex:none;
+}
+
+.invest-balance:hover{
+  background:rgba(255,255,255,.17);
+}
+
+.investment-modal{
+  max-width:560px;
+}
+
+.investment-modal-foot{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.investment-modal-foot button{
+  min-height:42px;
+  padding:0 16px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  white-space:nowrap;
+}
+
+.investment-modal-foot .primary{
+  min-width:170px;
+}
+
+/* =========================================================
+   KPI - BARRAS DINÂMICAS
+   ========================================================= */
+
+.kpi-card .bar{
+  position:relative;
+  width:100%;
+  height:7px;
+  margin-top:14px;
+  overflow:hidden;
+  border-radius:999px;
+  background:#e9f1f0;
+}
+
+.kpi-card .bar i{
+  display:block;
+  height:100%;
+  min-width:0;
+  border-radius:inherit;
+  transition:
+    width .65s cubic-bezier(.22,.61,.36,1);
+}
+
+.kpi-card .bar.green i{
+  background:linear-gradient(
+    90deg,
+    #0aa7a4,
+    #78ddd5
+  );
+}
+
+.kpi-card .bar.coral i{
+  background:linear-gradient(
+    90deg,
+    #c95c52,
+    #ef9b90
+  );
+}
+
+.kpi-card .bar.cards i{
+  background:linear-gradient(
+    90deg,
+    #4969c8,
+    #8ea5f3
+  );
+}
+
+.kpi-card .bar.gold i{
+  background:linear-gradient(
+    90deg,
+    #d7a63d,
+    #f0cf7a
+  );
+}
+
+.kpi-card:hover .bar i{
+  filter:brightness(1.05);
+}
+
+/* =========================================================
+   GRÁFICO DE FLUXO - SALDO ACUMULADO
+   ========================================================= */
+
+.plot .bars{
+  position:relative;
+}
+
+.plot .bars .proj{
+  width:7px;
+  border-radius:999px 999px 0 0;
+  background:#d7a63d;
+  opacity:.95;
+}
+
+.plot .bars .proj.negative{
+  background:#7a8b8d;
+}
+
+.legend .lg-proj{
+  background:#d7a63d;
+}
+
+/* =========================================================
+   ÍCONES DAS CATEGORIAS
+   ========================================================= */
+
+.category-emoji{
+  width:28px;
+  height:28px;
+  flex:none;
+  border-radius:8px;
+  background:var(--hf-50);
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  font-size:15px;
+}
+
+.table-category{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+}
+
+.ledger-category{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  min-width:0;
+}
+
+.ledger-category-icon{
+  width:28px;
+  height:28px;
+  flex:none;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:8px;
+  background:var(--hf-50);
+  font-size:15px;
+}
+
+/* =========================================================
+   BADGE COLORIDA DO CARTÃO
+   ========================================================= */
+
+.ledger-card-source{
+  max-width:100%;
+  min-height:29px;
+  padding:4px 9px;
+  border-radius:9px;
+  color:#fff;
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  font-size:12px;
+  font-weight:750;
+  box-shadow:
+    0 3px 8px rgba(0,0,0,.10);
+  white-space:nowrap;
+}
+
+.ledger-card-source svg{
+  flex:none;
+}
+
+.ledger-card-source small{
+  color:rgba(255,255,255,.85);
+  font-size:10px;
+}
+
+/* =========================================================
+   STATUS CLICÁVEL
+   ========================================================= */
+
+.status-button,
+.ledger-status-button{
+  min-height:30px;
+  padding:5px 10px;
+  border:1px solid transparent;
+  border-radius:999px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  font-size:11px;
+  font-weight:800;
+  line-height:1;
+  cursor:pointer;
+  white-space:nowrap;
+  transition:
+    transform .15s ease,
+    background .2s ease,
+    border-color .2s ease;
+}
+
+.status-button:hover,
+.ledger-status-button:hover{
+  transform:translateY(-1px);
+}
+
+.status-button.confirmado,
+.ledger-status-button.done{
+  color:#08776f;
+  border-color:#9ddbd4;
+  background:#e9f8f5;
+}
+
+.status-button.previsto,
+.ledger-status-button.pending{
+  color:#a35c2f;
+  border-color:#f0c79f;
+  background:#fff4e9;
+}
+
+.ledger-status-button:disabled{
+  cursor:default;
+  opacity:.65;
+  transform:none;
+}
+
+/* =========================================================
+   NOVA BARRA DE FERRAMENTAS DE LANÇAMENTOS
+   ========================================================= */
+
+.ledger-toolbar-new{
+  gap:14px;
+  flex-wrap:wrap;
+}
+
+.ledger-toolbar-actions{
+  margin-left:auto;
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+.ledger-search{
+  min-width:210px;
+}
+
+.filter-button,
+.clear-filter-button{
+  height:38px;
+  padding:0 12px;
+  border:1px solid var(--line);
+  border-radius:9px;
+  background:#fff;
+  color:var(--ink);
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  font-weight:700;
+}
+
+.filter-button svg,
+.clear-filter-button svg{
+  width:16px;
+}
+
+.filter-button:hover,
+.clear-filter-button:hover{
+  background:var(--hf-50);
+}
+
+.filter-button.active{
+  border-color:var(--hf-400);
+  color:var(--hf-700);
+  background:var(--hf-50);
+}
+
+.clear-filter-button{
+  color:var(--danger);
+}
+
+/* =========================================================
+   PAINEL DE FILTROS
+   ========================================================= */
+
+.ledger-filters{
+  margin:0 0 14px;
+  padding:14px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:#f8fbfb;
+  display:grid;
+  grid-template-columns:repeat(3, minmax(0, 1fr));
+  gap:12px;
+}
+
+.ledger-filters label{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  color:var(--muted);
+  font-size:11px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+}
+
+.ledger-filters select{
+  width:100%;
+  height:40px;
+  border:1px solid var(--line);
+  border-radius:9px;
+  background:#fff;
+  color:var(--ink);
+  padding:0 10px;
+  font-size:13px;
+  font-weight:600;
+}
+
+/* =========================================================
+   TABELA DE LANÇAMENTOS - 8 COLUNAS
+   ========================================================= */
+
+.ledger-row-new{
+  min-width:1260px;
+  grid-template-columns:
+    75px
+    1.45fr
+    1fr
+    1.25fr
+    .95fr
+    105px
+    115px
+    78px;
+}
+
+.ledger-row-new > *{
+  min-width:0;
+}
+
+.ledger-actions{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:5px;
+}
+
+.ledger-actions button{
+  width:32px;
+  height:32px;
+  border:1px solid transparent;
+  border-radius:8px;
+  background:transparent;
+  color:var(--muted);
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.ledger-actions button:hover{
+  border-color:var(--line);
+  background:var(--hf-50);
+  color:var(--hf-700);
+}
+
+/* =========================================================
+   VAZIO NOS LANÇAMENTOS
+   ========================================================= */
+
+.ledger-empty{
+  padding:45px 20px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  text-align:center;
+  color:var(--muted);
+}
+
+.ledger-empty svg{
+  width:28px;
+  height:28px;
+  color:var(--hf-500);
+}
+
+.ledger-empty b{
+  color:var(--ink);
+}
+
+/* =========================================================
+   INFO DOS MODAIS
+   ========================================================= */
+
+.income-info{
+  min-height:44px;
+  padding:10px 12px;
+  border:1px solid #b8e4df;
+  border-radius:10px;
+  background:#eef9f8;
+  color:#496d6f;
+  display:flex;
+  align-items:flex-start;
+  gap:8px;
+  font-size:12px;
+  line-height:1.4;
+}
+
+.income-info svg{
+  width:16px;
+  flex:none;
+  color:var(--hf-600);
+}
+
+.expense-info{
+  border-color:#eed1cc;
+  background:#fff4f2;
+}
+
+/* =========================================================
+   RESPONSIVIDADE
+   ========================================================= */
+
+@media (max-width: 1180px){
+  .forecast-new{
+    grid-template-columns:1fr;
+  }
+
+  .forecast-stats{
+    grid-template-columns:repeat(4, minmax(130px, 1fr));
+  }
+}
+
+@media (max-width: 900px){
+  .forecast-stats{
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+  }
+
+  .ledger-filters{
+    grid-template-columns:1fr;
+  }
+
+  .ledger-toolbar-actions{
+    width:100%;
+    margin-left:0;
+    justify-content:flex-start;
+  }
+
+  .ledger-search{
+    flex:1;
+    min-width:180px;
+  }
+}
+
+@media (max-width: 600px){
+  .forecast-stats{
+    grid-template-columns:1fr 1fr;
+  }
+
+  .forecast-stats article{
+    padding:11px;
+  }
+
+  .forecast-stats article b{
+    font-size:13px;
+  }
+
+  .investment-modal-foot{
+    flex-direction:column-reverse;
+    align-items:stretch;
+  }
+
+  .investment-modal-foot button,
+  .investment-modal-foot .primary{
+    width:100%;
+    min-width:0;
+  }
+
+  .ledger-toolbar-actions{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+  }
+
+  .ledger-search{
+    grid-column:1 / -1;
+    width:100%;
+  }
+}

@@ -13,6 +13,7 @@ import {
   Circle,
   CircleCheck,
   CreditCard,
+  Filter,
   KeyRound,
   Landmark,
   LayoutDashboard,
@@ -70,8 +71,9 @@ function changeMonth(
   current: string,
   amount: number
 ) {
-  const [year, month] =
-    current.split("-").map(Number);
+  const [year, month] = current
+    .split("-")
+    .map(Number);
 
   const date = new Date(
     year,
@@ -85,49 +87,38 @@ function changeMonth(
 }
 
 function monthLabel(key: string) {
-  const [year, month] =
-    key.split("-").map(Number);
+  const [year, month] = key
+    .split("-")
+    .map(Number);
 
-  return new Intl.DateTimeFormat(
-    "pt-BR",
-    {
-      month: "long",
-      year: "numeric",
-    }
-  ).format(
-    new Date(
-      year,
-      month - 1,
-      1
-    )
+  return new Intl.DateTimeFormat("pt-BR", {
+    month: "long",
+    year: "numeric",
+  }).format(
+    new Date(year, month - 1, 1)
   );
 }
 
 function defaultDateForMonth(
   month: string
 ) {
-  if (
-    month === currentMonthKey()
-  ) {
+  if (month === currentMonthKey()) {
     return currentDateKey();
   }
 
   return `${month}-01`;
 }
 
-function formatDate(
-  date: string
-) {
+function formatDate(date: string) {
   if (
-    !/^\d{4}-\d{2}-\d{2}$/.test(
-      date
-    )
+    !/^\d{4}-\d{2}-\d{2}$/.test(date)
   ) {
     return date;
   }
 
-  const [year, month, day] =
-    date.split("-").map(Number);
+  const [year, month, day] = date
+    .split("-")
+    .map(Number);
 
   return new Intl.DateTimeFormat(
     "pt-BR",
@@ -137,11 +128,7 @@ function formatDate(
     }
   )
     .format(
-      new Date(
-        year,
-        month - 1,
-        day
-      )
+      new Date(year, month - 1, day)
     )
     .replace(".", "");
 }
@@ -155,35 +142,6 @@ function dateBelongsToMonth(
   );
 }
 
-function normalizedStatus(entry: Ledger) {
-  if (entry.status === "Confirmado") {
-    return entry.type === "Receita"
-      ? "Recebido"
-      : entry.type === "Despesa"
-      ? "Pago"
-      : "Confirmado";
-  }
-
-  if (entry.status === "Previsto") {
-    return entry.type === "Receita"
-      ? "A receber"
-      : entry.type === "Despesa"
-      ? "A pagar"
-      : "Previsto";
-  }
-
-  return entry.status;
-}
-
-
-
-/*
-  Adiciona meses preservando o dia sempre que possível.
-
-  Exemplo:
-  31/01 + 1 mês -> 28/02 ou 29/02,
-  evitando o JavaScript jogar a data para março.
-*/
 function addMonthsToDateKey(
   dateKey: string,
   amount: number
@@ -213,10 +171,7 @@ function addMonthsToDateKey(
     ).getDate();
 
   const safeDay =
-    Math.min(
-      day,
-      lastDay
-    );
+    Math.min(day, lastDay);
 
   return `${targetYear}-${String(
     targetMonth + 1
@@ -229,10 +184,9 @@ function convertImportedDate(
   value: string,
   selectedMonth: string
 ) {
-  const parts =
-    value
-      .split(/[/-]/)
-      .map(Number);
+  const parts = value
+    .split(/[/-]/)
+    .map(Number);
 
   const day = parts[0];
   const month = parts[1];
@@ -241,9 +195,7 @@ function convertImportedDate(
 
   if (!year) {
     year = Number(
-      selectedMonth.split(
-        "-"
-      )[0]
+      selectedMonth.split("-")[0]
     );
   }
 
@@ -275,9 +227,7 @@ async function saveFinanceNamespace(
 
   const { error } =
     await supabase
-      .from(
-        "finance_records"
-      )
+      .from("finance_records")
       .upsert(
         {
           user_id: user.id,
@@ -301,6 +251,14 @@ async function saveFinanceNamespace(
    TIPOS
    ========================================================= */
 
+type LedgerStatus =
+  | "Recebido"
+  | "A receber"
+  | "Pago"
+  | "A pagar"
+  | "Confirmado"
+  | "Previsto";
+
 type Ledger = {
   id: number;
 
@@ -310,15 +268,10 @@ type Ledger = {
     | "Investimento";
 
   name: string;
-
   category: string;
-
   icon: string;
-
   date: string;
-
   value: number;
-
   account: string;
 
   frequency:
@@ -328,16 +281,9 @@ type Ledger = {
     | "Parcelado";
 
   installment?: string;
-
   remaining?: number;
 
-  status:
-  | "Recebido"
-  | "A receber"
-  | "Pago"
-  | "A pagar"
-  | "Confirmado"
-  | "Previsto";
+  status: LedgerStatus;
 
   sourceType?:
     | "account"
@@ -345,33 +291,23 @@ type Ledger = {
     | "cash";
 
   sourceId?: number;
-
   seriesId?: number;
 };
 
 type FinanceCard = {
   id: number;
-
   bank: string;
-
   logo: string;
-
   last4: string;
-
   closing: number;
-
   due: number;
-
   color: string;
-
   color2: string;
 };
 
 type FinanceAccount = {
   id: number;
-
   name: string;
-
   bank: string;
 
   type:
@@ -385,15 +321,10 @@ type FinanceAccount = {
 
 type PlanItem = {
   id: number;
-
   name: string;
-
   category: string;
-
   icon: string;
-
   date: string;
-
   value: number;
 
   kind:
@@ -402,16 +333,60 @@ type PlanItem = {
     | "Parcela";
 
   detail?: string;
-
   active: boolean;
 };
+
+/* =========================================================
+   NORMALIZAÇÃO DOS STATUS ANTIGOS
+   ========================================================= */
+
+function normalizedStatus(
+  entry: Ledger
+): LedgerStatus {
+  if (
+    entry.status === "Confirmado"
+  ) {
+    if (
+      entry.type === "Receita"
+    ) {
+      return "Recebido";
+    }
+
+    if (
+      entry.type === "Despesa"
+    ) {
+      return "Pago";
+    }
+
+    return "Confirmado";
+  }
+
+  if (
+    entry.status === "Previsto"
+  ) {
+    if (
+      entry.type === "Receita"
+    ) {
+      return "A receber";
+    }
+
+    if (
+      entry.type === "Despesa"
+    ) {
+      return "A pagar";
+    }
+
+    return "Previsto";
+  }
+
+  return entry.status;
+}
 
 /* =========================================================
    VALORES INICIAIS
    ========================================================= */
 
-const ledgerSeed: Ledger[] =
-  [];
+const ledgerSeed: Ledger[] = [];
 
 const initialCards:
   FinanceCard[] = [];
@@ -430,215 +405,95 @@ const initialBudgets: {
 }[] = [];
 
 const categorySeed = [
-  [
-    "Salário",
-    "💼",
-    "Receita",
-  ],
-  [
-    "Bolsa",
-    "🎓",
-    "Receita",
-  ],
-  [
-    "Freelance",
-    "💻",
-    "Receita",
-  ],
-  [
-    "Renda extra",
-    "📈",
-    "Receita",
-  ],
-  [
-    "Investimentos",
-    "💰",
-    "Receita",
-  ],
-  [
-    "Reembolso",
-    "↩️",
-    "Receita",
-  ],
-  [
-    "Outras receitas",
-    "✨",
-    "Receita",
-  ],
+  ["Salário", "💼", "Receita"],
+  ["Bolsa", "🎓", "Receita"],
+  ["Freelance", "💻", "Receita"],
+  ["Renda extra", "📈", "Receita"],
+  ["Investimentos", "💰", "Receita"],
+  ["Reembolso", "↩️", "Receita"],
+  ["Outras receitas", "✨", "Receita"],
 
-  [
-    "Moradia",
-    "🏠",
-    "Despesa",
-  ],
-  [
-    "Mercado",
-    "🛒",
-    "Despesa",
-  ],
-  [
-    "Alimentação",
-    "🍽️",
-    "Despesa",
-  ],
-  [
-    "Transporte",
-    "🚗",
-    "Despesa",
-  ],
-  [
-    "Combustível",
-    "⛽",
-    "Despesa",
-  ],
-  [
-    "Saúde",
-    "❤️",
-    "Despesa",
-  ],
-  [
-    "Educação",
-    "📚",
-    "Despesa",
-  ],
-  [
-    "Lazer",
-    "🎮",
-    "Despesa",
-  ],
-  [
-    "Compras",
-    "🛍️",
-    "Despesa",
-  ],
-  [
-    "Assinaturas",
-    "🎵",
-    "Despesa",
-  ],
-  [
-    "Contas da casa",
-    "💡",
-    "Despesa",
-  ],
-  [
-    "Impostos",
-    "🧾",
-    "Despesa",
-  ],
-  [
-    "Outras despesas",
-    "✨",
-    "Despesa",
-  ],
+  ["Moradia", "🏠", "Despesa"],
+  ["Mercado", "🛒", "Despesa"],
+  ["Alimentação", "🍽️", "Despesa"],
+  ["Transporte", "🚗", "Despesa"],
+  ["Combustível", "⛽", "Despesa"],
+  ["Saúde", "❤️", "Despesa"],
+  ["Educação", "📚", "Despesa"],
+  ["Lazer", "🎮", "Despesa"],
+  ["Compras", "🛍️", "Despesa"],
+  ["Assinaturas", "🎵", "Despesa"],
+  ["Contas da casa", "💡", "Despesa"],
+  ["Impostos", "🧾", "Despesa"],
+  ["Outras despesas", "✨", "Despesa"],
 ];
 
 const bankCatalog = [
-  [
-    "Nubank",
-    "#820ad1",
-    "#4c0677",
-    "NU",
-  ],
-
-  [
-    "Inter",
-    "#ff7a00",
-    "#c94d00",
-    "inter",
-  ],
-
-  [
-    "Itaú",
-    "#ec7000",
-    "#073f87",
-    "itaú",
-  ],
-
+  ["Nubank", "#820ad1", "#4c0677", "NU"],
+  ["Inter", "#ff7a00", "#c94d00", "inter"],
+  ["Itaú", "#ec7000", "#073f87", "itaú"],
   [
     "Banco do Brasil",
     "#f9dc16",
     "#173863",
     "BB",
   ],
-
-  [
-    "Caixa",
-    "#087bb8",
-    "#005ca9",
-    "CAIXA",
-  ],
-
+  ["Caixa", "#087bb8", "#005ca9", "CAIXA"],
   [
     "Bradesco",
     "#cc092f",
     "#8e0623",
     "bradesco",
   ],
-
   [
     "Santander",
     "#ec0000",
     "#9e0000",
     "S",
   ],
-
   [
     "C6 Bank",
     "#242424",
     "#050505",
     "C6",
   ],
-
   [
     "BTG Pactual",
     "#18365f",
     "#071a34",
     "BTG",
   ],
-
-  [
-    "XP",
-    "#171717",
-    "#000000",
-    "XP",
-  ],
-
+  ["XP", "#171717", "#000000", "XP"],
   [
     "Sicredi",
     "#68a82f",
     "#39751e",
     "sicredi",
   ],
-
   [
     "Sicoob",
     "#006b5b",
     "#003b37",
     "sicoob",
   ],
-
   [
     "PicPay",
     "#21c25e",
     "#087f42",
     "PicPay",
   ],
-
   [
     "Mercado Pago",
     "#16aee8",
     "#0876b9",
     "mercado pago",
   ],
-
   [
     "PagBank",
     "#42b549",
     "#187c31",
     "PagBank",
   ],
-
   [
     "Neon",
     "#00b8e6",
@@ -662,9 +517,7 @@ export default function Home({
     section,
     setSection,
   ] =
-    useState(
-      "Visão geral"
-    );
+    useState("Visão geral");
 
   const [
     mobile,
@@ -678,20 +531,12 @@ export default function Home({
   ] =
     useState(false);
 
-  /*
-    Sempre começa no mês atual.
-  */
   const [
     month,
     setMonth,
   ] =
-    useState(
-      currentMonthKey
-    );
+    useState(currentMonthKey);
 
-  /*
-    Ledger único do sistema.
-  */
   const [
     entries,
     setEntries,
@@ -704,10 +549,6 @@ export default function Home({
       ledgerSeed
     );
 
-  /*
-    Contas utilizadas também
-    no recurso Guardar saldo.
-  */
   const [
     investmentAccounts,
     setInvestmentAccounts,
@@ -717,6 +558,22 @@ export default function Home({
     >(
       "accounts",
       initialAccounts
+    );
+
+  const [cards] =
+    usePersistedFinance<
+      FinanceCard[]
+    >(
+      "cards",
+      initialCards
+    );
+
+  const [homeCategories] =
+    usePersistedFinance<
+      string[][]
+    >(
+      "categories",
+      categorySeed
     );
 
   const [
@@ -791,10 +648,6 @@ export default function Home({
     ],
   ] as const;
 
-  /*
-    Apenas lançamentos
-    pertencentes ao mês selecionado.
-  */
   const monthEntries =
     useMemo(
       () =>
@@ -810,6 +663,10 @@ export default function Home({
         month,
       ]
     );
+
+  /* =======================================================
+     RESUMO FINANCEIRO
+     ======================================================= */
 
   const income =
     monthEntries
@@ -845,66 +702,6 @@ export default function Home({
         0
       );
 
-      const cardExpenses = monthEntries
-  .filter(
-    (entry) =>
-      entry.type === "Despesa" &&
-      entry.sourceType === "card"
-  )
-  .reduce(
-    (total, entry) =>
-      total + entry.value,
-    0
-  );
-
-      const received = monthEntries
-  .filter(
-    (entry) =>
-      entry.type === "Receita" &&
-      normalizedStatus(entry) === "Recebido"
-  )
-  .reduce(
-    (total, entry) =>
-      total + entry.value,
-    0
-  );
-
-const toReceive = monthEntries
-  .filter(
-    (entry) =>
-      entry.type === "Receita" &&
-      normalizedStatus(entry) === "A receber"
-  )
-  .reduce(
-    (total, entry) =>
-      total + entry.value,
-    0
-  );
-
-const paid = monthEntries
-  .filter(
-    (entry) =>
-      entry.type === "Despesa" &&
-      normalizedStatus(entry) === "Pago"
-  )
-  .reduce(
-    (total, entry) =>
-      total + entry.value,
-    0
-  );
-
-const toPay = monthEntries
-  .filter(
-    (entry) =>
-      entry.type === "Despesa" &&
-      normalizedStatus(entry) === "A pagar"
-  )
-  .reduce(
-    (total, entry) =>
-      total + entry.value,
-    0
-  );
-
   const invested =
     monthEntries
       .filter(
@@ -922,110 +719,190 @@ const toPay = monthEntries
         0
       );
 
+  /*
+    Este é o valor previsto considerando
+    TODAS as receitas e despesas,
+    independentemente de já terem sido
+    recebidas ou pagas.
+  */
   const projectedBalance =
     income -
     spent -
     invested;
 
-    const flowData = useMemo(() => {
-  const buckets = [
-    { label: "01", from: 1, to: 5 },
-    { label: "06", from: 6, to: 11 },
-    { label: "12", from: 12, to: 17 },
-    { label: "18", from: 18, to: 23 },
-    { label: "24", from: 24, to: 29 },
-    { label: "30", from: 30, to: 31 },
-  ];
+  const received =
+    monthEntries
+      .filter(
+        (entry) =>
+          entry.type ===
+            "Receita" &&
+          normalizedStatus(
+            entry
+          ) ===
+            "Recebido"
+      )
+      .reduce(
+        (
+          total,
+          entry
+        ) =>
+          total +
+          entry.value,
+        0
+      );
 
-  const data = buckets.map((bucket) => {
-    const records =
-      monthEntries.filter((entry) => {
-        if (
-          !/^\d{4}-\d{2}-\d{2}$/.test(
-            entry.date
-          )
-        ) {
-          return false;
-        }
+  const toReceive =
+    monthEntries
+      .filter(
+        (entry) =>
+          entry.type ===
+            "Receita" &&
+          normalizedStatus(
+            entry
+          ) ===
+            "A receber"
+      )
+      .reduce(
+        (
+          total,
+          entry
+        ) =>
+          total +
+          entry.value,
+        0
+      );
 
-        const day =
-          Number(
-            entry.date.split("-")[2]
-          );
+  const paid =
+    monthEntries
+      .filter(
+        (entry) =>
+          entry.type ===
+            "Despesa" &&
+          normalizedStatus(
+            entry
+          ) ===
+            "Pago"
+      )
+      .reduce(
+        (
+          total,
+          entry
+        ) =>
+          total +
+          entry.value,
+        0
+      );
 
-        return (
-          day >= bucket.from &&
-          day <= bucket.to
-        );
-      });
+  const toPay =
+    monthEntries
+      .filter(
+        (entry) =>
+          entry.type ===
+            "Despesa" &&
+          normalizedStatus(
+            entry
+          ) ===
+            "A pagar"
+      )
+      .reduce(
+        (
+          total,
+          entry
+        ) =>
+          total +
+          entry.value,
+        0
+      );
 
-    const income =
-      records
-        .filter(
-          (entry) =>
-            entry.type === "Receita"
-        )
-        .reduce(
-          (total, entry) =>
-            total + entry.value,
-          0
-        );
+  /*
+    Dinheiro efetivamente realizado
+    até o momento.
+  */
+  const realizedBalance =
+    received -
+    paid -
+    invested;
 
-    const expense =
-      records
-        .filter(
-          (entry) =>
-            entry.type === "Despesa"
-        )
-        .reduce(
-          (total, entry) =>
-            total + entry.value,
-          0
-        );
+  const cardExpenses =
+    monthEntries
+      .filter(
+        (entry) =>
+          entry.type ===
+            "Despesa" &&
+          entry.sourceType ===
+            "card"
+      )
+      .reduce(
+        (
+          total,
+          entry
+        ) =>
+          total +
+          entry.value,
+        0
+      );
 
-    return {
-      label: bucket.label,
-      income,
-      expense,
-    };
-  });
-
-  const max =
-    Math.max(
-      1,
-      ...data.flatMap((item) => [
-        item.income,
-        item.expense,
-      ])
-    );
-
-  return data.map((item) => ({
-    ...item,
-
-    incomeHeight:
-      (item.income / max) * 100,
-
-    expenseHeight:
-      (item.expense / max) * 100,
-  }));
-}, [monthEntries]);
-
-
-  const filtered =
+  const cardEntryCount =
     monthEntries.filter(
       (entry) =>
         entry.type ===
           "Despesa" &&
-        (
-          entry.name +
-          entry.category +
-          entry.account
-        )
-          .toLowerCase()
-          .includes(
-            query.toLowerCase()
-          )
+        entry.sourceType ===
+          "card"
+    ).length;
+
+  /* =======================================================
+     PROGRESSO DOS KPIs
+     ======================================================= */
+
+  const kpiMaximum =
+    Math.max(
+      income,
+      spent,
+      cardExpenses,
+      invested,
+      1
     );
+
+  const incomeProgress =
+    (income /
+      kpiMaximum) *
+    100;
+
+  const expenseProgress =
+    (spent /
+      kpiMaximum) *
+    100;
+
+  const cardProgress =
+    (cardExpenses /
+      kpiMaximum) *
+    100;
+
+  const reserveProgress =
+    (invested /
+      kpiMaximum) *
+    100;
+
+  /* =======================================================
+     CATEGORIAS
+     ======================================================= */
+
+  function getCategoryIcon(
+    categoryName: string
+  ) {
+    const category =
+      homeCategories.find(
+        (item) =>
+          item[0] ===
+          categoryName
+      );
+
+    return (
+      category?.[1] ||
+      "✨"
+    );
+  }
 
   const cats =
     useMemo(() => {
@@ -1069,6 +946,280 @@ const toPay = monthEntries
     }, [
       monthEntries,
     ]);
+
+  const filtered =
+    monthEntries.filter(
+      (entry) =>
+        entry.type ===
+          "Despesa" &&
+        (
+          entry.name +
+          entry.category +
+          entry.account
+        )
+          .toLowerCase()
+          .includes(
+            query.toLowerCase()
+          )
+    );
+
+  /* =======================================================
+     GRÁFICO DE FLUXO
+     ======================================================= */
+
+  const flowData =
+    useMemo(() => {
+      const buckets = [
+        {
+          label: "01",
+          from: 1,
+          to: 5,
+        },
+        {
+          label: "06",
+          from: 6,
+          to: 11,
+        },
+        {
+          label: "12",
+          from: 12,
+          to: 17,
+        },
+        {
+          label: "18",
+          from: 18,
+          to: 23,
+        },
+        {
+          label: "24",
+          from: 24,
+          to: 29,
+        },
+        {
+          label: "30",
+          from: 30,
+          to: 31,
+        },
+      ];
+
+      let cumulative =
+        0;
+
+      const raw =
+        buckets.map(
+          (bucket) => {
+            const records =
+              monthEntries.filter(
+                (entry) => {
+                  if (
+                    !/^\d{4}-\d{2}-\d{2}$/.test(
+                      entry.date
+                    )
+                  ) {
+                    return false;
+                  }
+
+                  const day =
+                    Number(
+                      entry.date.split(
+                        "-"
+                      )[2]
+                    );
+
+                  return (
+                    day >=
+                      bucket.from &&
+                    day <=
+                      bucket.to
+                  );
+                }
+              );
+
+            const bucketIncome =
+              records
+                .filter(
+                  (entry) =>
+                    entry.type ===
+                    "Receita"
+                )
+                .reduce(
+                  (
+                    total,
+                    entry
+                  ) =>
+                    total +
+                    entry.value,
+                  0
+                );
+
+            const bucketExpense =
+              records
+                .filter(
+                  (entry) =>
+                    entry.type ===
+                    "Despesa"
+                )
+                .reduce(
+                  (
+                    total,
+                    entry
+                  ) =>
+                    total +
+                    entry.value,
+                  0
+                );
+
+            const bucketInvestment =
+              records
+                .filter(
+                  (entry) =>
+                    entry.type ===
+                    "Investimento"
+                )
+                .reduce(
+                  (
+                    total,
+                    entry
+                  ) =>
+                    total +
+                    entry.value,
+                  0
+                );
+
+            cumulative +=
+              bucketIncome -
+              bucketExpense -
+              bucketInvestment;
+
+            return {
+              label:
+                bucket.label,
+
+              income:
+                bucketIncome,
+
+              expense:
+                bucketExpense,
+
+              balance:
+                cumulative,
+            };
+          }
+        );
+
+      const maximum =
+        Math.max(
+          1,
+          ...raw.flatMap(
+            (item) => [
+              item.income,
+              item.expense,
+              Math.abs(
+                item.balance
+              ),
+            ]
+          )
+        );
+
+      return raw.map(
+        (item) => ({
+          ...item,
+
+          incomeHeight:
+            (item.income /
+              maximum) *
+            100,
+
+          expenseHeight:
+            (item.expense /
+              maximum) *
+            100,
+
+          balanceHeight:
+            (Math.abs(
+              item.balance
+            ) /
+              maximum) *
+            100,
+        })
+      );
+    }, [
+      monthEntries,
+    ]);
+
+  /* =======================================================
+     ALTERAR STATUS CLICANDO
+     ======================================================= */
+
+  async function toggleEntryStatus(
+    entry: Ledger
+  ) {
+    let nextStatus:
+      LedgerStatus;
+
+    const currentStatus =
+      normalizedStatus(
+        entry
+      );
+
+    if (
+      entry.type ===
+      "Receita"
+    ) {
+      nextStatus =
+        currentStatus ===
+        "Recebido"
+          ? "A receber"
+          : "Recebido";
+    } else if (
+      entry.type ===
+      "Despesa"
+    ) {
+      nextStatus =
+        currentStatus ===
+        "Pago"
+          ? "A pagar"
+          : "Pago";
+    } else {
+      return;
+    }
+
+    const updatedEntries =
+      entries.map(
+        (item) =>
+          item.id ===
+          entry.id
+            ? {
+                ...item,
+                status:
+                  nextStatus,
+              }
+            : item
+      );
+
+    try {
+      await saveFinanceNamespace(
+        "ledger",
+        updatedEntries
+      );
+
+      setEntries(
+        updatedEntries
+      );
+    } catch (error) {
+      console.error(
+        error
+      );
+
+      alert(
+        "Não foi possível alterar o status."
+      );
+    }
+  }
+
+  /* =======================================================
+     IMPORTAÇÃO
+     ======================================================= */
 
   function doImport() {
     const lines =
@@ -1209,10 +1360,9 @@ const toPay = monthEntries
             "Único",
 
           status:
-            map[0] ===
-            "A confirmar"
-              ? "Previsto"
-              : "Confirmado",
+            value >= 0
+              ? "Recebido"
+              : "Pago",
 
           sourceType:
             "cash",
@@ -1246,14 +1396,13 @@ const toPay = monthEntries
           )
       );
 
-    const updatedEntries =
-      [
-        ...unique,
-        ...entries,
-      ];
-
     setEntries(
-      updatedEntries
+      (
+        current
+      ) => [
+        ...unique,
+        ...current,
+      ]
     );
 
     setNotice(
@@ -1265,6 +1414,10 @@ const toPay = monthEntries
 
     setPaste("");
   }
+
+  /* =======================================================
+     GUARDAR SALDO
+     ======================================================= */
 
   async function submitInvestment(
     event:
@@ -1284,7 +1437,7 @@ const toPay = monthEntries
         )
       );
 
-    const requestedAmount =
+    const amount =
       Math.abs(
         Number(
           fd.get(
@@ -1294,7 +1447,7 @@ const toPay = monthEntries
       );
 
     if (
-      requestedAmount <= 0
+      amount <= 0
     ) {
       alert(
         "Informe um valor válido."
@@ -1304,11 +1457,11 @@ const toPay = monthEntries
     }
 
     if (
-      requestedAmount >
+      amount >
       projectedBalance
     ) {
       alert(
-        "O valor não pode ser maior que o saldo disponível."
+        "O valor não pode ser maior que o saldo previsto."
       );
 
       return;
@@ -1339,7 +1492,7 @@ const toPay = monthEntries
 
                 balance:
                   item.balance +
-                  requestedAmount,
+                  amount,
               }
             : item
       );
@@ -1361,17 +1514,13 @@ const toPay = monthEntries
       icon:
         "🐷",
 
-      /*
-        O investimento pertence
-        ao mês que está sendo visualizado.
-      */
       date:
         defaultDateForMonth(
           month
         ),
 
       value:
-        requestedAmount,
+        amount,
 
       account:
         `${account.name} · ${account.bank}`,
@@ -1477,8 +1626,7 @@ const toPay = monthEntries
             </strong>
 
             <small>
-              Inteligência
-              financeira
+              Inteligência financeira
             </small>
           </div>
 
@@ -1629,15 +1777,11 @@ const toPay = monthEntries
                       )
                   )
                 }
-                title="Mês anterior"
               >
                 ‹
               </button>
 
-              <label
-                className="month-current"
-                title="Selecionar mês e ano"
-              >
+              <label className="month-current">
                 <CalendarDays />
 
                 <input
@@ -1654,7 +1798,6 @@ const toPay = monthEntries
                         .value
                     )
                   }
-                  aria-label="Selecionar mês"
                 />
               </label>
 
@@ -1671,7 +1814,6 @@ const toPay = monthEntries
                       )
                   )
                 }
-                title="Próximo mês"
               >
                 ›
               </button>
@@ -1679,12 +1821,12 @@ const toPay = monthEntries
 
             <button
               className="iconbtn"
-              title="Voltar para o mês atual"
               onClick={() =>
                 setMonth(
                   currentMonthKey()
                 )
               }
+              title="Mês atual"
             >
               <CalendarDays />
             </button>
@@ -1718,7 +1860,6 @@ const toPay = monthEntries
                   "Lançamentos"
                 )
               }
-              title="Novo lançamento"
             >
               <Plus />
             </button>
@@ -1728,7 +1869,6 @@ const toPay = monthEntries
               onClick={
                 onLogout
               }
-              title="Sair"
             >
               <LogOut />
             </button>
@@ -1769,21 +1909,21 @@ const toPay = monthEntries
             </h2>
 
             <p>
-              Esta área faz parte
-              do seu controle
-              financeiro e será
-              vinculada aos dados
-              da sua conta.
+              Esta área faz parte do seu
+              controle financeiro.
             </p>
           </div>
         ) : (
           <div className="content">
-            <section className="forecast">
-              <div>
-                <span className="eyebrow">
-                  SALDO PROJETADO
-                  {" · "}
 
+            {/* ============================================
+                PAINEL PRINCIPAL
+                ============================================ */}
+
+            <section className="forecast forecast-new">
+              <div className="forecast-main">
+                <span className="eyebrow">
+                  PREVISÃO DO MÊS ·{" "}
                   {monthLabel(
                     month
                   )}
@@ -1799,6 +1939,12 @@ const toPay = monthEntries
                     projectedBalance
                   )}
                 </h2>
+
+                <p>
+                  Valor previsto após considerar
+                  todas as receitas, despesas e
+                  reservas do mês.
+                </p>
 
                 {projectedBalance >
                   0 && (
@@ -1816,70 +1962,113 @@ const toPay = monthEntries
                     Guardar saldo
                   </button>
                 )}
-
-                <p>
-                  {monthEntries.length
-                    ? "Calculado com base nos lançamentos deste mês."
-                    : "Nenhum lançamento registrado neste mês."}
-                </p>
               </div>
 
-              <div className="forecast-right">
-                <div>
-  <span>Saldo projetado</span>
+              <div className="forecast-stats">
+                <article>
+                  <span>
+                    Receitas previstas
+                  </span>
 
-  <b>
-    {projectedBalance < 0
-      ? "− "
-      : ""}
+                  <b className="green">
+                    +{" "}
+                    {fmt(
+                      income
+                    )}
+                  </b>
+                </article>
 
-    {fmt(projectedBalance)}
-  </b>
-</div>
+                <article>
+                  <span>
+                    Despesas previstas
+                  </span>
 
-<div className="line" />
+                  <b className="red">
+                    −{" "}
+                    {fmt(
+                      spent
+                    )}
+                  </b>
+                </article>
 
-<div>
-  <span>Recebido</span>
+                <article>
+                  <span>
+                    Já recebido
+                  </span>
 
-  <b className="green">
-    + {fmt(received)}
-  </b>
-</div>
+                  <b className="green">
+                    +{" "}
+                    {fmt(
+                      received
+                    )}
+                  </b>
+                </article>
 
-<div>
-  <span>A receber</span>
+                <article>
+                  <span>
+                    A receber
+                  </span>
 
-  <b className="green">
-    + {fmt(toReceive)}
-  </b>
-</div>
+                  <b>
+                    {fmt(
+                      toReceive
+                    )}
+                  </b>
+                </article>
 
-<div>
-  <span>Pago</span>
+                <article>
+                  <span>
+                    Já pago
+                  </span>
 
-  <b className="red">
-    − {fmt(paid)}
-  </b>
-</div>
+                  <b className="red">
+                    −{" "}
+                    {fmt(
+                      paid
+                    )}
+                  </b>
+                </article>
 
-<div>
-  <span>A pagar</span>
+                <article>
+                  <span>
+                    A pagar
+                  </span>
 
-  <b className="red">
-    − {fmt(toPay)}
-  </b>
-</div>
+                  <b>
+                    {fmt(
+                      toPay
+                    )}
+                  </b>
+                </article>
 
-{invested > 0 && (
-  <div>
-    <span>Guardado</span>
+                <article>
+                  <span>
+                    Guardado
+                  </span>
 
-    <b>
-      − {fmt(invested)}
-    </b>
-  </div>
-)}
+                  <b>
+                    {fmt(
+                      invested
+                    )}
+                  </b>
+                </article>
+
+                <article className="forecast-highlight">
+                  <span>
+                    Saldo realizado
+                  </span>
+
+                  <b>
+                    {realizedBalance <
+                    0
+                      ? "− "
+                      : ""}
+
+                    {fmt(
+                      realizedBalance
+                    )}
+                  </b>
+                </article>
               </div>
             </section>
 
@@ -1898,10 +2087,9 @@ const toPay = monthEntries
                 </b>
 
                 <span>
-                  Use o seletor
-                  superior para
-                  consultar qualquer
-                  mês.
+                  O saldo projetado considera
+                  também valores ainda não pagos
+                  ou recebidos.
                 </span>
               </div>
 
@@ -1915,6 +2103,10 @@ const toPay = monthEntries
                 Ver lançamentos
               </button>
             </div>
+
+            {/* ============================================
+                KPIs
+                ============================================ */}
 
             <section className="kpis">
               <Kpi
@@ -1931,6 +2123,9 @@ const toPay = monthEntries
                     "Receita"
                 ).length} lançamentos`}
                 kind="green"
+                progress={
+                  incomeProgress
+                }
               />
 
               <Kpi
@@ -1947,19 +2142,23 @@ const toPay = monthEntries
                     "Despesa"
                 ).length} lançamentos`}
                 kind="coral"
+                progress={
+                  expenseProgress
+                }
               />
 
-             <Kpi
-  title="Cartões"
-  value={fmt(cardExpenses)}
-  sub="Compras no cartão"
-  foot={`${monthEntries.filter(
-    (entry) =>
-      entry.type === "Despesa" &&
-      entry.sourceType === "card"
-  ).length} lançamentos`}
-  kind="cards"
-/>
+              <Kpi
+                title="Cartões"
+                value={fmt(
+                  cardExpenses
+                )}
+                sub="Compras no cartão"
+                foot={`${cardEntryCount} lançamentos`}
+                kind="cards"
+                progress={
+                  cardProgress
+                }
+              />
 
               <Kpi
                 title="Reservas"
@@ -1973,8 +2172,15 @@ const toPay = monthEntries
                     : "Nenhum valor guardado"
                 }
                 kind="gold"
+                progress={
+                  reserveProgress
+                }
               />
             </section>
+
+            {/* ============================================
+                GRÁFICOS
+                ============================================ */}
 
             <div className="grid-main">
               <section className="panel cash">
@@ -2003,22 +2209,22 @@ const toPay = monthEntries
 
                   <span>
                     <i className="lg-proj" />
-                    Saldo projetado
+                    Saldo acumulado
                   </span>
                 </div>
 
                 <div className="chart">
                   <div className="axis">
                     <span>
-                      12 mil
+                      Maior
                     </span>
 
                     <span>
-                      8 mil
+                      75%
                     </span>
 
                     <span>
-                      4 mil
+                      50%
                     </span>
 
                     <span>
@@ -2027,38 +2233,67 @@ const toPay = monthEntries
                   </div>
 
                   <div className="plot">
-                    {flowData.map((item) => (
-  <div
-    className="bars"
-    key={item.label}
-  >
-    <i
-      className="in"
-      title={`Entradas: ${fmt(
-        item.income
-      )}`}
-      style={{
-        height:
-          `${item.incomeHeight}%`,
-      }}
-    />
+                    {flowData.map(
+                      (
+                        item
+                      ) => (
+                        <div
+                          className="bars"
+                          key={
+                            item.label
+                          }
+                        >
+                          <i
+                            className="in"
+                            title={`Entradas: ${fmt(
+                              item.income
+                            )}`}
+                            style={{
+                              height:
+                                `${item.incomeHeight}%`,
+                            }}
+                          />
 
-    <i
-      className="out"
-      title={`Saídas: ${fmt(
-        item.expense
-      )}`}
-      style={{
-        height:
-          `${item.expenseHeight}%`,
-      }}
-    />
+                          <i
+                            className="out"
+                            title={`Saídas: ${fmt(
+                              item.expense
+                            )}`}
+                            style={{
+                              height:
+                                `${item.expenseHeight}%`,
+                            }}
+                          />
 
-    <span>
-      {item.label}
-    </span>
-  </div>
-))}
+                          <i
+                            className={`proj ${
+                              item.balance <
+                              0
+                                ? "negative"
+                                : ""
+                            }`}
+                            title={`Saldo acumulado: ${
+                              item.balance <
+                              0
+                                ? "− "
+                                : ""
+                            }${fmt(
+                              item.balance
+                            )}`}
+                            style={{
+                              height:
+                                `${item.balanceHeight}%`,
+                            }}
+                          />
+
+                          <span>
+                            {
+                              item.label
+                            }
+                          </span>
+                        </div>
+                      )
+                    )}
                   </div>
                 </div>
               </section>
@@ -2110,7 +2345,12 @@ const toPay = monthEntries
                                 className={`c${index}`}
                               />
 
-                              ✨{" "}
+                              <span className="category-emoji">
+                                {getCategoryIcon(
+                                  category
+                                )}
+                              </span>
+
                               {
                                 category
                               }
@@ -2129,6 +2369,10 @@ const toPay = monthEntries
               </section>
             </div>
 
+            {/* ============================================
+                DESPESAS DO MÊS
+                ============================================ */}
+
             <section className="panel transactions">
               <div className="panel-head">
                 <div>
@@ -2140,10 +2384,9 @@ const toPay = monthEntries
                   </h3>
 
                   <p>
-                    Despesas
-                    registradas no
-                    período
-                    selecionado
+                    Clique no status para marcar
+                    uma despesa como paga ou
+                    pendente.
                   </p>
                 </div>
 
@@ -2199,8 +2442,7 @@ const toPay = monthEntries
                       </th>
 
                       <th>
-                        Conta /
-                        cartão
+                        Conta / cartão
                       </th>
 
                       <th>
@@ -2253,30 +2495,56 @@ const toPay = monthEntries
                           </td>
 
                           <td>
-                            {
-                              entry.category
-                            }
+                            <span className="table-category">
+                              <span className="category-emoji">
+                                {getCategoryIcon(
+                                  entry.category
+                                )}
+                              </span>
+
+                              {
+                                entry.category
+                              }
+                            </span>
                           </td>
 
                           <td>
-                            {
+                            {entry.sourceType ===
+                            "card" ? (
+                              <CardSourceBadge
+                                entry={
+                                  entry
+                                }
+                                cards={
+                                  cards
+                                }
+                              />
+                            ) : (
                               entry.account
-                            }
+                            )}
                           </td>
 
                           <td>
-                            <span
-                              className={`status ${
-                                entry.status ===
-                                "Confirmado"
+                            <button
+                              type="button"
+                              className={`status status-button ${
+                                normalizedStatus(
+                                  entry
+                                ) ===
+                                "Pago"
                                   ? "confirmado"
                                   : "previsto"
                               }`}
-                            >
-                              {
-                                entry.status
+                              onClick={() =>
+                                toggleEntryStatus(
+                                  entry
+                                )
                               }
-                            </span>
+                            >
+                              {normalizedStatus(
+                                entry
+                              )}
+                            </button>
                           </td>
 
                           <td className="red">
@@ -2297,7 +2565,7 @@ const toPay = monthEntries
       </main>
 
       {/* ===================================================
-          IMPORTAÇÃO DE EXTRATO
+          IMPORTAÇÃO
           =================================================== */}
 
       {importOpen && (
@@ -2365,8 +2633,7 @@ const toPay = monthEntries
                   doImport
                 }
               >
-                Analisar
-                lançamentos
+                Analisar lançamentos
 
                 <ArrowUpRight />
               </button>
@@ -2376,22 +2643,27 @@ const toPay = monthEntries
       )}
 
       {/* ===================================================
-          GUARDAR / INVESTIR SALDO
+          GUARDAR SALDO
           =================================================== */}
 
       {investOpen && (
         <div className="modal-bg">
           <form
-            className="modal small"
+            className="modal small investment-modal"
             onSubmit={
               submitInvestment
             }
           >
             <ModalHead
               title="Guardar saldo"
-              sub={`Saldo disponível em ${monthLabel(
+              sub={`Disponível previsto em ${monthLabel(
                 month
-              )}: ${fmt(
+              )}: ${
+                projectedBalance <
+                0
+                  ? "− "
+                  : ""
+              }${fmt(
                 projectedBalance
               )}`}
               close={() =>
@@ -2406,8 +2678,7 @@ const toPay = monthEntries
 
             <div className="form-grid">
               <label className="wide">
-                Valor para
-                guardar
+                Valor para guardar
 
                 <input
                   name="investmentValue"
@@ -2425,8 +2696,7 @@ const toPay = monthEntries
               </label>
 
               <label className="wide">
-                Conta de
-                destino
+                Conta de destino
 
                 <select
                   name="investmentAccount"
@@ -2455,7 +2725,7 @@ const toPay = monthEntries
                         {
                           account.bank
                         }{" "}
-                        · Saldo{" "}
+                        ·{" "}
                         {fmt(
                           account.balance
                         )}
@@ -2466,7 +2736,7 @@ const toPay = monthEntries
               </label>
             </div>
 
-            <div className="modal-foot">
+            <div className="modal-foot investment-modal-foot">
               <button
                 type="button"
                 onClick={() =>
@@ -2498,34 +2768,8 @@ const toPay = monthEntries
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /* =========================================================
-   KPI
+   KPI E COMPONENTES AUXILIARES
    ========================================================= */
 
 function Kpi({
@@ -2534,51 +2778,71 @@ function Kpi({
   sub,
   foot,
   kind,
+  progress = 0,
 }: {
   title: string;
   value: string;
   sub: string;
   foot: string;
   kind: string;
+  progress?: number;
 }) {
-  return (
-    <article>
-      <div className="kpi-title">
-        <span>{title}</span>
+  const safeProgress =
+    Math.max(
+      0,
+      Math.min(
+        100,
+        progress
+      )
+    );
 
-        {title === "Receitas" ? (
+  return (
+    <article className="kpi-card">
+      <div className="kpi-title">
+        <span>
+          {title}
+        </span>
+
+        {title ===
+        "Receitas" ? (
           <ArrowDownLeft />
-        ) : title === "Despesas" ? (
+        ) : title ===
+          "Despesas" ? (
           <ArrowUpRight />
-        ) : title === "Cartões" ? (
+        ) : title ===
+          "Cartões" ? (
           <WalletCards />
         ) : (
           <PiggyBank />
         )}
       </div>
 
-      <h3>{value}</h3>
+      <h3>
+        {value}
+      </h3>
 
-      <small>{sub}</small>
+      <small>
+        {sub}
+      </small>
 
-      {kind === "cards" ? (
-        <div className="card-dots">
-          <i />
-          <i />
-          <i />
-        </div>
-      ) : (
-        <div className={`bar ${kind}`}>
-          <i
-            style={{
-              width: "0%",
-            }}
-          />
-        </div>
-      )}
+      <div
+        className={`bar ${kind}`}
+        title={`${Math.round(
+          safeProgress
+        )}% em relação ao maior valor do período`}
+      >
+        <i
+          style={{
+            width:
+              `${safeProgress}%`,
+          }}
+        />
+      </div>
 
       <p>
-        <b>{foot}</b>
+        <b>
+          {foot}
+        </b>
       </p>
     </article>
   );
@@ -2600,12 +2864,18 @@ function PanelHead({
   return (
     <div className="panel-head">
       <div>
-        <h3>{title}</h3>
-        <p>{sub}</p>
+        <h3>
+          {title}
+        </h3>
+
+        <p>
+          {sub}
+        </p>
       </div>
 
       {onDetails && (
         <button
+          type="button"
           onClick={
             onDetails
           }
@@ -2640,18 +2910,76 @@ function ModalHead({
         </span>
 
         <div>
-          <h2>{title}</h2>
-          <p>{sub}</p>
+          <h2>
+            {title}
+          </h2>
+
+          <p>
+            {sub}
+          </p>
         </div>
       </div>
 
       <button
-        onClick={close}
+        onClick={
+          close
+        }
         type="button"
       >
         <X />
       </button>
     </div>
+  );
+}
+
+/* =========================================================
+   IDENTIFICAÇÃO COLORIDA DO CARTÃO
+   ========================================================= */
+
+function CardSourceBadge({
+  entry,
+  cards,
+}: {
+  entry: Ledger;
+  cards: FinanceCard[];
+}) {
+  const card =
+    entry.sourceId != null
+      ? cards.find(
+          (
+            item
+          ) =>
+            item.id ===
+            entry.sourceId
+        )
+      : undefined;
+
+  if (!card) {
+    return (
+      <span>
+        {entry.account}
+      </span>
+    );
+  }
+
+  return (
+    <span
+      className="ledger-card-source"
+      style={{
+        background:
+          `linear-gradient(135deg, ${card.color}, ${card.color2})`,
+      }}
+    >
+      <CreditCard
+        size={13}
+      />
+
+      {card.bank}
+
+      <small>
+        • {card.last4}
+      </small>
+    </span>
   );
 }
 
@@ -2671,33 +2999,6 @@ function TransactionsWorkspace({
   >;
 }) {
   const [
-    entryType,
-    setEntryType,
-  ] =
-    useState<
-      "Receita" | "Despesa"
-    >("Despesa");
-
-  const [
-    frequency,
-    setFrequency,
-  ] =
-    useState<
-      | "Único"
-      | "Mensal"
-      | "Mensal até dezembro"
-      | "Parcelado"
-    >("Único");
-
-  const [
-    editingEntry,
-    setEditingEntry,
-  ] =
-    useState<
-      Ledger | null
-    >(null);
-
-  const [
     accounts,
     setAccounts,
   ] =
@@ -2715,6 +3016,36 @@ function TransactionsWorkspace({
       "cards",
       initialCards
     );
+
+  const [
+    categories,
+    setCategories,
+  ] =
+    usePersistedFinance<
+      string[][]
+    >(
+      "categories",
+      categorySeed
+    );
+
+  const [
+    entryType,
+    setEntryType,
+  ] =
+    useState<
+      "Receita" | "Despesa"
+    >("Despesa");
+
+  const [
+    frequency,
+    setFrequency,
+  ] =
+    useState<
+      | "Único"
+      | "Mensal"
+      | "Mensal até dezembro"
+      | "Parcelado"
+    >("Único");
 
   const [
     view,
@@ -2739,15 +3070,12 @@ function TransactionsWorkspace({
     useState(false);
 
   const [
-    categories,
-    setCategories,
+    editingEntry,
+    setEditingEntry,
   ] =
-    usePersistedFinance<
-      string[][]
-    >(
-      "categories",
-      categorySeed
-    );
+    useState<
+      Ledger | null
+    >(null);
 
   const [
     catOpen,
@@ -2761,6 +3089,34 @@ function TransactionsWorkspace({
   ] =
     useState("");
 
+  /* =======================================================
+     FILTROS
+     ======================================================= */
+
+  const [
+    filterCategory,
+    setFilterCategory,
+  ] =
+    useState("Todas");
+
+  const [
+    filterSource,
+    setFilterSource,
+  ] =
+    useState("Todos");
+
+  const [
+    filterStatus,
+    setFilterStatus,
+  ] =
+    useState("Todos");
+
+  const [
+    filtersOpen,
+    setFiltersOpen,
+  ] =
+    useState(false);
+
   const monthEntries =
     entries.filter(
       (entry) =>
@@ -2770,11 +3126,34 @@ function TransactionsWorkspace({
         )
     );
 
+  const availableCategories =
+    Array.from(
+      new Set(
+        monthEntries.map(
+          (entry) =>
+            entry.category
+        )
+      )
+    ).sort();
+
+  const availableSources =
+    Array.from(
+      new Set(
+        monthEntries
+          .map(
+            (entry) =>
+              entry.account
+          )
+          .filter(Boolean)
+      )
+    ).sort();
+
   const shown =
     monthEntries.filter(
-      (entry) =>
-        (
-          view === "Todos" ||
+      (entry) => {
+        const matchesView =
+          view ===
+            "Todos" ||
           (
             view ===
               "Receitas" &&
@@ -2786,18 +3165,54 @@ function TransactionsWorkspace({
               "Despesas" &&
             entry.type ===
               "Despesa"
+          );
+
+        const matchesSearch =
+          (
+            entry.name +
+            " " +
+            entry.category +
+            " " +
+            entry.account
           )
-        ) &&
-        (
-          entry.name +
-          entry.category +
-          entry.account
-        )
-          .toLowerCase()
-          .includes(
-            search.toLowerCase()
-          )
+            .toLowerCase()
+            .includes(
+              search.toLowerCase()
+            );
+
+        const matchesCategory =
+          filterCategory ===
+            "Todas" ||
+          entry.category ===
+            filterCategory;
+
+        const matchesSource =
+          filterSource ===
+            "Todos" ||
+          entry.account ===
+            filterSource;
+
+        const matchesStatus =
+          filterStatus ===
+            "Todos" ||
+          normalizedStatus(
+            entry
+          ) ===
+            filterStatus;
+
+        return (
+          matchesView &&
+          matchesSearch &&
+          matchesCategory &&
+          matchesSource &&
+          matchesStatus
+        );
+      }
     );
+
+  /* =======================================================
+     RESUMOS
+     ======================================================= */
 
   const revenues =
     monthEntries
@@ -2850,14 +3265,79 @@ function TransactionsWorkspace({
         0
       );
 
-  const monthlyIncome =
+  const toReceive =
     monthEntries
       .filter(
         (entry) =>
           entry.type ===
             "Receita" &&
-          entry.frequency ===
-            "Mensal até dezembro"
+          normalizedStatus(
+            entry
+          ) ===
+            "A receber"
+      )
+      .reduce(
+        (
+          total,
+          entry
+        ) =>
+          total +
+          entry.value,
+        0
+      );
+
+  const received =
+    monthEntries
+      .filter(
+        (entry) =>
+          entry.type ===
+            "Receita" &&
+          normalizedStatus(
+            entry
+          ) ===
+            "Recebido"
+      )
+      .reduce(
+        (
+          total,
+          entry
+        ) =>
+          total +
+          entry.value,
+        0
+      );
+
+  const toPay =
+    monthEntries
+      .filter(
+        (entry) =>
+          entry.type ===
+            "Despesa" &&
+          normalizedStatus(
+            entry
+          ) ===
+            "A pagar"
+      )
+      .reduce(
+        (
+          total,
+          entry
+        ) =>
+          total +
+          entry.value,
+        0
+      );
+
+  const paid =
+    monthEntries
+      .filter(
+        (entry) =>
+          entry.type ===
+            "Despesa" &&
+          normalizedStatus(
+            entry
+          ) ===
+            "Pago"
       )
       .reduce(
         (
@@ -2887,6 +3367,125 @@ function TransactionsWorkspace({
           entry.value,
         0
       );
+
+  function getCategoryIcon(
+    categoryName: string
+  ) {
+    const category =
+      categories.find(
+        (item) =>
+          item[0] ===
+          categoryName
+      );
+
+    return (
+      category?.[1] ||
+      "✨"
+    );
+  }
+
+  /* =======================================================
+     LIMPAR FILTROS
+     ======================================================= */
+
+  function clearFilters() {
+    setFilterCategory(
+      "Todas"
+    );
+
+    setFilterSource(
+      "Todos"
+    );
+
+    setFilterStatus(
+      "Todos"
+    );
+
+    setSearch("");
+  }
+
+  const hasFilters =
+    filterCategory !==
+      "Todas" ||
+    filterSource !==
+      "Todos" ||
+    filterStatus !==
+      "Todos" ||
+    search.trim() !== "";
+
+  /* =======================================================
+     ALTERAR STATUS
+     ======================================================= */
+
+  async function toggleStatus(
+    entry: Ledger
+  ) {
+    const current =
+      normalizedStatus(
+        entry
+      );
+
+    let next:
+      LedgerStatus;
+
+    if (
+      entry.type ===
+      "Receita"
+    ) {
+      next =
+        current ===
+        "Recebido"
+          ? "A receber"
+          : "Recebido";
+    } else if (
+      entry.type ===
+      "Despesa"
+    ) {
+      next =
+        current ===
+        "Pago"
+          ? "A pagar"
+          : "Pago";
+    } else {
+      return;
+    }
+
+    const updatedEntries =
+      entries.map(
+        (item) =>
+          item.id ===
+          entry.id
+            ? {
+                ...item,
+                status:
+                  next,
+              }
+            : item
+      );
+
+    try {
+      await saveFinanceNamespace(
+        "ledger",
+        updatedEntries
+      );
+
+      setEntries(
+        updatedEntries
+      );
+    } catch (error) {
+      console.error(
+        error
+      );
+
+      alert(
+        "Não foi possível alterar o status."
+      );
+    }
+  }
+
+  /* =======================================================
+     NOVO LANÇAMENTO
+     ======================================================= */
 
   async function submit(
     event:
@@ -2950,7 +3549,9 @@ function TransactionsWorkspace({
       Date.now();
 
     let accountLabel =
-      "Dinheiro";
+      type === "Receita"
+        ? "Receita"
+        : "Dinheiro";
 
     let sourceType:
       | "account"
@@ -2962,10 +3563,10 @@ function TransactionsWorkspace({
       | number
       | undefined;
 
-    /*
-      Conta e cartão só são
-      relevantes para despesa.
-    */
+    /* =====================================================
+       IDENTIFICA A CONTA
+       ===================================================== */
+
     if (
       type === "Despesa" &&
       destination.startsWith(
@@ -3005,47 +3606,11 @@ function TransactionsWorkspace({
 
       accountLabel =
         `${selectedAccount.name} · ${selectedAccount.bank}`;
-
-      /*
-        Apenas o lançamento do mês atual
-        deve afetar o saldo imediatamente.
-      */
-      const updatedAccounts =
-        accounts.map(
-          (account) =>
-            account.id ===
-            accountId
-              ? {
-                  ...account,
-
-                  balance:
-                    account.balance -
-                    value,
-                }
-              : account
-        );
-
-      try {
-        await saveFinanceNamespace(
-          "accounts",
-          updatedAccounts
-        );
-
-        setAccounts(
-          updatedAccounts
-        );
-      } catch (error) {
-        console.error(
-          error
-        );
-
-        alert(
-          "Erro ao atualizar o saldo da conta."
-        );
-
-        return;
-      }
     }
+
+    /* =====================================================
+       IDENTIFICA O CARTÃO
+       ===================================================== */
 
     if (
       type === "Despesa" &&
@@ -3096,17 +3661,17 @@ function TransactionsWorkspace({
        ===================================================== */
 
     if (
-      type === "Receita" &&
+      type ===
+        "Receita" &&
       selectedFrequency ===
         "Mensal até dezembro"
     ) {
-      const [
-        year,
-        month,
-      ] =
-        baseDate
-          .split("-")
-          .map(Number);
+      const month =
+        Number(
+          baseDate.split(
+            "-"
+          )[1]
+        );
 
       const monthsRemaining =
         12 -
@@ -3122,60 +3687,59 @@ function TransactionsWorkspace({
           (
             _,
             index
-          ) => {
-            const dateKey =
-              addMonthsToDateKey(
-                baseDate,
-                index
-              );
+          ) => ({
+            id:
+              seriesId +
+              index,
 
-            return {
-              id:
-                seriesId +
-                index,
+            seriesId,
 
-              seriesId,
+            type:
+              "Receita",
 
-              type:
-                "Receita",
+            name:
+              String(
+                fd.get(
+                  "name"
+                )
+              ),
 
-              name:
-                String(
-                  fd.get(
-                    "name"
-                  )
-                ),
+            category:
+              String(
+                fd.get(
+                  "category"
+                )
+              ),
 
-              category:
+            icon:
+              getCategoryIcon(
                 String(
                   fd.get(
                     "category"
                   )
-                ),
+                )
+              ),
 
-              icon:
-                "💰",
+            date:
+              addMonthsToDateKey(
+                baseDate,
+                index
+              ),
 
-              date:
-                dateKey,
+            value,
 
-              value,
+            account:
+              "Receita",
 
-              account:
-                "Receita",
+            frequency:
+              "Mensal até dezembro",
 
-              frequency:
-                "Mensal até dezembro",
+            status:
+              "A receber",
 
-              status:
-  index === 0
-    ? "Recebido"
-    : "A receber",
-
-              sourceType:
-                "cash",
-            };
-          }
+            sourceType:
+              "cash",
+          })
         );
     }
 
@@ -3184,7 +3748,8 @@ function TransactionsWorkspace({
        ===================================================== */
 
     else if (
-      type === "Despesa" &&
+      type ===
+        "Despesa" &&
       selectedFrequency ===
         "Parcelado"
     ) {
@@ -3197,88 +3762,87 @@ function TransactionsWorkspace({
           (
             _,
             index
-          ) => {
-            const dateKey =
-              addMonthsToDateKey(
-                baseDate,
-                index
-              );
+          ) => ({
+            id:
+              seriesId +
+              index,
 
-            return {
-              id:
-                seriesId +
-                index,
+            seriesId,
 
-              seriesId,
+            type:
+              "Despesa",
 
-              type:
-                "Despesa",
+            name:
+              String(
+                fd.get(
+                  "name"
+                )
+              ),
 
-              name:
-                String(
-                  fd.get(
-                    "name"
-                  )
-                ),
+            category:
+              String(
+                fd.get(
+                  "category"
+                )
+              ),
 
-              category:
+            icon:
+              getCategoryIcon(
                 String(
                   fd.get(
                     "category"
                   )
-                ),
+                )
+              ),
 
-              icon:
-                "✨",
+            date:
+              addMonthsToDateKey(
+                baseDate,
+                index
+              ),
 
-              date:
-                dateKey,
+            value,
 
-              value,
+            account:
+              accountLabel,
 
-              account:
-                accountLabel,
+            frequency:
+              "Parcelado",
 
-              frequency:
-                "Parcelado",
+            installment:
+              `${index + 1}/${total}`,
 
-              installment:
-                `${index + 1}/${total}`,
+            remaining:
+              total -
+              index -
+              1,
 
-              remaining:
-                total -
-                index -
-                1,
+            status:
+              "A pagar",
 
-              status:
-  index === 0
-    ? "Pago"
-    : "A pagar",
+            sourceType,
 
-              sourceType,
-
-              sourceId,
-            };
-          }
+            sourceId,
+          })
         );
     }
 
     /* =====================================================
-       DESPESA MENSAL
+       DESPESA MENSAL ATÉ DEZEMBRO
        ===================================================== */
 
     else if (
-      type === "Despesa" &&
+      type ===
+        "Despesa" &&
       selectedFrequency ===
         "Mensal"
     ) {
-      const [
-        year,
-        month,
-      ] =
-        baseDate
-          .split("-")
-          .map(Number);
+      const month =
+        Number(
+          baseDate.split(
+            "-"
+          )[1]
+        );
 
       const monthsRemaining =
         12 -
@@ -3319,7 +3883,13 @@ function TransactionsWorkspace({
               ),
 
             icon:
-              "✨",
+              getCategoryIcon(
+                String(
+                  fd.get(
+                    "category"
+                  )
+                )
+              ),
 
             date:
               addMonthsToDateKey(
@@ -3336,9 +3906,7 @@ function TransactionsWorkspace({
               "Mensal",
 
             status:
-  index === 0
-    ? "Pago"
-    : "A pagar",
+              "A pagar",
 
             sourceType,
 
@@ -3348,7 +3916,7 @@ function TransactionsWorkspace({
     }
 
     /* =====================================================
-       LANÇAMENTO ÚNICO
+       ÚNICO
        ===================================================== */
 
     else {
@@ -3374,10 +3942,13 @@ function TransactionsWorkspace({
             ),
 
           icon:
-            type ===
-            "Receita"
-              ? "💰"
-              : "✨",
+            getCategoryIcon(
+              String(
+                fd.get(
+                  "category"
+                )
+              )
+            ),
 
           date:
             baseDate,
@@ -3385,18 +3956,20 @@ function TransactionsWorkspace({
           value,
 
           account:
-            type ===
-            "Receita"
-              ? "Receita"
-              : accountLabel,
+            accountLabel,
 
           frequency:
             "Único",
 
+          /*
+            Todo novo lançamento começa
+            como pendente.
+          */
           status:
-  type === "Receita"
-    ? "Recebido"
-    : "Pago",
+            type ===
+            "Receita"
+              ? "A receber"
+              : "A pagar",
 
           sourceType:
             type ===
@@ -3451,6 +4024,19 @@ function TransactionsWorkspace({
     }
   }
 
+
+
+
+
+
+
+
+
+
+    /* =========================================================
+     EXCLUIR E EDITAR LANÇAMENTO
+     ========================================================= */
+
   async function deleteEntry(
     entry: Ledger
   ) {
@@ -3463,19 +4049,25 @@ function TransactionsWorkspace({
     }
 
     /*
-      Se for despesa lançada diretamente
-      em uma conta, devolve o valor.
+      Se for uma despesa já paga
+      e vinculada a uma conta,
+      devolve o valor ao saldo.
     */
     if (
       entry.type ===
         "Despesa" &&
+      normalizedStatus(
+        entry
+      ) === "Pago" &&
       entry.sourceType ===
         "account" &&
       entry.sourceId != null
     ) {
       const updatedAccounts =
         accounts.map(
-          (account) =>
+          (
+            account
+          ) =>
             account.id ===
             entry.sourceId
               ? {
@@ -3511,9 +4103,9 @@ function TransactionsWorkspace({
     }
 
     /*
-      Se for investimento,
-      retira novamente o dinheiro
-      da conta que recebeu a reserva.
+      Ao excluir investimento,
+      retira o valor da conta
+      que recebeu a reserva.
     */
     if (
       entry.type ===
@@ -3524,7 +4116,9 @@ function TransactionsWorkspace({
     ) {
       const updatedAccounts =
         accounts.map(
-          (account) =>
+          (
+            account
+          ) =>
             account.id ===
             entry.sourceId
               ? {
@@ -3552,7 +4146,7 @@ function TransactionsWorkspace({
         );
 
         alert(
-          "Erro ao reverter o investimento."
+          "Erro ao reverter a reserva."
         );
 
         return;
@@ -3561,7 +4155,9 @@ function TransactionsWorkspace({
 
     const updatedEntries =
       entries.filter(
-        (item) =>
+        (
+          item
+        ) =>
           item.id !==
           entry.id
       );
@@ -3637,15 +4233,28 @@ function TransactionsWorkspace({
           )
         ),
 
+      icon:
+        getCategoryIcon(
+          String(
+            fd.get(
+              "category"
+            )
+          )
+        ),
+
       status:
-  String(
-    fd.get("status")
-  ) as Ledger["status"],
+        String(
+          fd.get(
+            "status"
+          )
+        ) as LedgerStatus,
     };
 
     const updatedEntries =
       entries.map(
-        (entry) =>
+        (
+          entry
+        ) =>
           entry.id ===
           editingEntry.id
             ? updatedEntry
@@ -3676,46 +4285,135 @@ function TransactionsWorkspace({
     }
   }
 
+  /* =========================================================
+     STATUS + MOVIMENTAÇÃO DE SALDO
+     ========================================================= */
 
-  function getCardForEntry(entry: Ledger) {
-  if (
-    entry.sourceType !== "card" ||
-    entry.sourceId == null
+  async function handleStatusClick(
+    entry: Ledger
   ) {
-    return undefined;
+    if (
+      entry.type ===
+      "Investimento"
+    ) {
+      return;
+    }
+
+    const current =
+      normalizedStatus(
+        entry
+      );
+
+    let next:
+      LedgerStatus;
+
+    if (
+      entry.type ===
+      "Receita"
+    ) {
+      next =
+        current ===
+        "Recebido"
+          ? "A receber"
+          : "Recebido";
+    } else {
+      next =
+        current ===
+        "Pago"
+          ? "A pagar"
+          : "Pago";
+    }
+
+    /*
+      Ajusta saldo da conta somente
+      para despesas vinculadas a conta.
+    */
+    if (
+      entry.type ===
+        "Despesa" &&
+      entry.sourceType ===
+        "account" &&
+      entry.sourceId != null
+    ) {
+      const becomingPaid =
+        next === "Pago";
+
+      const updatedAccounts =
+        accounts.map(
+          (
+            account
+          ) =>
+            account.id ===
+            entry.sourceId
+              ? {
+                  ...account,
+
+                  balance:
+                    becomingPaid
+                      ? account.balance -
+                        entry.value
+                      : account.balance +
+                        entry.value,
+                }
+              : account
+        );
+
+      try {
+        await saveFinanceNamespace(
+          "accounts",
+          updatedAccounts
+        );
+
+        setAccounts(
+          updatedAccounts
+        );
+      } catch (error) {
+        console.error(
+          error
+        );
+
+        alert(
+          "Erro ao atualizar o saldo da conta."
+        );
+
+        return;
+      }
+    }
+
+    const updatedEntries =
+      entries.map(
+        (
+          item
+        ) =>
+          item.id ===
+          entry.id
+            ? {
+                ...item,
+                status:
+                  next,
+              }
+            : item
+      );
+
+    try {
+      await saveFinanceNamespace(
+        "ledger",
+        updatedEntries
+      );
+
+      setEntries(
+        updatedEntries
+      );
+    } catch (error) {
+      console.error(
+        error
+      );
+
+      alert(
+        "Não foi possível alterar o status."
+      );
+    }
   }
-
-  return cards.find(
-    (card) =>
-      card.id === entry.sourceId
-  );
-}
-
-function getCategoryIcon(entry: Ledger) {
-  const category =
-    categories.find(
-      (item) =>
-        item[0] ===
-        entry.category
-    );
-
-  return (
-    category?.[1] ||
-    entry.icon ||
-    "✨"
-  );
-}
-
-
-
-
-
-
-
-
-
-
-
 
   return (
     <div className="ledger-page">
@@ -3728,7 +4426,6 @@ function getCategoryIcon(entry: Ledger) {
           <h2>
             Receitas e despesas
             {" · "}
-
             {monthLabel(
               selectedMonth
             )}
@@ -3736,9 +4433,8 @@ function getCategoryIcon(entry: Ledger) {
 
           <p>
             Cadastre receitas,
-            despesas,
-            recorrências e
-            compras parceladas.
+            despesas, recorrências
+            e compras parceladas.
           </p>
         </div>
 
@@ -3782,51 +4478,48 @@ function getCategoryIcon(entry: Ledger) {
         </div>
       </section>
 
+      {/* ===================================================
+          RESUMO
+          =================================================== */}
+
       <section className="ledger-summary">
         <article>
           <span>
-            Receitas
+            A receber
           </span>
 
           <b className="ledger-green">
             +{" "}
             {fmt(
-              revenues
+              toReceive
             )}
           </b>
 
           <small>
+            Recebido:{" "}
             {fmt(
-              monthlyIncome
-            )}{" "}
-            previstos mensalmente
+              received
+            )}
           </small>
         </article>
 
         <article>
           <span>
-            Despesas
+            A pagar
           </span>
 
           <b className="ledger-red">
             −{" "}
             {fmt(
-              expenses
+              toPay
             )}
           </b>
 
           <small>
-            {
-              monthEntries.filter(
-                (entry) =>
-                  entry.type ===
-                    "Despesa" &&
-                  entry.frequency ===
-                    "Mensal"
-              ).length
-            }{" "}
-            compromissos
-            recorrentes
+            Pago:{" "}
+            {fmt(
+              paid
+            )}
           </small>
         </article>
 
@@ -3851,8 +4544,7 @@ function getCategoryIcon(entry: Ledger) {
           </b>
 
           <small>
-            Considerando o
-            período selecionado
+            Considerando todo o mês
           </small>
         </article>
 
@@ -3869,17 +4561,19 @@ function getCategoryIcon(entry: Ledger) {
 
           <small>
             Valores programados
-            para próximos meses
           </small>
         </article>
       </section>
+
+      {/* ===================================================
+          CATEGORIAS
+          =================================================== */}
 
       {catOpen && (
         <section className="category-manager">
           <div>
             <h3>
-              Categorias
-              personalizadas
+              Categorias personalizadas
             </h3>
 
             <p>
@@ -3901,7 +4595,9 @@ function getCategoryIcon(entry: Ledger) {
                   {category[0]}
 
                   <small>
-                    {category[2]}
+                    {
+                      category[2]
+                    }
                   </small>
 
                   <button
@@ -3946,7 +4642,6 @@ function getCategoryIcon(entry: Ledger) {
                   list
                 ) => [
                   ...list,
-
                   [
                     newCat,
                     "✨",
@@ -3976,14 +4671,19 @@ function getCategoryIcon(entry: Ledger) {
 
             <button>
               <Plus />
+
               Criar categoria
             </button>
           </form>
         </section>
       )}
 
+      {/* ===================================================
+          TABELA E FILTROS
+          =================================================== */}
+
       <section className="panel ledger-panel">
-        <div className="ledger-toolbar">
+        <div className="ledger-toolbar ledger-toolbar-new">
           <div className="ledger-tabs">
             {[
               "Todos",
@@ -4040,29 +4740,197 @@ function getCategoryIcon(entry: Ledger) {
             )}
           </div>
 
-          <label>
-            <Search />
+          <div className="ledger-toolbar-actions">
+            <label className="ledger-search">
+              <Search />
 
-            <input
-              value={
-                search
-              }
-              onChange={(
-                event
-              ) =>
-                setSearch(
+              <input
+                value={
+                  search
+                }
+                onChange={(
                   event
-                    .target
-                    .value
+                ) =>
+                  setSearch(
+                    event
+                      .target
+                      .value
+                  )
+                }
+                placeholder="Buscar"
+              />
+            </label>
+
+            <button
+              type="button"
+              className={
+                hasFilters
+                  ? "filter-button active"
+                  : "filter-button"
+              }
+              onClick={() =>
+                setFiltersOpen(
+                  (
+                    current
+                  ) =>
+                    !current
                 )
               }
-              placeholder="Buscar lançamento, categoria ou conta"
-            />
-          </label>
+            >
+              <Filter />
+
+              Filtros
+            </button>
+
+            {hasFilters && (
+              <button
+                type="button"
+                className="clear-filter-button"
+                onClick={
+                  clearFilters
+                }
+              >
+                <X />
+                Limpar
+              </button>
+            )}
+          </div>
         </div>
 
+        {filtersOpen && (
+          <div className="ledger-filters">
+            <label>
+              Categoria
+
+              <select
+                value={
+                  filterCategory
+                }
+                onChange={(
+                  event
+                ) =>
+                  setFilterCategory(
+                    event
+                      .target
+                      .value
+                  )
+                }
+              >
+                <option value="Todas">
+                  Todas
+                </option>
+
+                {availableCategories.map(
+                  (
+                    category
+                  ) => (
+                    <option
+                      key={
+                        category
+                      }
+                      value={
+                        category
+                      }
+                    >
+                      {
+                        getCategoryIcon(
+                          category
+                        )
+                      }{" "}
+                      {
+                        category
+                      }
+                    </option>
+                  )
+                )}
+              </select>
+            </label>
+
+            <label>
+              Conta / cartão
+
+              <select
+                value={
+                  filterSource
+                }
+                onChange={(
+                  event
+                ) =>
+                  setFilterSource(
+                    event
+                      .target
+                      .value
+                  )
+                }
+              >
+                <option value="Todos">
+                  Todos
+                </option>
+
+                {availableSources.map(
+                  (
+                    source
+                  ) => (
+                    <option
+                      key={
+                        source
+                      }
+                      value={
+                        source
+                      }
+                    >
+                      {
+                        source
+                      }
+                    </option>
+                  )
+                )}
+              </select>
+            </label>
+
+            <label>
+              Status
+
+              <select
+                value={
+                  filterStatus
+                }
+                onChange={(
+                  event
+                ) =>
+                  setFilterStatus(
+                    event
+                      .target
+                      .value
+                  )
+                }
+              >
+                <option value="Todos">
+                  Todos
+                </option>
+
+                <option value="A receber">
+                  A receber
+                </option>
+
+                <option value="Recebido">
+                  Recebido
+                </option>
+
+                <option value="A pagar">
+                  A pagar
+                </option>
+
+                <option value="Pago">
+                  Pago
+                </option>
+              </select>
+            </label>
+          </div>
+        )}
+
         <div className="ledger-list">
-          <div className="ledger-row ledger-labels">
+          <div className="ledger-row ledger-labels ledger-row-new">
             <span>
               Data
             </span>
@@ -4076,11 +4944,15 @@ function getCategoryIcon(entry: Ledger) {
             </span>
 
             <span>
-              Conta ou cartão
+              Conta / cartão
             </span>
 
             <span>
               Repetição
+            </span>
+
+            <span>
+              Status
             </span>
 
             <span>
@@ -4097,7 +4969,7 @@ function getCategoryIcon(entry: Ledger) {
               entry
             ) => (
               <article
-                className="ledger-row"
+                className="ledger-row ledger-row-new"
                 key={
                   entry.id
                 }
@@ -4122,43 +4994,44 @@ function getCategoryIcon(entry: Ledger) {
                       }
                     </b>
 
-                    <small>
-                      {
-                        entry.status
-                      }
-                    </small>
+                    {entry.installment && (
+                      <small>
+                        Parcela{" "}
+                        {
+                          entry.installment
+                        }
+                      </small>
+                    )}
                   </p>
                 </div>
 
                 <span className="ledger-category">
-  <span className="ledger-category-icon">
-    {getCategoryIcon(entry)}
-  </span>
+                  <span className="ledger-category-icon">
+                    {getCategoryIcon(
+                      entry.category
+                    )}
+                  </span>
 
-  {entry.category}
-</span>
+                  {
+                    entry.category
+                  }
+                </span>
 
                 <span>
-  {entry.sourceType === "card" ? (
-    <span
-      className="ledger-card-source"
-      style={{
-        background: (() => {
-          const card =
-            getCardForEntry(entry);
-
-          return card
-            ? `linear-gradient(135deg, ${card.color}, ${card.color2})`
-            : undefined;
-        })(),
-      }}
-    >
-      {entry.account}
-    </span>
-  ) : (
-    entry.account
-  )}
-</span>
+                  {entry.sourceType ===
+                  "card" ? (
+                    <CardSourceBadge
+                      entry={
+                        entry
+                      }
+                      cards={
+                        cards
+                      }
+                    />
+                  ) : (
+                    entry.account
+                  )}
+                </span>
 
                 <div>
                   <b className="frequency">
@@ -4172,14 +5045,44 @@ function getCategoryIcon(entry: Ledger) {
                       Parcela{" "}
                       {
                         entry.installment
-                      }{" "}
-                      · faltam{" "}
+                      }
+                      {" · "}
+                      faltam{" "}
                       {
                         entry.remaining
                       }
                     </small>
                   )}
                 </div>
+
+                <button
+                  type="button"
+                  className={`ledger-status-button ${
+                    normalizedStatus(
+                      entry
+                    ) ===
+                      "Pago" ||
+                    normalizedStatus(
+                      entry
+                    ) ===
+                      "Recebido"
+                      ? "done"
+                      : "pending"
+                  }`}
+                  onClick={() =>
+                    handleStatusClick(
+                      entry
+                    )
+                  }
+                  disabled={
+                    entry.type ===
+                    "Investimento"
+                  }
+                >
+                  {normalizedStatus(
+                    entry
+                  )}
+                </button>
 
                 <strong
                   className={
@@ -4235,6 +5138,21 @@ function getCategoryIcon(entry: Ledger) {
               </article>
             )
           )}
+
+          {!shown.length && (
+            <div className="ledger-empty">
+              <Search />
+
+              <b>
+                Nenhum lançamento encontrado
+              </b>
+
+              <span>
+                Ajuste os filtros ou
+                cadastre um novo lançamento.
+              </span>
+            </div>
+          )}
         </div>
       </section>
 
@@ -4286,6 +5204,7 @@ function getCategoryIcon(entry: Ledger) {
                   }}
                 >
                   <ArrowUpRight />
+
                   Despesa
                 </button>
 
@@ -4308,6 +5227,7 @@ function getCategoryIcon(entry: Ledger) {
                   }}
                 >
                   <ArrowDownLeft />
+
                   Receita
                 </button>
               </div>
@@ -4391,8 +5311,12 @@ function getCategoryIcon(entry: Ledger) {
                             category[0]
                           }
                         >
-                          {category[1]}{" "}
-                          {category[0]}
+                          {
+                            category[1]
+                          }{" "}
+                          {
+                            category[0]
+                          }
                         </option>
                       )
                     )}
@@ -4436,11 +5360,9 @@ function getCategoryIcon(entry: Ledger) {
                     <Sparkles />
 
                     <span>
-                      Se escolher recorrência,
-                      a receita será criada até
-                      dezembro do ano selecionado.
-                      Cada mês poderá ser editado
-                      individualmente.
+                      Toda receita nova
+                      será criada inicialmente
+                      como <b>A receber</b>.
                     </span>
                   </div>
                 </>
@@ -4465,10 +5387,14 @@ function getCategoryIcon(entry: Ledger) {
                             key={`account-${account.id}`}
                             value={`account:${account.id}`}
                           >
-                            {account.name}
+                            {
+                              account.name
+                            }
                             {" · "}
-                            {account.bank}
-                            {" · Saldo "}
+                            {
+                              account.bank
+                            }
+                            {" · "}
                             {fmt(
                               account.balance
                             )}
@@ -4484,9 +5410,13 @@ function getCategoryIcon(entry: Ledger) {
                             key={`card-${card.id}`}
                             value={`card:${card.id}`}
                           >
-                            {card.bank}
+                            {
+                              card.bank
+                            }
                             {" • "}
-                            {card.last4}
+                            {
+                              card.last4
+                            }
                           </option>
                         )
                       )}
@@ -4546,6 +5476,16 @@ function getCategoryIcon(entry: Ledger) {
                       />
                     </label>
                   )}
+
+                  <div className="income-info expense-info">
+                    <Sparkles />
+
+                    <span>
+                      Toda despesa nova
+                      será criada inicialmente
+                      como <b>A pagar</b>.
+                    </span>
+                  </div>
                 </>
               )}
             </div>
@@ -4567,6 +5507,7 @@ function getCategoryIcon(entry: Ledger) {
                 type="submit"
               >
                 <Check />
+
                 Salvar lançamento
               </button>
             </div>
@@ -4575,7 +5516,7 @@ function getCategoryIcon(entry: Ledger) {
       )}
 
       {/* ===================================================
-          EDITAR LANÇAMENTO INDIVIDUAL
+          EDITAR
           =================================================== */}
 
       {editingEntry && (
@@ -4643,51 +5584,91 @@ function getCategoryIcon(entry: Ledger) {
               <label>
                 Categoria
 
-                <input
+                <select
                   name="category"
                   defaultValue={
                     editingEntry.category
                   }
                   required
-                />
+                >
+                  {categories
+                    .filter(
+                      (
+                        category
+                      ) =>
+                        category[2] ===
+                        editingEntry.type
+                    )
+                    .map(
+                      (
+                        category,
+                        index
+                      ) => (
+                        <option
+                          key={`${category[0]}-edit-${index}`}
+                          value={
+                            category[0]
+                          }
+                        >
+                          {
+                            category[1]
+                          }{" "}
+                          {
+                            category[0]
+                          }
+                        </option>
+                      )
+                    )}
+                </select>
               </label>
 
-              <label>
-  Situação
+              {editingEntry.type !==
+                "Investimento" && (
+                <label>
+                  Status
 
-  <select
-    name="status"
-    defaultValue={
-      normalizedStatus(editingEntry)
-    }
-  >
-    {editingEntry.type === "Receita" ? (
-      <>
-        <option value="Recebido">
-          Recebido
-        </option>
+                  <select
+                    name="status"
+                    defaultValue={normalizedStatus(
+                      editingEntry
+                    )}
+                  >
+                    {editingEntry.type ===
+                    "Receita" ? (
+                      <>
+                        <option value="A receber">
+                          A receber
+                        </option>
 
-        <option value="A receber">
-          A receber
-        </option>
-      </>
-    ) : editingEntry.type === "Despesa" ? (
-      <>
-        <option value="Pago">
-          Pago
-        </option>
+                        <option value="Recebido">
+                          Recebido
+                        </option>
+                      </>
+                    ) : (
+                      <>
+                        <option value="A pagar">
+                          A pagar
+                        </option>
 
-        <option value="A pagar">
-          A pagar
-        </option>
-      </>
-    ) : (
-      <option value="Confirmado">
-        Confirmado
-      </option>
-    )}
-  </select>
-</label>
+                        <option value="Pago">
+                          Pago
+                        </option>
+                      </>
+                    )}
+                  </select>
+                </label>
+              )}
+
+              {editingEntry.type ===
+                "Investimento" && (
+                <input
+                  type="hidden"
+                  name="status"
+                  value={
+                    editingEntry.status
+                  }
+                />
+              )}
             </div>
 
             <div className="modal-foot">
@@ -4707,6 +5688,7 @@ function getCategoryIcon(entry: Ledger) {
                 type="submit"
               >
                 <Check />
+
                 Salvar alteração
               </button>
             </div>
@@ -4716,12 +5698,6 @@ function getCategoryIcon(entry: Ledger) {
     </div>
   );
 }
-
-
-
-
-
-
 
 
 
@@ -4847,6 +5823,7 @@ function Planning() {
             index
               ? {
                   ...budget,
+
                   value:
                     Math.max(
                       0,
@@ -4864,6 +5841,7 @@ function Planning() {
         <div>
           <span className="planning-kicker">
             <CalendarDays />
+
             {" "}
             PLANEJAMENTO
           </span>
@@ -5056,6 +6034,7 @@ function Planning() {
             </div>
 
             <button
+              type="button"
               onClick={() =>
                 setEditing(
                   (
@@ -5087,6 +6066,7 @@ function Planning() {
                   }
                 >
                   <button
+                    type="button"
                     className="plan-check"
                     onClick={() =>
                       setItems(
@@ -5193,6 +6173,7 @@ function Planning() {
 
                   {editing && (
                     <button
+                      type="button"
                       className="plan-remove"
                       onClick={() =>
                         setItems(
@@ -5218,6 +6199,7 @@ function Planning() {
           </div>
 
           <button
+            type="button"
             className="add-commitment"
             onClick={() =>
               setItems(
@@ -5353,14 +6335,12 @@ function Planning() {
 
             <p>
               <b>
-                Margem
-                disponível
+                Margem disponível
               </b>
 
               <br />
 
-              Sua margem atual
-              é{" "}
+              Sua margem atual é{" "}
 
               <strong>
                 {income > 0
@@ -5382,34 +6362,6 @@ function Planning() {
     </div>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 /* =========================================================
    CARTÕES
@@ -5443,7 +6395,9 @@ function BankCatalog() {
 
   const banks =
     bankCatalog.filter(
-      (bank) =>
+      (
+        bank
+      ) =>
         bank[0]
           .toLowerCase()
           .includes(
@@ -5612,8 +6566,7 @@ function BankCatalog() {
 
           <p>
             Cadastre seus
-            cartões e
-            configure
+            cartões e configure
             fechamento e
             vencimento.
           </p>
@@ -5642,6 +6595,7 @@ function BankCatalog() {
 
           <button
             className="primary"
+            type="button"
             onClick={() =>
               openCard()
             }
@@ -5719,6 +6673,7 @@ function BankCatalog() {
                   </small>
 
                   <button
+                    type="button"
                     className="edit-card"
                     onClick={() =>
                       setEditing(
@@ -5751,13 +6706,12 @@ function BankCatalog() {
 
             <span>
               Adicione seu
-              primeiro cartão
-              para organizar
-              suas compras.
+              primeiro cartão.
             </span>
 
             <button
               className="primary"
+              type="button"
               onClick={() =>
                 openCard()
               }
@@ -5790,6 +6744,7 @@ function BankCatalog() {
 
             return (
               <button
+                type="button"
                 key={
                   bank[0]
                 }
@@ -5853,6 +6808,7 @@ function BankCatalog() {
         )}
 
         <button
+          type="button"
           className="bank-option custom-bank"
           onClick={() =>
             openCard()
@@ -5982,7 +6938,6 @@ function BankCatalog() {
                         : {}),
                     });
                   }}
-                  placeholder="Ex.: Nubank"
                 />
               </label>
 
@@ -6009,7 +6964,6 @@ function BankCatalog() {
                   maxLength={
                     12
                   }
-                  placeholder="Ex.: NU"
                 />
               </label>
 
@@ -6046,7 +7000,6 @@ function BankCatalog() {
                   maxLength={
                     4
                   }
-                  placeholder="0000"
                 />
               </label>
 
@@ -6319,14 +7272,14 @@ function AccountsWorkspace() {
           <p>
             Cadastre contas
             bancárias,
-            poupança,
-            dinheiro e
-            investimentos.
+            dinheiro, poupança
+            e investimentos.
           </p>
         </div>
 
         <button
           className="primary"
+          type="button"
           onClick={() =>
             setFormOpen(
               true
@@ -6445,13 +7398,13 @@ function AccountsWorkspace() {
 
             <span>
               Adicione sua
-              primeira conta
-              para organizar
-              seus saldos.
+              primeira conta para
+              organizar seus saldos.
             </span>
 
             <button
               className="primary"
+              type="button"
               onClick={() =>
                 setFormOpen(
                   true
