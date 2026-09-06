@@ -25,6 +25,7 @@ import {
   KeyRound,
   Landmark,
   LayoutDashboard,
+  LogOut,
   Menu,
   PanelLeftClose,
   PanelLeftOpen,
@@ -420,7 +421,6 @@ export default function Home({
     useState(currentMonthKey);
 
 
-const [profileOpen, setProfileOpen] = useState(false);
 
 
 
@@ -1310,9 +1310,10 @@ const donutBackground =
 
     <button
       className="primary"
-      onClick={() =>
-        setImportOpen(true)
-      }
+      onClick={() => {
+  setSection("Lançamentos");
+  setImportOpen(true);
+}}
     >
       <Upload />
       Importar extrato
