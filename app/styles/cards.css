@@ -136,13 +136,20 @@
    ========================================================= */
 
 .selected-cards-grid{
-  display:grid;
-  grid-template-columns:repeat(
-    auto-fill,
-    minmax(310px, 360px)
-  );
+  display:flex;
   gap:18px;
-  align-items:start;
+  overflow-x:auto;
+  overflow-y:hidden;
+  padding:5px 4px 14px;
+
+  scroll-snap-type:x proximity;scrollbar-width:thin;
+}
+
+.selected-cards-grid .credit-visual{
+  flex:0 0 330px;
+  width:330px;
+
+  scroll-snap-align:start;
 }
 
 /* =========================================================
@@ -781,15 +788,8 @@
         minmax(0,1fr)
       );
   }
-
-  .selected-cards-grid{
-    grid-template-columns:
-      repeat(
-        2,
-        minmax(280px,1fr)
-      );
-  }
 }
+
 
 /* =========================================================
    MOBILE
@@ -807,7 +807,6 @@
 
   .bank-title-actions{
     width:100%;
-
     margin-top:15px;
   }
 
@@ -823,18 +822,13 @@
       );
   }
 
-  .selected-cards-grid{
-    grid-template-columns:1fr;
-  }
-
   .card-form{
     grid-template-columns:1fr;
-
     max-height:60vh;
-
     overflow:auto;
   }
 }
+
 
 @media(max-width:600px){
 
@@ -852,6 +846,11 @@
     height:245px;
   }
 
+  .selected-cards-grid .credit-visual{
+    flex:0 0 285px;
+    width:285px;
+  }
+
   .card-modal-foot > span{
     display:none;
   }
@@ -860,6 +859,7 @@
     flex:1 1 140px;
   }
 }
+
 
 @media(max-width:430px){
 
@@ -870,7 +870,6 @@
 
   .bank-option{
     min-height:68px;
-
     padding:8px;
 
     grid-template-columns:
@@ -882,9 +881,7 @@
   .bank-logo{
     width:38px;
     height:38px;
-
     border-radius:10px;
-
     font-size:10px;
   }
 
@@ -898,13 +895,24 @@
 
   .credit-visual{
     height:245px;
-
-    padding:
-      18px 18px 50px;
+    padding:18px 18px 50px;
   }
 
   .card-bank-name,
   .credit-visual > strong{
     left:18px;
+  }
+}
+
+@media(max-width:600px){
+
+  .selected-cards-grid{
+    display:flex;
+    overflow-x:auto;
+  }
+
+  .selected-cards-grid .credit-visual{
+    flex:0 0 285px;
+    width:285px;
   }
 }
