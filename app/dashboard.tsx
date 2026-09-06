@@ -947,6 +947,44 @@ export default function Home({
       monthEntries,
     ]);
 
+    const categoryTotal =
+  cats.reduce(
+    (total, [, value]) =>
+      total + value,
+    0
+  );
+
+const donutBackground =
+  cats.length && categoryTotal > 0
+    ? `conic-gradient(${cats
+        .slice(0, 5)
+        .map(([_, value], index) => {
+          const colors = [
+            "#118f8b",
+            "#4c73c9",
+            "#d6a63b",
+            "#d76b61",
+            "#7c6db0",
+          ];
+
+          const previous =
+            cats
+              .slice(0, index)
+              .reduce(
+                (sum, [, current]) =>
+                  sum + current,
+                0
+              ) / categoryTotal * 100;
+
+          const current =
+            previous +
+            (value / categoryTotal) * 100;
+
+          return `${colors[index]} ${previous}% ${current}%`;
+        })
+        .join(", ")})`
+    : "#edf2f2";
+
   const filtered =
     monthEntries.filter(
       (entry) =>
@@ -1763,60 +1801,64 @@ export default function Home({
           </div>
 
           <div className="header-actions">
-            <div className="month-navigation">
-              <button
-                type="button"
-                onClick={() =>
-                  setMonth(
-                    (
-                      current
-                    ) =>
-                      changeMonth(
-                        current,
-                        -1
-                      )
-                  )
-                }
-              >
-                ‹
-              </button>
+            <div className="header-actions">
+  <div className="month-navigation">
+    <button
+      type="button"
+      onClick={() =>
+        setMonth((current) =>
+          changeMonth(current, -1)
+        )
+      }
+    >
+      ‹
+    </button>
 
-              <label className="month-current">
-                <CalendarDays />
+    <label className="month-current">
+      <CalendarDays />
 
-                <input
-                  type="month"
-                  value={
-                    month
-                  }
-                  onChange={(
-                    event
-                  ) =>
-                    setMonth(
-                      event
-                        .target
-                        .value
-                    )
-                  }
-                />
-              </label>
+      <input
+        type="month"
+        value={month}
+        onChange={(event) =>
+          setMonth(
+            event.target.value
+          )
+        }
+      />
+    </label>
 
-              <button
-                type="button"
-                onClick={() =>
-                  setMonth(
-                    (
-                      current
-                    ) =>
-                      changeMonth(
-                        current,
-                        1
-                      )
-                  )
-                }
-              >
-                ›
-              </button>
+    <button
+      type="button"
+      onClick={() =>
+        setMonth((current) =>
+          changeMonth(current, 1)
+        )
+      }
+    >
+      ›
+    </button>
+  </div>
+
+  <button
+    className="primary"
+    onClick={() =>
+      setImportOpen(true)
+    }
+  >
+    <Upload />
+
+    Importar extrato
+  </button>
+
+  <button
+    className="iconbtn"
+    onClick={onLogout}
+    title="Sair"
+  >
+    <LogOut />
+  </button>
+</div>
             </div>
 
             <button
@@ -2184,119 +2226,122 @@ export default function Home({
 
             <div className="grid-main">
               <section className="panel cash">
-                <PanelHead
-                  title="Fluxo do mês"
-                  sub={monthLabel(
-                    month
-                  )}
-                  onDetails={() =>
-                    setSection(
-                      "Lançamentos"
-                    )
-                  }
-                />
+  <PanelHead
+    title="Situação das receitas e despesas"
+    sub={monthLabel(month)}
+    onDetails={() =>
+      setSection("Lançamentos")
+    }
+  />
 
-                <div className="legend">
-                  <span>
-                    <i className="lg-in" />
-                    Entradas
-                  </span>
+  <div className="financial-status-grid">
+    <article>
+      <span>Recebido</span>
+      <b className="green">
+        + {fmt(received)}
+      </b>
+      <small>
+        {income > 0
+          ? `${Math.round((received / income) * 100)}% das receitas`
+          : "Sem receitas"}
+      </small>
 
-                  <span>
-                    <i className="lg-out" />
-                    Saídas
-                  </span>
+      <div className="status-progress">
+        <i
+          style={{
+            width:
+              income > 0
+                ? `${Math.min(100, (received / income) * 100)}%`
+                : "0%",
+          }}
+        />
+      </div>
+    </article>
 
-                  <span>
-                    <i className="lg-proj" />
-                    Saldo acumulado
-                  </span>
-                </div>
+    <article>
+      <span>A receber</span>
+      <b>
+        {fmt(toReceive)}
+      </b>
+      <small>
+        Valores ainda pendentes
+      </small>
 
-                <div className="chart">
-                  <div className="axis">
-                    <span>
-                      Maior
-                    </span>
+      <div className="status-progress pending">
+        <i
+          style={{
+            width:
+              income > 0
+                ? `${Math.min(100, (toReceive / income) * 100)}%`
+                : "0%",
+          }}
+        />
+      </div>
+    </article>
 
-                    <span>
-                      75%
-                    </span>
+    <article>
+      <span>Pago</span>
+      <b className="red">
+        − {fmt(paid)}
+      </b>
+      <small>
+        {spent > 0
+          ? `${Math.round((paid / spent) * 100)}% das despesas`
+          : "Sem despesas"}
+      </small>
 
-                    <span>
-                      50%
-                    </span>
+      <div className="status-progress expense">
+        <i
+          style={{
+            width:
+              spent > 0
+                ? `${Math.min(100, (paid / spent) * 100)}%`
+                : "0%",
+          }}
+        />
+      </div>
+    </article>
 
-                    <span>
-                      0
-                    </span>
-                  </div>
+    <article>
+      <span>A pagar</span>
+      <b>
+        {fmt(toPay)}
+      </b>
+      <small>
+        Compromissos pendentes
+      </small>
 
-                  <div className="plot">
-                    {flowData.map(
-                      (
-                        item
-                      ) => (
-                        <div
-                          className="bars"
-                          key={
-                            item.label
-                          }
-                        >
-                          <i
-                            className="in"
-                            title={`Entradas: ${fmt(
-                              item.income
-                            )}`}
-                            style={{
-                              height:
-                                `${item.incomeHeight}%`,
-                            }}
-                          />
+      <div className="status-progress warning">
+        <i
+          style={{
+            width:
+              spent > 0
+                ? `${Math.min(100, (toPay / spent) * 100)}%`
+                : "0%",
+          }}
+        />
+      </div>
+    </article>
+  </div>
 
-                          <i
-                            className="out"
-                            title={`Saídas: ${fmt(
-                              item.expense
-                            )}`}
-                            style={{
-                              height:
-                                `${item.expenseHeight}%`,
-                            }}
-                          />
+  <div className="financial-status-footer">
+    <div>
+      <span>Saldo realizado</span>
+      <b>
+        {realizedBalance < 0 ? "− " : ""}
+        {fmt(realizedBalance)}
+      </b>
+    </div>
 
-                          <i
-                            className={`proj ${
-                              item.balance <
-                              0
-                                ? "negative"
-                                : ""
-                            }`}
-                            title={`Saldo acumulado: ${
-                              item.balance <
-                              0
-                                ? "− "
-                                : ""
-                            }${fmt(
-                              item.balance
-                            )}`}
-                            style={{
-                              height:
-                                `${item.balanceHeight}%`,
-                            }}
-                          />
-
-                          <span>
-                            {
-                              item.label
-                            }
-                          </span>
-                        </div>
-                      )
-                    )}
-                  </div>
-                </div>
-              </section>
+    <div>
+      <span>Saldo previsto</span>
+      <b>
+        {projectedBalance < 0 ? "− " : ""}
+        {fmt(projectedBalance)}
+      </b>
+    </div>
+  </div>
+</section>
 
               <section className="panel categories">
                 <PanelHead
@@ -2307,7 +2352,12 @@ export default function Home({
                 />
 
                 <div className="donut-wrap">
-                  <div className="donut">
+                 <div
+  className="donut"
+  style={{
+    background: donutBackground,
+  }}
+>
                     <div>
                       <b>
                         {fmt(
@@ -2342,8 +2392,17 @@ export default function Home({
                           >
                             <span>
                               <i
-                                className={`c${index}`}
-                              />
+  className={`c${index}`}
+  style={{
+    background: [
+      "#118f8b",
+      "#4c73c9",
+      "#d6a63b",
+      "#d76b61",
+      "#7c6db0",
+    ][index],
+  }}
+/>
 
                               <span className="category-emoji">
                                 {getCategoryIcon(

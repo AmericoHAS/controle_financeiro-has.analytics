@@ -2977,3 +2977,105 @@ textarea:focus {
     width:100%;
   }
 }
+
+
+/* =========================================================
+   SITUAÇÃO FINANCEIRA DO MÊS
+   ========================================================= */
+
+.financial-status-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:14px;
+  margin-top:18px;
+}
+
+.financial-status-grid article{
+  padding:16px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:#fff;
+}
+
+.financial-status-grid article > span{
+  display:block;
+  margin-bottom:6px;
+  color:var(--muted);
+  font-size:12px;
+  font-weight:700;
+}
+
+.financial-status-grid article b{
+  display:block;
+  margin-bottom:5px;
+  font-size:20px;
+}
+
+.financial-status-grid article small{
+  color:var(--muted);
+  font-size:11px;
+}
+
+.status-progress{
+  width:100%;
+  height:6px;
+  margin-top:12px;
+  overflow:hidden;
+  border-radius:999px;
+  background:#e8f0ef;
+}
+
+.status-progress i{
+  display:block;
+  height:100%;
+  border-radius:inherit;
+  background:#14998f;
+  transition:width .5s ease;
+}
+
+.status-progress.pending i{
+  background:#4c73c9;
+}
+
+.status-progress.expense i{
+  background:#d76b61;
+}
+
+.status-progress.warning i{
+  background:#d6a63b;
+}
+
+.financial-status-footer{
+  margin-top:16px;
+  padding-top:14px;
+  border-top:1px solid var(--line);
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+}
+
+.financial-status-footer div{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+
+.financial-status-footer span{
+  color:var(--muted);
+  font-size:12px;
+}
+
+.financial-status-footer b{
+  font-size:16px;
+}
+
+@media(max-width:650px){
+  .financial-status-grid{
+    grid-template-columns:1fr;
+  }
+
+  .financial-status-footer{
+    grid-template-columns:1fr;
+  }
+}
