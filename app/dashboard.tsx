@@ -5620,6 +5620,23 @@ function BankCatalog({
           availableLimit,
         } = getCardLimitInfo(card);
 
+        const monthInvoice =
+  entries
+    .filter(
+      (entry) =>
+        entry.type === "Despesa" &&
+        entry.sourceType === "card" &&
+        entry.sourceId === card.id &&
+        dateBelongsToMonth(
+          entry.date,
+          currentMonthKey()
+        )
+    )
+    .reduce(
+      (total, entry) =>
+        total + entry.value,
+      0
+    );
         return (
           <article
             className="credit-visual"
@@ -5665,6 +5682,11 @@ function BankCatalog({
             <strong className="card-bank-name">
               {card.bank}
             </strong>
+
+<div className="card-invoice">
+  <span>Fatura do mês</span>
+  <b>{fmt(monthInvoice)}</b>
+</div>
 
             <button
               type="button"
