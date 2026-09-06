@@ -526,3 +526,110 @@
   font-size:11px;
   letter-spacing:0;
 }
+
+
+
+
+.selected-cards-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(290px,360px));
+  gap:18px;
+  align-items:start;
+}
+
+.bank-catalog-section{
+  margin-top:28px;
+}
+
+.bank-catalog-section > h3{
+  margin:0 0 14px;
+  font-size:17px;
+  color:var(--ink);
+}
+
+.bank-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
+  gap:12px;
+}
+
+.credit-visual{
+  position:relative;
+  min-height:235px;
+  padding:20px;
+  overflow:hidden;
+  border-radius:20px;
+  display:flex;
+  flex-direction:column;
+}
+
+.card-number{
+  position:relative;
+  z-index:2;
+  margin-top:26px;
+}
+
+.card-dates{
+  position:relative;
+  z-index:2;
+  margin-top:5px;
+}
+
+.card-limit-info{
+  position:relative;
+  z-index:2;
+
+  margin-top:15px;
+
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:8px;
+}
+
+.card-limit-info span{
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+
+  font-size:9px;
+  color:rgba(255,255,255,.72);
+}
+
+.card-limit-info span b{
+  font-size:11px;
+  color:#fff;
+  white-space:nowrap;
+}
+
+.card-bank-name{
+  position:absolute;
+  z-index:2;
+  left:20px;
+  bottom:15px;
+
+  max-width:60%;
+
+  font-size:13px;
+  color:#fff;
+}
+
+.edit-card{
+  position:absolute;
+  z-index:3;
+  right:16px;
+  bottom:12px;
+}
+
+@media(max-width:600px){
+  .selected-cards-grid{
+    grid-template-columns:1fr;
+  }
+
+  .bank-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+
+  .credit-visual{
+    min-height:235px;
+  }
+}

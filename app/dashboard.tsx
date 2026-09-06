@@ -583,13 +583,16 @@ export default function Home({
       initialAccounts
     );
 
-  const [cards] =
-    usePersistedFinance<
-      FinanceCard[]
-    >(
-      "cards",
-      initialCards
-    );
+  const [
+  cards,
+  setCards,
+] =
+  usePersistedFinance<
+    FinanceCard[]
+  >(
+    "cards",
+    initialCards
+  );
 
   const [
     homeCategories,
@@ -1625,10 +1628,10 @@ export default function Home({
         {section ===
         "Cartões" ? (
           <BankCatalog
-            entries={
-              entries
-            }
-          />
+  entries={entries}
+  cards={cards}
+  setCards={setCards}
+/>
         ) : section ===
           "Contas" ? (
           <AccountsWorkspace
@@ -1666,33 +1669,18 @@ export default function Home({
         ) : section ===
           "Lançamentos" ? (
           <TransactionsWorkspace
-            importReady={
-              saveState ===
-                "salvo" &&
-              accountsSaveState ===
-                "salvo"
-            }
-            accounts={
-              investmentAccounts
-            }
-            setAccounts={
-              setInvestmentAccounts
-            }
-            onImport={() =>
-              setImportOpen(
-                true
-              )
-            }
-            selectedMonth={
-              month
-            }
-            entries={
-              entries
-            }
-            setEntries={
-              setEntries
-            }
-          />
+  importReady={
+    saveState === "salvo" &&
+    accountsSaveState === "salvo"
+  }
+  accounts={investmentAccounts}
+  setAccounts={setInvestmentAccounts}
+  cards={cards}
+  onImport={() => setImportOpen(true)}
+  selectedMonth={month}
+  entries={entries}
+  setEntries={setEntries}
+/>
         ) : section ===
           "Metas e reservas" ? (
           <GoalsWorkspace
@@ -2700,6 +2688,7 @@ function TransactionsWorkspace({
   importReady,
   accounts,
   setAccounts,
+  cards,
   onImport,
   selectedMonth,
   entries,
@@ -2707,15 +2696,22 @@ function TransactionsWorkspace({
 }: {
   accounts: FinanceAccount[];
   importReady: boolean;
+
   setAccounts:
     React.Dispatch<
       React.SetStateAction<
         FinanceAccount[]
       >
     >;
+
+  cards: FinanceCard[];
+
   onImport: () => void;
+
   selectedMonth: string;
+
   entries: Ledger[];
+
   setEntries:
     React.Dispatch<
       React.SetStateAction<
@@ -2723,13 +2719,7 @@ function TransactionsWorkspace({
       >
     >;
 }) {
-  const [cards] =
-    usePersistedFinance<
-      FinanceCard[]
-    >(
-      "cards",
-      initialCards
-    );
+  
 
   const [
     categories,
@@ -5306,19 +5296,19 @@ function TransactionsWorkspace({
 
 function BankCatalog({
   entries,
+  cards,
+  setCards,
 }: {
   entries: Ledger[];
+  cards: FinanceCard[];
+
+  setCards:
+    React.Dispatch<
+      React.SetStateAction<
+        FinanceCard[]
+      >
+    >;
 }) {
-  const [
-    cards,
-    setCards,
-  ] =
-    usePersistedFinance<
-      FinanceCard[]
-    >(
-      "cards",
-      initialCards
-    );
 
   const [
     q,
@@ -5613,261 +5603,192 @@ function BankCatalog({
       </div>
 
       <div className="selected-banks">
-        <div className="selected-heading">
-          <h3>
-            Seus cartões
-          </h3>
+  <div className="selected-heading">
+    <h3>
+      Seus cartões
+    </h3>
 
-          <small>
-            {
-              cards.length
-            }{" "}
+    <small>
+      {cards.length}{" "}
+      {cards.length === 1
+        ? "cartão cadastrado"
+        : "cartões cadastrados"}
+    </small>
+  </div>
 
-            {cards.length ===
-            1
-              ? "cartão cadastrado"
-              : "cartões cadastrados"}
-          </small>
-        </div>
+  {cards.length ? (
+    <div className="selected-cards-grid">
+      {cards.map((card) => {
+        const {
+          totalLimit,
+          usedLimit,
+          availableLimit,
+        } = getCardLimitInfo(card);
 
-        {cards.length ? (
-          <div>
-            {cards.map(
-              (
-                card
-              ) => {
-                const {
-                  totalLimit,
-                  usedLimit,
-                  availableLimit,
-                } =
-                  getCardLimitInfo(
-                    card
-                  );
+        return (
+          <article
+            className="credit-visual"
+            key={card.id}
+            style={{
+              background: `linear-gradient(135deg, ${card.color}, ${card.color2})`,
+            }}
+          >
+            <div className="card-shine" />
 
-                return (
-                  <article
-                    className="credit-visual"
-                    key={
-                      card.id
-                    }
-                    style={{
-                      background:
-                        `linear-gradient(135deg, ${card.color}, ${card.color2})`,
-                    }}
-                  >
-                    <div className="card-shine" />
+            <div className="card-top">
+              <span>{card.logo}</span>
+              <CreditCard />
+            </div>
 
-                    <div className="card-top">
-                      <span>
-                        {
-                          card.logo
-                        }
-                      </span>
-
-                      <CreditCard />
-                    </div>
-
-                    <b>
-                      ••••&nbsp;{" "}
-                      {
-                        card.last4
-                      }
-                    </b>
-
-                    <small>
-                      Fechamento dia{" "}
-                      {
-                        card.closing
-                      }
-                      {" · "}
-                      Vencimento dia{" "}
-                      {
-                        card.due
-                      }
-                    </small>
-
-                    <div className="card-limit-info">
-                      <span>
-                        Disponível
-                        <b>
-                          {fmt(
-                            availableLimit
-                          )}
-                        </b>
-                      </span>
-
-                      <span>
-                        Utilizado
-                        <b>
-                          {fmt(
-                            usedLimit
-                          )}
-                        </b>
-                      </span>
-
-                      <span>
-                        Limite
-                        <b>
-                          {fmt(
-                            totalLimit
-                          )}
-                        </b>
-                      </span>
-                    </div>
-
-                    <button
-                      type="button"
-                      className="edit-card"
-                      onClick={() =>
-                        setEditing(
-                          card
-                        )
-                      }
-                    >
-                      <Pencil />
-                      Editar
-                    </button>
-
-                    <strong>
-                      {
-                        card.bank
-                      }
-                    </strong>
-                  </article>
-                );
-              }
-            )}
-          </div>
-        ) : (
-          <div className="empty-cards">
-            <CreditCard />
-
-            <b>
-              Nenhum cartão cadastrado
+            <b className="card-number">
+              ••••&nbsp; {card.last4}
             </b>
 
-            <span>
-              Adicione seu primeiro cartão.
-            </span>
+            <small className="card-dates">
+              Fechamento dia {card.closing}
+              {" · "}
+              Vencimento dia {card.due}
+            </small>
+
+            <div className="card-limit-info">
+              <span>
+                Disponível
+                <b>{fmt(availableLimit)}</b>
+              </span>
+
+              <span>
+                Utilizado
+                <b>{fmt(usedLimit)}</b>
+              </span>
+
+              <span>
+                Limite
+                <b>{fmt(totalLimit)}</b>
+              </span>
+            </div>
+
+            <strong className="card-bank-name">
+              {card.bank}
+            </strong>
 
             <button
-              className="primary"
               type="button"
+              className="edit-card"
               onClick={() =>
-                openCard()
+                setEditing(card)
               }
             >
-              <Plus />
-              Adicionar cartão
+              <Pencil />
+              Editar
             </button>
-          </div>
-        )}
+          </article>
+        );
+      })}
+    </div>
+  ) : (
+    <div className="empty-cards">
+      <CreditCard />
 
-        <h3>
-          Catálogo de instituições
-        </h3>
+      <b>
+        Nenhum cartão cadastrado
+      </b>
 
-        <div className="bank-grid">
-          {banks.map(
-            (
-              bank
-            ) => {
-              const added =
-                cards.some(
-                  (
-                    card
-                  ) =>
-                    card.bank ===
-                    bank[0]
-                );
+      <span>
+        Adicione seu primeiro cartão.
+      </span>
 
-              return (
-                <button
-                  type="button"
-                  key={
-                    bank[0]
-                  }
-                  className={
-                    added
-                      ? "bank-option chosen"
-                      : "bank-option"
-                  }
-                  onClick={() =>
-                    added
-                      ? setEditing(
-                          cards.find(
-                            (
-                              card
-                            ) =>
-                              card.bank ===
-                              bank[0]
-                          )!
-                        )
-                      : openCard(
-                          bank
-                        )
-                  }
-                >
-                  <span
-                    className="bank-logo"
-                    style={{
-                      background:
-                        `linear-gradient(135deg, ${bank[1]}, ${bank[2]})`,
+      <button
+        className="primary"
+        type="button"
+        onClick={() => openCard()}
+      >
+        <Plus />
+        Adicionar cartão
+      </button>
+    </div>
+  )}
+</div>
 
-                      color:
-                        bank[0] ===
-                        "Banco do Brasil"
-                          ? "#173863"
-                          : "white",
-                    }}
-                  >
-                    {
-                      bank[3]
-                    }
-                  </span>
+<div className="bank-catalog-section">
+  <h3>
+    Catálogo de instituições
+  </h3>
 
-                  <b>
-                    {
+  <div className="bank-grid">
+    {banks.map((bank) => {
+      const added =
+        cards.some(
+          (card) =>
+            card.bank === bank[0]
+        );
+
+      return (
+        <button
+          type="button"
+          key={bank[0]}
+          className={
+            added
+              ? "bank-option chosen"
+              : "bank-option"
+          }
+          onClick={() =>
+            added
+              ? setEditing(
+                  cards.find(
+                    (card) =>
+                      card.bank ===
                       bank[0]
-                    }
-                  </b>
-
-                  <small>
-                    {added
-                      ? "Editar cartão"
-                      : "Adicionar cartão"}
-                  </small>
-
-                  {added && (
-                    <Check />
-                  )}
-                </button>
-              );
-            }
-          )}
-
-          <button
-            type="button"
-            className="bank-option custom-bank"
-            onClick={() =>
-              openCard()
-            }
+                  )!
+                )
+              : openCard(bank)
+          }
+        >
+          <span
+            className="bank-logo"
+            style={{
+              background: `linear-gradient(135deg, ${bank[1]}, ${bank[2]})`,
+              color:
+                bank[0] ===
+                "Banco do Brasil"
+                  ? "#173863"
+                  : "white",
+            }}
           >
-            <span className="bank-logo">
-              <Plus />
-            </span>
+            {bank[3]}
+          </span>
 
-            <b>
-              Outra instituição
-            </b>
+          <b>{bank[0]}</b>
 
-            <small>
-              Cadastrar manualmente
-            </small>
-          </button>
-        </div>
-      </div>
+          <small>
+            {added
+              ? "Editar cartão"
+              : "Adicionar cartão"}
+          </small>
+
+          {added && <Check />}
+        </button>
+      );
+    })}
+
+    <button
+      type="button"
+      className="bank-option custom-bank"
+      onClick={() => openCard()}
+    >
+      <span className="bank-logo">
+        <Plus />
+      </span>
+
+      <b>
+        Outra instituição
+      </b>
+
+      <small>
+        Cadastrar manualmente
+      </small>
+    </button>
+  </div>
+</div>
 
       {editing && (
         <div className="modal-bg">
