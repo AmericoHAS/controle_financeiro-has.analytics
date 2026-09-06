@@ -1622,6 +1622,12 @@ textarea:focus{
    ========================================================= */
 
 .category-manager{
+ 
+  width:100%;
+  max-width:100%;
+  overflow:hidden;
+  box-sizing:border-box;
+
   margin-bottom:14px;
   padding:20px;
 
@@ -3353,18 +3359,18 @@ textarea:focus{
    ========================================================= */
 
 .category-manager form{
-  display:grid;
-  grid-template-columns:minmax(150px,1.2fr) 95px 120px auto;
+  display:flex;
+  flex-wrap:wrap;
   gap:8px;
   width:100%;
+  max-width:100%;
   align-items:center;
   margin-top:12px;
+  box-sizing:border-box;
 }
 
 .category-manager form input,
 .category-manager form select{
-  width:100%;
-  min-width:0;
   height:38px;
   padding:0 10px;
   border:1px solid #d8e2e3;
@@ -3374,6 +3380,20 @@ textarea:focus{
   font-size:13px;
   outline:none;
   box-sizing:border-box;
+  min-width:0;
+  max-width:100%;
+}
+
+.category-manager form input:first-of-type{
+  flex:1 1 180px;
+}
+
+.category-manager form input:nth-of-type(2){
+  flex:0 1 110px;
+}
+
+.category-manager form select{
+  flex:0 1 120px;
 }
 
 .category-manager form input::placeholder{
@@ -3401,7 +3421,7 @@ textarea:focus{
 
 .category-manager form button{
   height:38px;
-  min-width:130px;
+  flex:0 0 auto;
   padding:0 12px;
   border:0;
   border-radius:10px;
@@ -3611,14 +3631,7 @@ textarea:focus{
 
 @media(max-width:800px){
 
-   .category-manager form{
-    grid-template-columns:1fr 90px 110px;
-  }
-
-  .category-manager form button{
-    grid-column:1 / -1;
-    width:100%;
-  }
+ 
 
   .statement-review-row{
     grid-template-columns:28px 1fr;
@@ -3665,5 +3678,21 @@ textarea:focus{
 
   .statement-modal{
     width:calc(100vw - 18px);
+  }
+}
+
+@media(max-width:600px){
+
+  .category-manager form{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:8px;
+  }
+
+  .category-manager form input,
+  .category-manager form select,
+  .category-manager form button{
+    width:100%;
+    max-width:100%;
   }
 }
