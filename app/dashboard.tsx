@@ -3201,17 +3201,16 @@ function TransactionsWorkspace({
     const seriesId =
       Date.now();
 
-    let accountLabel =
-      type ===
-      "Receita"
-        ? "Receita"
-        : "Dinheiro";
+   let accountLabel =
+  type === "Receita"
+    ? "Receita"
+    : "💵 Dinheiro";
 
-    let sourceType:
-      | "account"
-      | "card"
-      | "cash" =
-      "cash";
+let sourceType:
+  | "account"
+  | "card"
+  | "cash" =
+  "cash";
 
     let sourceId:
       | number
@@ -3387,6 +3386,33 @@ function TransactionsWorkspace({
               "cash",
           })
         );
+
+        if (
+  type === "Despesa" &&
+  destination === "pix"
+) {
+  sourceType = "cash";
+  sourceId = undefined;
+  accountLabel = "📱 Pix";
+}
+
+if (
+  type === "Despesa" &&
+  destination === "boleto"
+) {
+  sourceType = "cash";
+  sourceId = undefined;
+  accountLabel = "🧾 Boleto";
+}
+
+if (
+  type === "Despesa" &&
+  destination === "cash"
+) {
+  sourceType = "cash";
+  sourceId = undefined;
+  accountLabel = "💵 Dinheiro";
+}
     } else if (
       type ===
         "Despesa" &&
@@ -5002,9 +5028,17 @@ function TransactionsWorkspace({
                         )
                       )}
 
-                      <option value="cash">
-                        Dinheiro
-                      </option>
+                      <option value="pix">
+  📱 Pix
+</option>
+
+<option value="boleto">
+  🧾 Boleto
+</option>
+
+<option value="cash">
+  💵 Dinheiro
+</option>
                     </select>
                   </label>
 
