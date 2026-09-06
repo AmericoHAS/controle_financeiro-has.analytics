@@ -123,7 +123,7 @@
   position:relative;
   isolation:isolate;
   min-width:310px;
-  height:188px;
+  height:215px;
   padding:20px 21px;
   overflow:hidden;
   border:1px solid #ffffff2e;
@@ -493,4 +493,36 @@
   .credit-visual{
     min-width:260px;
   }
+}
+
+
+
+.card-limit-info{
+  position:relative;
+  z-index:1;
+
+  margin-top:12px;
+
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+
+  gap:8px;
+}
+
+.card-limit-info span{
+  display:flex;
+  flex-direction:column;
+
+  gap:2px;
+
+  color:rgba(255,255,255,.7);
+
+  font-size:9px;
+}
+
+.card-limit-info b{
+  color:#fff;
+
+  font-size:11px;
+  letter-spacing:0;
 }

@@ -728,6 +728,36 @@ export default function Home({
           "card"
     ).length;
 
+
+    const totalCardLimit =
+  cards.reduce(
+    (total, card) =>
+      total +
+      Number(card.limit || 0),
+    0
+  );
+
+const usedCardLimit =
+  entries
+    .filter(
+      (entry) =>
+        entry.type === "Despesa" &&
+        entry.sourceType === "card" &&
+        normalizedStatus(entry) ===
+          "A pagar"
+    )
+    .reduce(
+      (total, entry) =>
+        total + entry.value,
+      0
+    );
+
+const availableCardLimit =
+  Math.max(
+    0,
+    totalCardLimit -
+      usedCardLimit
+  );
   /* =======================================================
      PROGRESSO DOS KPIs
      ======================================================= */
@@ -1320,7 +1350,7 @@ const donutBackground =
 
         {section ===
         "Cartões" ? (
-          <BankCatalog />
+          <BankCatalog entries={entries} />
         ) : section ===
           "Contas" ? (
           <AccountsWorkspace accounts={investmentAccounts} setAccounts={setInvestmentAccounts} entries={entries} saveState={accountsSaveState} />
@@ -1601,17 +1631,19 @@ const donutBackground =
               />
 
               <Kpi
-                title="Cartões"
-                value={fmt(
-                  cardExpenses
-                )}
-                sub="Compras no cartão"
-                foot={`${cardEntryCount} lançamentos`}
-                kind="cards"
-                progress={
-                  cardProgress
-                }
-              />
+  title="Cartões"
+  value={fmt(cardExpenses)}
+  sub={
+    totalCardLimit > 0
+      ? `Limite disponível: ${fmt(
+          availableCardLimit
+        )}`
+      : "Cadastre o limite dos cartões"
+  }
+  foot={`${cardEntryCount} lançamentos`}
+  kind="cards"
+  progress={cardProgress}
+/>
 
               <Kpi
                 title="Reservas"
@@ -1942,7 +1974,41 @@ const donutBackground =
           =================================================== */}
 
       {investOpen && (
-        <div className="modal-bg">
+       <div className="modal-bg">
+    {investmentAccounts.length === 0 ? (
+      <div className="modal small investment-modal">
+        <ModalHead
+          title="Guardar saldo"
+          sub="Você ainda não possui uma conta cadastrada."
+          close={() => setInvestOpen(false)}
+          icon={<PiggyBank />}
+        />
+
+        <div className="empty-cards">
+          <Landmark />
+
+          <b>
+            Crie uma conta primeiro
+          </b>
+
+          <span>
+            Para guardar dinheiro, você precisa ter pelo menos uma conta cadastrada.
+          </span>
+
+          <button
+            type="button"
+            className="primary"
+            onClick={() => {
+              setInvestOpen(false);
+              setSection("Contas");
+            }}
+          >
+            <Plus />
+            Criar conta
+          </button>
+        </div>
+      </div>
+    ) : (
           <form
             className="modal small investment-modal"
             onSubmit={
@@ -4966,7 +5032,11 @@ function TransactionsWorkspace({
    CARTÕES
    ========================================================= */
 
-function BankCatalog() {
+function BankCatalog({
+  entries,
+}: {
+  entries: Ledger[];
+}) {
   const [
     cards,
     setCards,
@@ -5034,8 +5104,45 @@ function BankCatalog() {
 
       due:
         10,
+
+        limit: 0,
     });
   }
+
+  function getCardLimitInfo(
+  card: FinanceCard
+) {
+  const totalLimit =
+    Number(card.limit || 0);
+
+  const usedLimit =
+    entries
+      .filter(
+        (entry) =>
+          entry.type === "Despesa" &&
+          entry.sourceType === "card" &&
+          entry.sourceId === card.id &&
+          normalizedStatus(entry) ===
+            "A pagar"
+      )
+      .reduce(
+        (total, entry) =>
+          total + entry.value,
+        0
+      );
+
+  const availableLimit =
+    Math.max(
+      0,
+      totalLimit - usedLimit
+    );
+
+  return {
+    totalLimit,
+    usedLimit,
+    availableLimit,
+  };
+}
 
   function saveCard(
     event:
@@ -5103,6 +5210,14 @@ function BankCatalog() {
             "due"
           )
         ),
+
+        limit:
+  Math.max(
+    0,
+    Number(
+      fd.get("limit")
+    ) || 0
+  ),
 
       color:
         String(
@@ -5227,10 +5342,16 @@ function BankCatalog() {
         {cards.length ? (
           <div>
             {cards.map(
-              (
-                card
-              ) => (
-                <article
+  (card) => {
+    const {
+      totalLimit,
+      usedLimit,
+      availableLimit,
+    } =
+      getCardLimitInfo(card);
+
+    return (
+      <article
                   className="credit-visual"
                   key={
                     card.id
@@ -5260,17 +5381,33 @@ function BankCatalog() {
                   </b>
 
                   <small>
-                    Fechamento dia{" "}
-                    {
-                      card.closing
-                    }
-                    {" · "}
-                    Vencimento dia{" "}
-                    {
-                      card.due
-                    }
-                  </small>
+  Fechamento dia {card.closing}
+  {" · "}
+  Vencimento dia {card.due}
+</small>
 
+<div className="card-limit-info">
+  <span>
+    Disponível
+    <b>
+      {fmt(availableLimit)}
+    </b>
+  </span>
+
+  <span>
+    Utilizado
+    <b>
+      {fmt(usedLimit)}
+    </b>
+  </span>
+
+  <span>
+    Limite
+    <b>
+      {fmt(totalLimit)}
+    </b>
+  </span>
+</div>
                   <button
                     type="button"
                     className="edit-card"
@@ -5291,8 +5428,9 @@ function BankCatalog() {
                     }
                   </strong>
                 </article>
-              )
-            )}
+    );
+  }
+)}
           </div>
         ) : (
           <div className="empty-cards">
@@ -5659,6 +5797,28 @@ function BankCatalog() {
                   }
                 />
               </label>
+
+              <label>
+  Limite do cartão
+
+  <input
+    name="limit"
+    type="number"
+    min="0"
+    step="0.01"
+    required
+    value={editing.limit ?? 0}
+    onChange={(event) =>
+      setEditing({
+        ...editing,
+        limit:
+          Number(
+            event.target.value
+          ) || 0,
+      })
+    }
+  />
+</label>
 
               <label className="color-field">
                 Cor principal

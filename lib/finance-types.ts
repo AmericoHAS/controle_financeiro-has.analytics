@@ -50,6 +50,7 @@ export type FinanceCard = {
   due: number;
   color: string;
   color2: string;
+  limit?: number;
 };
 
 export type FinanceAccount = {
