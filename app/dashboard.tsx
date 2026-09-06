@@ -2310,6 +2310,7 @@ export default function Home({
             accounts={
               investmentAccounts
             }
+            cards={cards}
             entries={
               entries
             }
