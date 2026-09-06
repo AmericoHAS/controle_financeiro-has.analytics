@@ -6,6 +6,7 @@ import {
 } from "react";
 
 import {
+  ClipboardPaste,
   CreditCard,
   Landmark,
   Upload,
@@ -24,11 +25,15 @@ import {
 } from "../../lib/statement-import";
 
 import {
-  money,
   belongsToAccount,
+  money,
 } from "../../lib/finance-summary";
 
 import ModalHead from "./ModalHead";
+
+type InputMode =
+  | "file"
+  | "paste";
 
 type StatementKind =
   | "account"
@@ -45,6 +50,22 @@ type RowOverride = {
   category?: string;
 };
 
+type PastedRow = {
+  row: number;
+  date: string;
+  name: string;
+  value: number;
+  signedValue: number;
+  category: string;
+  type:
+    | "Receita"
+    | "Despesa";
+};
+
+/* =========================================================
+   UTILITÁRIOS
+   ========================================================= */
+
 function normalizeText(
   value: string
 ) {
@@ -54,12 +75,15 @@ function normalizeText(
       /[\u0300-\u036f]/g,
       ""
     )
-    .toLowerCase();
+    .toLowerCase()
+    .trim();
 }
 
-function parseSignedValue(
+function parseMoney(
   value: unknown,
-  locale: "br" | "en"
+  locale:
+    | "br"
+    | "en" = "br"
 ) {
   if (
     typeof value ===
@@ -74,17 +98,50 @@ function parseSignedValue(
     )
       .trim()
       .replace(
-        /\s+/g,
+        /R\$/gi,
         ""
       )
       .replace(
-        /R\$/gi,
+        /\s+/g,
         ""
       );
 
   if (!text) {
     return 0;
   }
+
+  let negative =
+    text.startsWith(
+      "-"
+    );
+
+  /*
+    Alguns PDFs copiam valores negativos
+    entre parênteses.
+  */
+  if (
+    text.startsWith(
+      "("
+    ) &&
+    text.endsWith(
+      ")"
+    )
+  ) {
+    negative =
+      true;
+
+    text =
+      text.slice(
+        1,
+        -1
+      );
+  }
+
+  text =
+    text.replace(
+      /^[-+]/,
+      ""
+    );
 
   if (
     locale ===
@@ -111,11 +168,93 @@ function parseSignedValue(
   const parsed =
     Number(text);
 
-  return Number.isFinite(
-    parsed
-  )
-    ? parsed
-    : 0;
+  if (
+    !Number.isFinite(
+      parsed
+    )
+  ) {
+    return 0;
+  }
+
+  return negative
+    ? -Math.abs(
+        parsed
+      )
+    : parsed;
+}
+
+function parsePastedDate(
+  rawDate: string
+) {
+  const cleaned =
+    rawDate
+      .trim()
+      .replace(
+        /\./g,
+        "/"
+      )
+      .replace(
+        /-/g,
+        "/"
+      );
+
+  const parts =
+    cleaned
+      .split("/")
+      .map(
+        Number
+      );
+
+  if (
+    parts.length <
+    2
+  ) {
+    return "";
+  }
+
+  const day =
+    parts[0];
+
+  const month =
+    parts[1];
+
+  let year =
+    parts[2];
+
+  if (!year) {
+    year =
+      new Date()
+        .getFullYear();
+  }
+
+  if (
+    year <
+    100
+  ) {
+    year += 2000;
+  }
+
+  if (
+    !day ||
+    !month ||
+    !year ||
+    month > 12 ||
+    day > 31
+  ) {
+    return "";
+  }
+
+  return `${year}-${String(
+    month
+  ).padStart(
+    2,
+    "0"
+  )}-${String(
+    day
+  ).padStart(
+    2,
+    "0"
+  )}`;
 }
 
 function guessCategory(
@@ -127,6 +266,13 @@ function guessCategory(
     "Receita"
   ) {
     return "Outras receitas";
+  }
+
+  if (
+    type ===
+    "Ignorar"
+  ) {
+    return "";
   }
 
   const text =
@@ -150,6 +296,9 @@ function guessCategory(
       "restaurante"
     ) ||
     text.includes(
+      "lanch"
+    ) ||
+    text.includes(
       "food"
     )
   ) {
@@ -159,6 +308,9 @@ function guessCategory(
   if (
     text.includes(
       "openai"
+    ) ||
+    text.includes(
+      "chatgpt"
     ) ||
     text.includes(
       "apple.com"
@@ -171,6 +323,9 @@ function guessCategory(
     ) ||
     text.includes(
       "wellhub"
+    ) ||
+    text.includes(
+      "google"
     )
   ) {
     return "Assinaturas";
@@ -193,6 +348,9 @@ function guessCategory(
     ) ||
     text.includes(
       "99app"
+    ) ||
+    text.includes(
+      "99 "
     )
   ) {
     return "Transporte";
@@ -209,6 +367,17 @@ function guessCategory(
     return "Mercado";
   }
 
+  if (
+    text.includes(
+      "farmacia"
+    ) ||
+    text.includes(
+      "drogaria"
+    )
+  ) {
+    return "Saúde";
+  }
+
   return "Compras";
 }
 
@@ -217,7 +386,7 @@ function detectInstallment(
 ) {
   const match =
     name.match(
-      /parcela\s*(\d+)\s*\/\s*(\d+)/i
+      /(?:parcela\s*)?(\d+)\s*\/\s*(\d+)/i
     );
 
   if (!match) {
@@ -236,7 +405,9 @@ function detectInstallment(
 
   if (
     !current ||
-    !total
+    !total ||
+    current >
+      total
   ) {
     return null;
   }
@@ -254,6 +425,111 @@ function detectInstallment(
   };
 }
 
+/*
+  Converte a data da compra na competência
+  da fatura considerando o fechamento.
+
+  Exemplo:
+  fechamento dia 20
+
+  compra 13/08 -> fatura 09/2026
+  compra 25/08 -> fatura 10/2026
+*/
+function getCardStatementDate(
+  purchaseDate: string,
+  closingDay: number
+) {
+  const [
+    year,
+    month,
+    day,
+  ] =
+    purchaseDate
+      .split("-")
+      .map(
+        Number
+      );
+
+  if (
+    !year ||
+    !month ||
+    !day
+  ) {
+    return purchaseDate;
+  }
+
+  let statementMonth =
+    month +
+    (
+      day <=
+      closingDay
+        ? 1
+        : 2
+    );
+
+  let statementYear =
+    year;
+
+  while (
+    statementMonth >
+    12
+  ) {
+    statementMonth -=
+      12;
+
+    statementYear++;
+  }
+
+  return `${statementYear}-${String(
+    statementMonth
+  ).padStart(
+    2,
+    "0"
+  )}-01`;
+}
+
+function monthLabel(
+  date: string
+) {
+  const [
+    year,
+    month,
+  ] =
+    date
+      .split("-")
+      .map(
+        Number
+      );
+
+  if (
+    !year ||
+    !month
+  ) {
+    return "";
+  }
+
+  return new Intl.DateTimeFormat(
+    "pt-BR",
+    {
+      month:
+        "long",
+      year:
+        "numeric",
+    }
+  ).format(
+    new Date(
+      year,
+      month -
+        1,
+      1
+    )
+  );
+}
+
+/* =========================================================
+   COMPONENTE
+   ========================================================= */
+
 export default function StatementImport({
   accounts,
   cards,
@@ -269,6 +545,28 @@ export default function StatementImport({
   ) => Promise<void>;
   onClose: () => void;
 }) {
+  const [
+    inputMode,
+    setInputMode,
+  ] =
+    useState<InputMode>(
+      "file"
+    );
+
+  const [
+    pastedText,
+    setPastedText,
+  ] =
+    useState("");
+
+  const [
+    pastedRows,
+    setPastedRows,
+  ] =
+    useState<
+      PastedRow[]
+    >([]);
+
   const [
     sheets,
     setSheets,
@@ -376,19 +674,19 @@ export default function StatementImport({
     >({});
 
   const rows =
-    sheets[sheet] ||
-    [];
+    sheets[
+      sheet
+    ] || [];
 
   const headers =
     rows[
-      header - 1
+      header -
+        1
     ] || [];
 
   const account =
     accounts.find(
-      (
-        item
-      ) =>
+      item =>
         item.id ===
         Number(
           accountId
@@ -397,9 +695,7 @@ export default function StatementImport({
 
   const card =
     cards.find(
-      (
-        item
-      ) =>
+      item =>
         item.id ===
         Number(
           cardId
@@ -407,12 +703,20 @@ export default function StatementImport({
     );
 
   const prepared =
-    mapping.date >=
-      0 &&
-    mapping.name >=
-      0 &&
-    mapping.value >=
-      0
+    inputMode ===
+    "paste"
+      ? {
+          valid:
+            pastedRows,
+          errors:
+            [] as string[],
+        }
+      : mapping.date >=
+          0 &&
+        mapping.name >=
+          0 &&
+        mapping.value >=
+          0
       ? prepareRows(
           rows.slice(
             header
@@ -424,8 +728,13 @@ export default function StatementImport({
         )
       : {
           valid: [],
-          errors: [],
+          errors:
+            [] as string[],
         };
+
+  /* =======================================================
+     RESET
+     ======================================================= */
 
   function resetReview() {
     setSelected(
@@ -436,8 +745,6 @@ export default function StatementImport({
       false
     );
 
-    setMessage("");
-
     setPreviewPage(
       0
     );
@@ -445,11 +752,33 @@ export default function StatementImport({
     setOverrides(
       {}
     );
+
+    setMessage(
+      ""
+    );
   }
 
-  function rawValueForRow(
+  /* =======================================================
+     VALOR ORIGINAL COM SINAL
+     ======================================================= */
+
+  function signedValueForRow(
     rowNumber: number
   ) {
+    if (
+      inputMode ===
+      "paste"
+    ) {
+      return (
+        pastedRows.find(
+          item =>
+            item.row ===
+            rowNumber
+        )?.signedValue ??
+        0
+      );
+    }
+
     const sourceRow =
       rows[
         rowNumber -
@@ -464,13 +793,17 @@ export default function StatementImport({
       return 0;
     }
 
-    return parseSignedValue(
+    return parseMoney(
       sourceRow[
         mapping.value
       ],
       locale
     );
   }
+
+  /* =======================================================
+     CLASSIFICAÇÃO
+     ======================================================= */
 
   function defaultType(
     entry: {
@@ -487,16 +820,12 @@ export default function StatementImport({
       );
 
     const signedValue =
-      rawValueForRow(
+      signedValueForRow(
         entry.row
       );
 
     /*
-      Extrato de cartão:
-      compras positivas = despesas.
-
-      Pagamentos/créditos negativos
-      não devem virar receitas.
+      CARTÃO DE CRÉDITO
     */
     if (
       statementKind ===
@@ -508,11 +837,22 @@ export default function StatementImport({
         ) ||
         text.includes(
           "pagamento de fatura"
+        ) ||
+        text.includes(
+          "pagamento fatura"
+        ) ||
+        text.includes(
+          "credito de pagamento"
         )
       ) {
         return "Ignorar";
       }
 
+      /*
+        Em faturas como Nubank,
+        valores negativos representam
+        pagamento/crédito.
+      */
       if (
         signedValue <
         0
@@ -524,9 +864,7 @@ export default function StatementImport({
     }
 
     /*
-      Conta bancária:
-      negativo = saída;
-      positivo = entrada.
+      CONTA BANCÁRIA
     */
     return signedValue <
       0
@@ -534,13 +872,166 @@ export default function StatementImport({
       : "Receita";
   }
 
+  /* =======================================================
+     TEXTO COLADO
+     ======================================================= */
+
+  function processPastedStatement() {
+    setMessage("");
+
+    setConfirmed(
+      false
+    );
+
+    setSelected(
+      null
+    );
+
+    setPreviewPage(
+      0
+    );
+
+    setOverrides(
+      {}
+    );
+
+    const lines =
+      pastedText
+        .split(
+          /\r?\n/
+        )
+        .map(
+          line =>
+            line
+              .replace(
+                /\s+/g,
+                " "
+              )
+              .trim()
+        )
+        .filter(
+          Boolean
+        );
+
+    const parsed:
+      PastedRow[] =
+      [];
+
+    lines.forEach(
+      (
+        line,
+        index
+      ) => {
+        /*
+          Formatos aceitos:
+
+          13/08 Apple.Com/Bill 66,90
+
+          13/08/2026 Apple.Com/Bill R$ 66,90
+
+          13-08 OpenAI ChatGPT -106,65
+        */
+        const match =
+          line.match(
+            /^(\d{1,2}[\/.-]\d{1,2}(?:[\/.-]\d{2,4})?)\s+(.+?)\s+(-?\s*(?:R\$\s*)?[\d.]+,\d{2})$/i
+          );
+
+        if (
+          !match
+        ) {
+          return;
+        }
+
+        const rawDate =
+          match[1];
+
+        const rawName =
+          match[2];
+
+        const rawValue =
+          match[3];
+
+        const date =
+          parsePastedDate(
+            rawDate
+          );
+
+        const signedValue =
+          parseMoney(
+            rawValue,
+            "br"
+          );
+
+        if (
+          !date ||
+          !Number.isFinite(
+            signedValue
+          )
+        ) {
+          return;
+        }
+
+        parsed.push({
+          row:
+            index +
+            1,
+
+          date,
+
+          name:
+            rawName.trim(),
+
+          value:
+            Math.abs(
+              signedValue
+            ),
+
+          signedValue,
+
+          category:
+            "",
+
+          type:
+            signedValue <
+            0
+              ? "Despesa"
+              : "Receita",
+        });
+      }
+    );
+
+    if (
+      !parsed.length
+    ) {
+      setPastedRows(
+        []
+      );
+
+      setMessage(
+        "Não consegui identificar lançamentos. Use linhas com data, descrição e valor."
+      );
+
+      return;
+    }
+
+    setPastedRows(
+      parsed
+    );
+
+    setMessage(
+      `${parsed.length} lançamento(s) identificado(s). Confira a revisão antes de importar.`
+    );
+  }
+
+  /* =======================================================
+     LINHAS PARA REVISÃO
+     ======================================================= */
+
   const reviewRows =
     useMemo(
       () =>
         prepared.valid.map(
-          (
-            entry
-          ) => {
+          entry => {
             const override =
               overrides[
                 entry.row
@@ -569,8 +1060,18 @@ export default function StatementImport({
 
             return {
               ...entry,
+
+              value:
+                Math.abs(
+                  Number(
+                    entry.value
+                  )
+                ),
+
               name,
+
               type,
+
               category,
             };
           }
@@ -579,31 +1080,64 @@ export default function StatementImport({
         prepared.valid,
         overrides,
         statementKind,
+        inputMode,
+        pastedRows,
         rows,
         mapping.value,
         locale,
       ]
     );
 
-  const signature = (
+  /* =======================================================
+     DATA EFETIVA
+     ======================================================= */
+
+  function effectiveDate(
+    entry: {
+      date: string;
+    }
+  ) {
+    if (
+      statementKind ===
+        "card" &&
+      card
+    ) {
+      return getCardStatementDate(
+        entry.date,
+        Number(
+          card.closing ||
+            1
+        )
+      );
+    }
+
+    return entry.date;
+  }
+
+  /* =======================================================
+     DUPLICIDADES
+     ======================================================= */
+
+  function signature(
     entry: {
       date: string;
       name: string;
       value: number;
       type: string;
     }
-  ) =>
-    `${entry.date}|${entry.name
+  ) {
+    return `${entry.date}|${entry.name
       .trim()
-      .toLowerCase()}|${entry.value.toFixed(
+      .toLowerCase()}|${Number(
+      entry.value
+    ).toFixed(
       2
     )}|${entry.type}`;
+  }
 
   const existingEntries =
     entries.filter(
-      (
-        entry
-      ) => {
+      entry => {
         if (
           statementKind ===
             "account" &&
@@ -628,31 +1162,58 @@ export default function StatementImport({
           );
         }
 
-        return (
-          entry.account ===
-          "Extrato importado"
-        );
+        return false;
       }
     );
 
   const seen =
     new Set(
       existingEntries.map(
-        signature
+        entry =>
+          signature({
+            date:
+              entry.date,
+
+            name:
+              entry.name,
+
+            value:
+              entry.value,
+
+            type:
+              entry.type,
+          })
       )
     );
 
   const preview =
     reviewRows.map(
-      (
-        entry
-      ) => {
+      entry => {
+        const date =
+          effectiveDate(
+            entry
+          );
+
+        const comparable =
+          {
+            date,
+
+            name:
+              entry.name,
+
+            value:
+              entry.value,
+
+            type:
+              entry.type,
+          };
+
         const duplicate =
           entry.type !==
             "Ignorar" &&
           seen.has(
             signature(
-              entry
+              comparable
             )
           );
 
@@ -662,13 +1223,15 @@ export default function StatementImport({
         ) {
           seen.add(
             signature(
-              entry
+              comparable
             )
           );
         }
 
         return {
           ...entry,
+          effectiveDate:
+            date,
           duplicate,
         };
       }
@@ -687,7 +1250,7 @@ export default function StatementImport({
     }
 
     if (
-      selected ==
+      selected ===
       null
     ) {
       return !entry.duplicate;
@@ -700,30 +1263,31 @@ export default function StatementImport({
 
   const chosen =
     preview.filter(
-      (
-        entry
-      ) =>
+      entry =>
+        entry.type !==
+          "Ignorar" &&
         isSelected(
           entry
-        ) &&
-        entry.type !==
-          "Ignorar"
+        )
     );
+
+  /* =======================================================
+     EDITAR LINHA
+     ======================================================= */
 
   function updateRow(
     row: number,
     update: RowOverride
   ) {
     setOverrides(
-      (
-        current
-      ) => ({
+      current => ({
         ...current,
 
         [row]: {
           ...current[
             row
           ],
+
           ...update,
         },
       })
@@ -733,6 +1297,10 @@ export default function StatementImport({
       false
     );
   }
+
+  /* =======================================================
+     ARQUIVO
+     ======================================================= */
 
   async function load(
     file:
@@ -776,7 +1344,9 @@ export default function StatementImport({
       return;
     }
 
-    setBusy(true);
+    setBusy(
+      true
+    );
 
     try {
       const XLSX =
@@ -837,12 +1407,20 @@ export default function StatementImport({
           }
         );
 
+      if (
+        !book
+          .SheetNames
+          .length
+      ) {
+        throw new Error(
+          "O arquivo não contém planilhas."
+        );
+      }
+
       const loaded =
         Object.fromEntries(
           book.SheetNames.map(
-            (
-              name
-            ) => [
+            name => [
               name,
 
               XLSX.utils.sheet_to_json<
@@ -867,25 +1445,16 @@ export default function StatementImport({
               ),
             ]
           )
-        );
-
-      if (
-        !book
-          .SheetNames
-          .length
-      ) {
-        throw new Error(
-          "O arquivo não contém planilhas."
-        );
-      }
+        ) as Record<
+          string,
+          unknown[][]
+        >;
 
       if (
         Object.values(
           loaded
         ).some(
-          (
-            data
-          ) =>
+          data =>
             data.length >
             5001
         )
@@ -915,7 +1484,7 @@ export default function StatementImport({
         guessMapping(
           loaded[
             first
-          ][0] ||
+          ]?.[0] ||
             []
         )
       );
@@ -934,6 +1503,10 @@ export default function StatementImport({
       );
     }
   }
+
+  /* =======================================================
+     IMPORTAR
+     ======================================================= */
 
   async function commit() {
     if (
@@ -976,9 +1549,7 @@ export default function StatementImport({
       const ids =
         new Set(
           entries.map(
-            (
-              entry
-            ) =>
+            entry =>
               entry.id
           )
         );
@@ -1000,9 +1571,7 @@ export default function StatementImport({
       const imported:
         Ledger[] =
         chosen.map(
-          (
-            entry
-          ) => {
+          entry => {
             while (
               ids.has(
                 next
@@ -1030,14 +1599,8 @@ export default function StatementImport({
             return {
               id,
 
-              ate:
-  isCard &&
-  card
-    ? getCardStatementDate(
-        entry.date,
-        card.closing
-      )
-    : entry.date,
+              date:
+                entry.effectiveDate,
 
               name:
                 entry.name,
@@ -1094,14 +1657,6 @@ export default function StatementImport({
                 installment
                   ?.remaining,
 
-              /*
-                Cartão:
-                compra entra como A pagar.
-
-                Conta:
-                extrato representa movimentação
-                já realizada.
-              */
               status:
                 isCard
                   ? "A pagar"
@@ -1129,6 +1684,14 @@ export default function StatementImport({
     }
   }
 
+  const hasContent =
+    inputMode ===
+    "file"
+      ? rows.length >
+        0
+      : pastedRows.length >
+        0;
+
   const rawPreviewRows =
     rows.slice(
       header,
@@ -1136,12 +1699,16 @@ export default function StatementImport({
         6
     );
 
+  /* =======================================================
+     JSX
+     ======================================================= */
+
   return (
     <div className="modal-bg">
       <div className="modal statement-modal finance-workspace">
         <ModalHead
           title="Importar extrato"
-          sub="Configure as colunas, confira os lançamentos e ajuste antes de importar."
+          sub="Configure, confira e ajuste os lançamentos antes de salvar."
           icon={
             <Upload />
           }
@@ -1155,33 +1722,138 @@ export default function StatementImport({
         />
 
         <div className="statement-body">
-          <label className="statement-file">
-            Arquivo CSV ou Excel
 
-            <input
-              type="file"
-              accept=".csv,.xlsx,.xls"
-              disabled={
-                busy
+          {/* ===============================================
+              MODO DE ENTRADA
+              =============================================== */}
+
+          <div className="statement-input-mode">
+            <button
+              type="button"
+              className={
+                inputMode ===
+                "file"
+                  ? "active"
+                  : ""
               }
-              onChange={(
-                event
-              ) =>
-                void load(
-                  event
-                    .target
-                    .files?.[0]
-                )
+              onClick={() => {
+                setInputMode(
+                  "file"
+                );
+
+                resetReview();
+              }}
+            >
+              <Upload />
+              CSV / Excel
+            </button>
+
+            <button
+              type="button"
+              className={
+                inputMode ===
+                "paste"
+                  ? "active"
+                  : ""
               }
-            />
-          </label>
+              onClick={() => {
+                setInputMode(
+                  "paste"
+                );
 
-          <p>
-            Até 10 MB e 5.000 linhas. O arquivo é processado no seu aparelho.
-          </p>
+                resetReview();
+              }}
+            >
+              <ClipboardPaste />
+              Colar fatura
+            </button>
+          </div>
 
-          {rows.length >
-            0 && (
+          {/* ===============================================
+              ARQUIVO
+              =============================================== */}
+
+          {inputMode ===
+            "file" && (
+            <>
+              <label className="statement-file">
+                Arquivo CSV ou Excel
+
+                <input
+                  type="file"
+                  accept=".csv,.xlsx,.xls"
+                  disabled={
+                    busy
+                  }
+                  onChange={
+                    event =>
+                      void load(
+                        event
+                          .target
+                          .files?.[0]
+                      )
+                  }
+                />
+              </label>
+
+              <p>
+                Até 10 MB e 5.000 linhas. O arquivo é processado no seu aparelho.
+              </p>
+            </>
+          )}
+
+          {/* ===============================================
+              COLAR FATURA
+              =============================================== */}
+
+          {inputMode ===
+            "paste" && (
+            <div className="statement-paste">
+              <label>
+                Cole os lançamentos da fatura
+
+                <textarea
+                  value={
+                    pastedText
+                  }
+                  onChange={
+                    event =>
+                      setPastedText(
+                        event
+                          .target
+                          .value
+                      )
+                  }
+                  placeholder={`Exemplo:
+
+13/08 Apple.Com/Bill 66,90
+13/08 IFD*Ifood Club 7,95
+05/08 Jim.Com Wellington H - Parcela 4/5 197,37
+04/09 Pagamento recebido -978,43`}
+                />
+              </label>
+
+              <button
+                type="button"
+                className="primary"
+                disabled={
+                  busy ||
+                  !pastedText.trim()
+                }
+                onClick={
+                  processPastedStatement
+                }
+              >
+                Interpretar lançamentos
+              </button>
+            </div>
+          )}
+
+          {/* ===============================================
+              CONFIGURAÇÃO
+              =============================================== */}
+
+          {hasContent && (
             <>
               <h3>
                 Tipo de extrato
@@ -1247,149 +1919,11 @@ export default function StatementImport({
                 </button>
               </div>
 
+              {/* ===========================================
+                  CONTA / CARTÃO
+                  =========================================== */}
+
               <div className="form-grid">
-                <label>
-                  Planilha
-
-                  <select
-                    value={
-                      sheet
-                    }
-                    disabled={
-                      busy
-                    }
-                    onChange={(
-                      event
-                    ) => {
-                      const value =
-                        event
-                          .target
-                          .value;
-
-                      setSheet(
-                        value
-                      );
-
-                      setHeader(
-                        1
-                      );
-
-                      setMapping(
-                        guessMapping(
-                          sheets[
-                            value
-                          ][0] ||
-                            []
-                        )
-                      );
-
-                      resetReview();
-                    }}
-                  >
-                    {Object.keys(
-                      sheets
-                    ).map(
-                      (
-                        name
-                      ) => (
-                        <option
-                          key={
-                            name
-                          }
-                        >
-                          {
-                            name
-                          }
-                        </option>
-                      )
-                    )}
-                  </select>
-                </label>
-
-                <label>
-                  Linha dos títulos
-
-                  <input
-                    type="number"
-                    min="1"
-                    max={
-                      rows.length
-                    }
-                    value={
-                      header
-                    }
-                    disabled={
-                      busy
-                    }
-                    onChange={(
-                      event
-                    ) => {
-                      const value =
-                        Math.max(
-                          1,
-                          Math.min(
-                            rows.length,
-                            Number(
-                              event
-                                .target
-                                .value
-                            )
-                          )
-                        );
-
-                      setHeader(
-                        value
-                      );
-
-                      setMapping(
-                        guessMapping(
-                          rows[
-                            value -
-                              1
-                          ] ||
-                            []
-                        )
-                      );
-
-                      resetReview();
-                    }}
-                  />
-                </label>
-
-                <label>
-                  Formato dos valores
-
-                  <select
-                    value={
-                      locale
-                    }
-                    disabled={
-                      busy
-                    }
-                    onChange={(
-                      event
-                    ) => {
-                      setLocale(
-                        event
-                          .target
-                          .value as
-                          | "br"
-                          | "en"
-                      );
-
-                      resetReview();
-                    }}
-                  >
-                    <option value="br">
-                      1.234,56 (brasileiro)
-                    </option>
-
-                    <option value="en">
-                      1,234.56 (internacional)
-                    </option>
-                  </select>
-                </label>
-
                 {statementKind ===
                 "account" ? (
                   <label>
@@ -1402,26 +1936,24 @@ export default function StatementImport({
                       disabled={
                         busy
                       }
-                      onChange={(
-                        event
-                      ) => {
-                        setAccountId(
-                          event
-                            .target
-                            .value
-                        );
+                      onChange={
+                        event => {
+                          setAccountId(
+                            event
+                              .target
+                              .value
+                          );
 
-                        resetReview();
-                      }}
+                          resetReview();
+                        }
+                      }
                     >
                       <option value="">
                         Selecione a conta
                       </option>
 
                       {accounts.map(
-                        (
-                          item
-                        ) => (
+                        item => (
                           <option
                             key={
                               item.id
@@ -1430,13 +1962,9 @@ export default function StatementImport({
                               item.id
                             }
                           >
-                            {
-                              item.name
-                            }
+                            {item.name}
                             {" · "}
-                            {
-                              item.bank
-                            }
+                            {item.bank}
                           </option>
                         )
                       )}
@@ -1453,26 +1981,24 @@ export default function StatementImport({
                       disabled={
                         busy
                       }
-                      onChange={(
-                        event
-                      ) => {
-                        setCardId(
-                          event
-                            .target
-                            .value
-                        );
+                      onChange={
+                        event => {
+                          setCardId(
+                            event
+                              .target
+                              .value
+                          );
 
-                        resetReview();
-                      }}
+                          resetReview();
+                        }
+                      }
                     >
                       <option value="">
                         Selecione o cartão
                       </option>
 
                       {cards.map(
-                        (
-                          item
-                        ) => (
+                        item => (
                           <option
                             key={
                               item.id
@@ -1481,123 +2007,271 @@ export default function StatementImport({
                               item.id
                             }
                           >
-                            {
-                              item.bank
-                            }
+                            {item.bank}
                             {" • "}
-                            {
-                              item.last4
-                            }
+                            {item.last4}
                           </option>
                         )
                       )}
                     </select>
                   </label>
                 )}
+              </div>
 
-                {(
-                  [
-                    [
-                      "date",
-                      "Data",
-                    ],
+              {/* ===========================================
+                  MAPEAMENTO — APENAS ARQUIVO
+                  =========================================== */}
 
-                    [
-                      "name",
-                      "Descrição",
-                    ],
+              {inputMode ===
+                "file" && (
+                <div className="form-grid">
+                  <label>
+                    Planilha
 
-                    [
-                      "value",
-                      "Valor",
-                    ],
-
-                    [
-                      "type",
-                      "Tipo (opcional)",
-                    ],
-
-                    [
-                      "category",
-                      "Categoria (opcional)",
-                    ],
-                  ] as const
-                ).map(
-                  ([
-                    key,
-                    label,
-                  ]) => (
-                    <label
-                      key={
-                        key
+                    <select
+                      value={
+                        sheet
                       }
-                    >
-                      {
-                        label
+                      disabled={
+                        busy
                       }
+                      onChange={
+                        event => {
+                          const value =
+                            event
+                              .target
+                              .value;
 
-                      <select
-                        value={
-                          mapping[
-                            key
-                          ]
-                        }
-                        disabled={
-                          busy
-                        }
-                        onChange={(
-                          event
-                        ) => {
-                          setMapping({
-                            ...mapping,
+                          setSheet(
+                            value
+                          );
 
-                            [key]:
-                              Number(
-                                event
-                                  .target
-                                  .value
-                              ),
-                          });
+                          setHeader(
+                            1
+                          );
+
+                          setMapping(
+                            guessMapping(
+                              sheets[
+                                value
+                              ]?.[0] ||
+                                []
+                            )
+                          );
 
                           resetReview();
-                        }}
+                        }
+                      }
+                    >
+                      {Object.keys(
+                        sheets
+                      ).map(
+                        name => (
+                          <option
+                            key={
+                              name
+                            }
+                            value={
+                              name
+                            }
+                          >
+                            {name}
+                          </option>
+                        )
+                      )}
+                    </select>
+                  </label>
+
+                  <label>
+                    Linha dos títulos
+
+                    <input
+                      type="number"
+                      min="1"
+                      max={
+                        rows.length
+                      }
+                      value={
+                        header
+                      }
+                      disabled={
+                        busy
+                      }
+                      onChange={
+                        event => {
+                          const value =
+                            Math.max(
+                              1,
+                              Math.min(
+                                rows.length,
+                                Number(
+                                  event
+                                    .target
+                                    .value
+                                )
+                              )
+                            );
+
+                          setHeader(
+                            value
+                          );
+
+                          setMapping(
+                            guessMapping(
+                              rows[
+                                value -
+                                  1
+                              ] ||
+                                []
+                            )
+                          );
+
+                          resetReview();
+                        }
+                      }
+                    />
+                  </label>
+
+                  <label>
+                    Formato dos valores
+
+                    <select
+                      value={
+                        locale
+                      }
+                      disabled={
+                        busy
+                      }
+                      onChange={
+                        event => {
+                          setLocale(
+                            event
+                              .target
+                              .value as
+                              | "br"
+                              | "en"
+                          );
+
+                          resetReview();
+                        }
+                      }
+                    >
+                      <option value="br">
+                        1.234,56 (brasileiro)
+                      </option>
+
+                      <option value="en">
+                        1,234.56 (internacional)
+                      </option>
+                    </select>
+                  </label>
+
+                  {(
+                    [
+                      [
+                        "date",
+                        "Data",
+                      ],
+
+                      [
+                        "name",
+                        "Descrição",
+                      ],
+
+                      [
+                        "value",
+                        "Valor",
+                      ],
+
+                      [
+                        "type",
+                        "Tipo (opcional)",
+                      ],
+
+                      [
+                        "category",
+                        "Categoria (opcional)",
+                      ],
+                    ] as const
+                  ).map(
+                    ([
+                      key,
+                      label,
+                    ]) => (
+                      <label
+                        key={
+                          key
+                        }
                       >
-                        <option
+                        {label}
+
+                        <select
                           value={
-                            -1
+                            mapping[
+                              key
+                            ]
+                          }
+                          disabled={
+                            busy
+                          }
+                          onChange={
+                            event => {
+                              setMapping({
+                                ...mapping,
+
+                                [key]:
+                                  Number(
+                                    event
+                                      .target
+                                      .value
+                                  ),
+                              });
+
+                              resetReview();
+                            }
                           }
                         >
-                          Selecionar coluna
-                        </option>
+                          <option
+                            value={
+                              -1
+                            }
+                          >
+                            Selecionar coluna
+                          </option>
 
-                        {headers.map(
-                          (
-                            value,
-                            index
-                          ) => (
-                            <option
-                              key={
-                                index
-                              }
-                              value={
-                                index
-                              }
-                            >
-                              {index +
-                                1}
-                              .{" "}
-                              {String(
-                                value ||
-                                  "Sem título"
-                              )}
-                            </option>
-                          )
-                        )}
-                      </select>
-                    </label>
-                  )
-                )}
-              </div>
+                          {headers.map(
+                            (
+                              value,
+                              index
+                            ) => (
+                              <option
+                                key={
+                                  index
+                                }
+                                value={
+                                  index
+                                }
+                              >
+                                {index +
+                                  1}
+                                .{" "}
+                                {String(
+                                  value ||
+                                    "Sem título"
+                                )}
+                              </option>
+                            )
+                          )}
+                        </select>
+                      </label>
+                    )
+                  )}
+                </div>
+              )}
+
+              {/* ===========================================
+                  INFORMAÇÃO
+                  =========================================== */}
 
               <div className="statement-help">
                 {statementKind ===
@@ -1608,8 +2282,9 @@ export default function StatementImport({
                     </b>
 
                     <span>
-                      Compras positivas serão tratadas como despesas. Pagamentos da
-                      fatura e créditos negativos serão ignorados inicialmente.
+                      Compras serão atribuídas à fatura conforme o dia de
+                      fechamento cadastrado no cartão. Pagamentos da fatura e
+                      créditos negativos são ignorados inicialmente.
                     </span>
                   </>
                 ) : (
@@ -1619,98 +2294,119 @@ export default function StatementImport({
                     </b>
 
                     <span>
-                      Valores negativos serão tratados como despesas e valores
+                      Valores negativos são tratados como despesas e valores
                       positivos como receitas.
                     </span>
                   </>
                 )}
               </div>
 
-              <h3>
-                Pré-visualização do arquivo
-              </h3>
+              {/* ===========================================
+                  PRÉ-VISUALIZAÇÃO BRUTA
+                  =========================================== */}
 
-              <p>
-                Confira se as colunas selecionadas correspondem ao conteúdo do
-                extrato.
-              </p>
+              {inputMode ===
+                "file" && (
+                <>
+                  <h3>
+                    Pré-visualização do arquivo
+                  </h3>
 
-              <div className="statement-raw-preview">
-                <table>
-                  <thead>
-                    <tr>
-                      {headers.map(
-                        (
-                          value,
-                          index
-                        ) => (
-                          <th
-                            key={
-                              index
-                            }
-                          >
-                            {String(
-                              value ||
-                                `Coluna ${index + 1}`
-                            )}
-                          </th>
-                        )
-                      )}
-                    </tr>
-                  </thead>
+                  <p>
+                    Confira se as colunas selecionadas correspondem às informações
+                    corretas.
+                  </p>
 
-                  <tbody>
-                    {rawPreviewRows.map(
-                      (
-                        rawRow,
-                        rowIndex
-                      ) => (
-                        <tr
-                          key={
-                            rowIndex
-                          }
-                        >
+                  <div className="statement-raw-preview">
+                    <table>
+                      <thead>
+                        <tr>
                           {headers.map(
                             (
-                              _,
-                              columnIndex
+                              value,
+                              index
                             ) => (
-                              <td
+                              <th
                                 key={
-                                  columnIndex
+                                  index
                                 }
                               >
                                 {String(
-                                  rawRow[
-                                    columnIndex
-                                  ] ??
-                                    ""
+                                  value ||
+                                    `Coluna ${index + 1}`
                                 )}
-                              </td>
+                              </th>
                             )
                           )}
                         </tr>
-                      )
-                    )}
-                  </tbody>
-                </table>
-              </div>
+                      </thead>
+
+                      <tbody>
+                        {rawPreviewRows.map(
+                          (
+                            rawRow,
+                            rowIndex
+                          ) => (
+                            <tr
+                              key={
+                                rowIndex
+                              }
+                            >
+                              {headers.map(
+                                (
+                                  _,
+                                  columnIndex
+                                ) => (
+                                  <td
+                                    key={
+                                      columnIndex
+                                    }
+                                  >
+                                    {String(
+                                      rawRow[
+                                        columnIndex
+                                      ] ??
+                                        ""
+                                    )}
+                                  </td>
+                                )
+                              )}
+                            </tr>
+                          )
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
+
+              {/* ===========================================
+                  REVISÃO
+                  =========================================== */}
 
               <h3>
                 Revisar importação
               </h3>
 
               <p>
-                {chosen.length} selecionado(s) ·{" "}
+                {chosen.length} selecionado(s)
+                {" · "}
                 {
                   preview.filter(
-                    (
-                      row
-                    ) =>
+                    row =>
                       row.duplicate
                   ).length
                 }{" "}
                 possível(is) repetido(s)
+                {" · "}
+                {
+                  preview.filter(
+                    row =>
+                      row.type ===
+                      "Ignorar"
+                  ).length
+                }{" "}
+                ignorado(s)
               </p>
 
               <div className="statement-review">
@@ -1725,9 +2421,7 @@ export default function StatementImport({
                       50
                   )
                   .map(
-                    (
-                      entry
-                    ) => (
+                    entry => (
                       <article
                         className={`statement-review-row ${
                           entry.type ===
@@ -1746,54 +2440,52 @@ export default function StatementImport({
                             entry.type ===
                               "Ignorar"
                           }
-                          checked={isSelected(
-                            entry
-                          )}
-                          onChange={(
-                            event
-                          ) => {
-                            const next =
-                              new Set(
-                                selected ||
-                                  preview
-                                    .filter(
-                                      (
-                                        row
-                                      ) =>
-                                        !row.duplicate &&
-                                        row.type !==
-                                          "Ignorar"
-                                    )
-                                    .map(
-                                      (
-                                        row
-                                      ) =>
-                                        row.row
-                                    )
+                          checked={
+                            isSelected(
+                              entry
+                            )
+                          }
+                          onChange={
+                            event => {
+                              const next =
+                                new Set(
+                                  selected ||
+                                    preview
+                                      .filter(
+                                        row =>
+                                          !row.duplicate &&
+                                          row.type !==
+                                            "Ignorar"
+                                      )
+                                      .map(
+                                        row =>
+                                          row.row
+                                      )
+                                );
+
+                              if (
+                                event
+                                  .target
+                                  .checked
+                              ) {
+                                next.add(
+                                  entry.row
+                                );
+                              } else {
+                                next.delete(
+                                  entry.row
+                                );
+                              }
+
+                              setSelected(
+                                next
                               );
 
-                            if (
-                              event
-                                .target
-                                .checked
-                            ) {
-                              next.add(
-                                entry.row
-                              );
-                            } else {
-                              next.delete(
-                                entry.row
+                              setConfirmed(
+                                false
                               );
                             }
-
-                            setSelected(
-                              next
-                            );
-
-                            setConfirmed(
-                              false
-                            );
-                          }}
+                          }
                         />
 
                         <div className="statement-review-main">
@@ -1805,22 +2497,22 @@ export default function StatementImport({
                             disabled={
                               busy
                             }
-                            onChange={(
-                              event
-                            ) =>
-                              updateRow(
-                                entry.row,
-                                {
-                                  name:
-                                    event
-                                      .target
-                                      .value,
-                                }
-                              )
+                            onChange={
+                              event =>
+                                updateRow(
+                                  entry.row,
+                                  {
+                                    name:
+                                      event
+                                        .target
+                                        .value,
+                                  }
+                                )
                             }
                           />
 
                           <small>
+                            Compra:{" "}
                             {entry.date
                               .split(
                                 "-"
@@ -1828,6 +2520,18 @@ export default function StatementImport({
                               .reverse()
                               .join(
                                 "/"
+                              )}
+
+                            {statementKind ===
+                              "card" &&
+                              card && (
+                                <>
+                                  {" · "}
+                                  Fatura:{" "}
+                                  {monthLabel(
+                                    entry.effectiveDate
+                                  )}
+                                </>
                               )}
 
                             {entry.duplicate
@@ -1844,27 +2548,27 @@ export default function StatementImport({
                           disabled={
                             busy
                           }
-                          onChange={(
-                            event
-                          ) => {
-                            const type =
-                              event
-                                .target
-                                .value as ReviewType;
+                          onChange={
+                            event => {
+                              const type =
+                                event
+                                  .target
+                                  .value as ReviewType;
 
-                            updateRow(
-                              entry.row,
-                              {
-                                type,
+                              updateRow(
+                                entry.row,
+                                {
+                                  type,
 
-                                category:
-                                  guessCategory(
-                                    entry.name,
-                                    type
-                                  ),
-                              }
-                            );
-                          }}
+                                  category:
+                                    guessCategory(
+                                      entry.name,
+                                      type
+                                    ),
+                                }
+                              );
+                            }
+                          }
                         >
                           <option value="Despesa">
                             Despesa
@@ -1889,18 +2593,17 @@ export default function StatementImport({
                             entry.type ===
                               "Ignorar"
                           }
-                          onChange={(
-                            event
-                          ) =>
-                            updateRow(
-                              entry.row,
-                              {
-                                category:
-                                  event
-                                    .target
-                                    .value,
-                              }
-                            )
+                          onChange={
+                            event =>
+                              updateRow(
+                                entry.row,
+                                {
+                                  category:
+                                    event
+                                      .target
+                                      .value,
+                                }
+                              )
                           }
                           placeholder="Categoria"
                         />
@@ -1915,10 +2618,15 @@ export default function StatementImport({
                   )}
               </div>
 
+              {/* ===========================================
+                  PAGINAÇÃO
+                  =========================================== */}
+
               {preview.length >
                 50 && (
                 <div className="preview-pagination">
                   <button
+                    type="button"
                     disabled={
                       busy ||
                       previewPage ===
@@ -1926,9 +2634,7 @@ export default function StatementImport({
                     }
                     onClick={() =>
                       setPreviewPage(
-                        (
-                          value
-                        ) =>
+                        value =>
                           value -
                           1
                       )
@@ -1949,6 +2655,7 @@ export default function StatementImport({
                   </span>
 
                   <button
+                    type="button"
                     disabled={
                       busy ||
                       (
@@ -1960,9 +2667,7 @@ export default function StatementImport({
                     }
                     onClick={() =>
                       setPreviewPage(
-                        (
-                          value
-                        ) =>
+                        value =>
                           value +
                           1
                       )
@@ -1972,6 +2677,10 @@ export default function StatementImport({
                   </button>
                 </div>
               )}
+
+              {/* ===========================================
+                  ERROS
+                  =========================================== */}
 
               {prepared.errors.length >
                 0 && (
@@ -1990,22 +2699,22 @@ export default function StatementImport({
                       30
                     )
                     .map(
-                      (
-                        error
-                      ) => (
+                      error => (
                         <p
                           key={
                             error
                           }
                         >
-                          {
-                            error
-                          }
+                          {error}
                         </p>
                       )
                     )}
                 </details>
               )}
+
+              {/* ===========================================
+                  CONFIRMAÇÃO
+                  =========================================== */}
 
               <label className="preference-option">
                 <input
@@ -2016,20 +2725,19 @@ export default function StatementImport({
                   checked={
                     confirmed
                   }
-                  onChange={(
-                    event
-                  ) =>
-                    setConfirmed(
-                      event
-                        .target
-                        .checked
-                    )
+                  onChange={
+                    event =>
+                      setConfirmed(
+                        event
+                          .target
+                          .checked
+                      )
                   }
                 />
 
                 <span>
-                  Conferi os lançamentos, categorias e tipos e desejo importar
-                  somente os itens selecionados.
+                  Conferi os lançamentos, categorias, tipos e competência das
+                  faturas e desejo importar somente os itens selecionados.
                 </span>
               </label>
             </>
@@ -2042,8 +2750,13 @@ export default function StatementImport({
           </p>
         </div>
 
+        {/* ===============================================
+            RODAPÉ
+            =============================================== */}
+
         <div className="modal-foot">
           <button
+            type="button"
             disabled={
               busy
             }
@@ -2055,6 +2768,7 @@ export default function StatementImport({
           </button>
 
           <button
+            type="button"
             className="primary"
             disabled={
               busy ||
@@ -2074,71 +2788,4 @@ export default function StatementImport({
       </div>
     </div>
   );
-}
-
-
-
-function getCardStatementDate(
-  purchaseDate: string,
-  closingDay: number
-) {
-  const [
-    year,
-    month,
-    day,
-  ] =
-    purchaseDate
-      .split("-")
-      .map(Number);
-
-  if (
-    !year ||
-    !month ||
-    !day
-  ) {
-    return purchaseDate;
-  }
-
-  let statementYear =
-    year;
-
-  let statementMonth =
-    month;
-
-  /*
-    Compra realizada até o fechamento:
-    pertence à fatura do mês seguinte.
-
-    Compra após o fechamento:
-    pertence à fatura subsequente.
-  */
-
-  if (
-    day <=
-    closingDay
-  ) {
-    statementMonth +=
-      1;
-  } else {
-    statementMonth +=
-      2;
-  }
-
-  while (
-    statementMonth >
-    12
-  ) {
-    statementMonth -=
-      12;
-
-    statementYear +=
-      1;
-  }
-
-  return `${statementYear}-${String(
-    statementMonth
-  ).padStart(
-    2,
-    "0"
-  )}-01`;
 }

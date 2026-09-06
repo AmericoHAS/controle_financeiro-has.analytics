@@ -890,36 +890,25 @@ export default function Home({
     );
 
   const usedCardLimit =
-    entries
-      .filter(
-        (
-          entry
-        ) =>
-          entry.type ===
-            "Despesa" &&
-          entry.sourceType ===
-            "card" &&
-          normalizedStatus(
-            entry
-          ) ===
-            "A pagar"
-      )
-      .reduce(
-        (
-          total,
-          entry
-        ) =>
-          total +
-          entry.value,
-        0
-      );
-
-  const availableCardLimit =
-    Math.max(
-      0,
-      totalCardLimit -
-        usedCardLimit
+  monthEntries
+    .filter(
+      (entry) =>
+        entry.type === "Despesa" &&
+        entry.sourceType === "card" &&
+        normalizedStatus(entry) === "A pagar"
+    )
+    .reduce(
+      (total, entry) =>
+        total + entry.value,
+      0
     );
+
+const availableCardLimit =
+  Math.max(
+    0,
+    totalCardLimit -
+      usedCardLimit
+  );
 
   /* =======================================================
      KPI
