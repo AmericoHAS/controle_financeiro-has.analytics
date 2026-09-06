@@ -67,6 +67,7 @@ export type FinanceAccount = {
 };
 
 export type PlanItem = {
+  ledgerId?: number;
   id: number;
   name: string;
   category: string;
@@ -82,4 +83,3 @@ export type PlanItem = {
   detail?: string;
   active: boolean;
 };
-

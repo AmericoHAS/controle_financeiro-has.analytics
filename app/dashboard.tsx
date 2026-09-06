@@ -1,6 +1,10 @@
 "use client";
 
 import type { LedgerStatus, Ledger, FinanceCard, FinanceAccount } from "../lib/finance-types";
+import OverviewChart from "./components/OverviewChart";
+import StatementImport from "./components/StatementImport";
+import ProfileMenu from "./components/ProfileMenu";
+import PreferencesWorkspace, { defaultPreferences } from "./components/PreferencesWorkspace";
 import ModalHead from "./components/ModalHead";
 import PlanningWorkspace from "./components/PlanningWorkspace";
 import AccountsWorkspace from "./components/AccountsWorkspace";
@@ -14,7 +18,6 @@ import {
   ArrowUpRight,
   CalendarDays,
   Check,
-  ChevronDown,
   Circle,
   CircleCheck,
   CreditCard,
@@ -22,7 +25,6 @@ import {
   KeyRound,
   Landmark,
   LayoutDashboard,
-  LogOut,
   Menu,
   PanelLeftClose,
   PanelLeftOpen,
@@ -182,36 +184,6 @@ function addMonthsToDateKey(
     targetMonth + 1
   ).padStart(2, "0")}-${String(
     safeDay
-  ).padStart(2, "0")}`;
-}
-
-function convertImportedDate(
-  value: string,
-  selectedMonth: string
-) {
-  const parts = value
-    .split(/[/-]/)
-    .map(Number);
-
-  const day = parts[0];
-  const month = parts[1];
-
-  let year = parts[2];
-
-  if (!year) {
-    year = Number(
-      selectedMonth.split("-")[0]
-    );
-  }
-
-  if (year < 100) {
-    year += 2000;
-  }
-
-  return `${year}-${String(
-    month
-  ).padStart(2, "0")}-${String(
-    day
   ).padStart(2, "0")}`;
 }
 
@@ -500,22 +472,12 @@ export default function Home({
     useState(false);
 
   const [
-    paste,
-    setPaste,
-  ] =
-    useState("");
-
-  const [
-    notice,
-    setNotice,
-  ] =
-    useState("");
-
-  const [
     query,
     setQuery,
   ] =
     useState("");
+
+  const [preferences, setPreferences, preferencesState] = usePersistedFinance("preferences", defaultPreferences);
 
   const nav = [
     [
@@ -1000,204 +962,6 @@ const donutBackground =
      IMPORTAÇÃO
      ======================================================= */
 
-  function doImport() {
-    const lines =
-      paste
-        .split(/\n/)
-        .filter(Boolean);
-
-    const added:
-      Ledger[] = [];
-
-    lines.forEach(
-      (
-        line,
-        index
-      ) => {
-        const match =
-          line.match(
-            /(\d{2}[\/\-]\d{2}(?:[\/\-]\d{2,4})?).*?([+-]?\s?R?\$?\s?[\d.]+,\d{2})/
-          );
-
-        if (!match) {
-          return;
-        }
-
-        const raw =
-          match[2]
-            .replace(
-              /[^\d,\-]/g,
-              ""
-            )
-            .replace(
-              /\./g,
-              ""
-            )
-            .replace(
-              ",",
-              "."
-            );
-
-        const value =
-          Number(raw);
-
-        const description =
-          line
-            .slice(
-              match.index! +
-                match[0].indexOf(
-                  match[1]
-                ) +
-                match[1]
-                  .length,
-
-              line.lastIndexOf(
-                match[2]
-              )
-            )
-            .replace(
-              /[;|]/g,
-              " "
-            )
-            .trim() ||
-          "Lançamento importado";
-
-        const low =
-          description.toLowerCase();
-
-        const map =
-          low.includes(
-            "merc"
-          )
-            ? [
-                "Mercado",
-                "🛒",
-              ]
-            : low.includes(
-                  "posto"
-                ) ||
-                low.includes(
-                  "uber"
-                )
-            ? [
-                "Transporte",
-                "🚗",
-              ]
-            : low.includes(
-                "sal"
-              )
-            ? [
-                "Salário",
-                "💼",
-              ]
-            : low.includes(
-                "ifood"
-              )
-            ? [
-                "Alimentação",
-                "🍽️",
-              ]
-            : [
-                "A confirmar",
-                "✨",
-              ];
-
-        added.push({
-          id:
-            Date.now() +
-            index,
-
-          type:
-            value >= 0
-              ? "Receita"
-              : "Despesa",
-
-          name:
-            description,
-
-          category:
-            map[0],
-
-          icon:
-            map[1],
-
-          date:
-            convertImportedDate(
-              match[1],
-              month
-            ),
-
-          value:
-            Math.abs(
-              value
-            ),
-
-          account:
-            "Extrato importado",
-
-          frequency:
-            "Único",
-
-          status:
-            value >= 0
-              ? "Recebido"
-              : "Pago",
-
-          sourceType:
-            "cash",
-        });
-      }
-    );
-
-    if (
-      !added.length
-    ) {
-      setNotice(
-        "Não identifiquei linhas com data e valor."
-      );
-
-      return;
-    }
-
-    const unique =
-      added.filter(
-        (
-          newEntry
-        ) =>
-          !entries.some(
-            (entry) =>
-              entry.name ===
-                newEntry.name &&
-              entry.value ===
-                newEntry.value &&
-              entry.date ===
-                newEntry.date
-          )
-      );
-
-    setEntries(
-      (
-        current
-      ) => [
-        ...unique,
-        ...current,
-      ]
-    );
-
-    setNotice(
-      `${unique.length} lançamentos novos; ${
-        added.length -
-        unique.length
-      } duplicados ignorados.`
-    );
-
-    setPaste("");
-  }
-
-  /* =======================================================
-     GUARDAR SALDO
-     ======================================================= */
-
   async function submitInvestment(
     event:
       React.FormEvent<HTMLFormElement>
@@ -1358,11 +1122,7 @@ const donutBackground =
 
   return (
     <div
-      className={
-        collapsed
-          ? "app-shell sidebar-collapsed"
-          : "app-shell"
-      }
+      className={`app-shell ${collapsed ? "sidebar-collapsed" : ""} ${preferences.animations ? "" : "reduce-motion"} ${preferences.compact ? "compact-view" : ""}`}
     >
       <aside
         className={
@@ -1394,8 +1154,8 @@ const donutBackground =
 
         <div className="brand">
           <img
-            className="brandmark has-logo"
-            src="/has-financial-logo.png"
+            className={collapsed ? "brandmark has-icon" : "brandmark has-logo"}
+            src={collapsed ? "/icon.png" : "/has-financial-logo.png"}
             alt="HAS Financial"
           />
 
@@ -1464,7 +1224,7 @@ const donutBackground =
         </nav>
 
         <div className="side-bottom">
-          <button className="nav">
+          <button className="nav" title="Preferências" onClick={() => { setSection("Preferências"); setMobile(false); }}>
             <Settings />
 
             <span>
@@ -1472,29 +1232,7 @@ const donutBackground =
             </span>
           </button>
 
-          <div className="profile">
-            <div>
-              {userEmail
-                .slice(0, 2)
-                .toUpperCase()}
-            </div>
-
-            <span>
-              <b>
-                {
-                  userEmail.split(
-                    "@"
-                  )[0]
-                }
-              </b>
-
-              <small>
-                Conta pessoal
-              </small>
-            </span>
-
-            <ChevronDown />
-          </div>
+          <ProfileMenu name={preferences.displayName || userEmail.split("@")[0]} email={userEmail} onProfile={() => { setSection("Minha conta"); setMobile(false); }} onLogout={onLogout} />
         </div>
       </aside>
 
@@ -1578,24 +1316,6 @@ const donutBackground =
     </button>
   </div>
 
-  <button
-    className="primary"
-    onClick={() =>
-      setImportOpen(true)
-    }
-  >
-    <Upload />
-
-    Importar extrato
-  </button>
-
-  <button
-    className="iconbtn"
-    onClick={onLogout}
-    title="Sair"
-  >
-    <LogOut />
-  </button>
 </div>
         </header>
 
@@ -1607,10 +1327,14 @@ const donutBackground =
           <AccountsWorkspace accounts={investmentAccounts} setAccounts={setInvestmentAccounts} entries={entries} saveState={accountsSaveState} />
         ) : section ===
           "Planejamento" ? (
-          <PlanningWorkspace />
+          <PlanningWorkspace key={month} entries={entries} selectedMonth={month} onEntries={() => setSection("Lançamentos")} />
         ) : section ===
           "Lançamentos" ? (
           <TransactionsWorkspace
+            importReady={saveState === "salvo" && accountsSaveState === "salvo"}
+            accounts={investmentAccounts}
+            setAccounts={setInvestmentAccounts}
+            onImport={() => setImportOpen(true)}
             selectedMonth={
               month
             }
@@ -1625,6 +1349,8 @@ const donutBackground =
           <GoalsWorkspace entries={entries} accounts={investmentAccounts} />
         ) : section === "Relatório anual" ? (
           <AnnualReportWorkspace entries={entries} selectedMonth={month} />
+        ) : section === "Preferências" || section === "Minha conta" ? (
+          preferencesState === "carregando" ? <p className="preferences-page">Carregando preferências…</p> : <PreferencesWorkspace key={section} preferences={preferences} onSave={setPreferences} state={preferencesState} email={userEmail} onLogout={onLogout} profile={section === "Minha conta"} />
         ) : section !==
           "Visão geral" ? (
           <div className="section-placeholder">
@@ -1911,123 +1637,7 @@ const donutBackground =
                 ============================================ */}
 
             <div className="grid-main">
-              <section className="panel cash">
-  <PanelHead
-    title="Situação das receitas e despesas"
-    sub={monthLabel(month)}
-    onDetails={() =>
-      setSection("Lançamentos")
-    }
-  />
-
-  <div className="financial-status-grid">
-    <article>
-      <span>Recebido</span>
-      <b className="green">
-        + {fmt(received)}
-      </b>
-      <small>
-        {income > 0
-          ? `${Math.round((received / income) * 100)}% das receitas`
-          : "Sem receitas"}
-      </small>
-
-      <div className="status-progress">
-        <i
-          style={{
-            width:
-              income > 0
-                ? `${Math.min(100, (received / income) * 100)}%`
-                : "0%",
-          }}
-        />
-      </div>
-    </article>
-
-    <article>
-      <span>A receber</span>
-      <b>
-        {fmt(toReceive)}
-      </b>
-      <small>
-        Valores ainda pendentes
-      </small>
-
-      <div className="status-progress pending">
-        <i
-          style={{
-            width:
-              income > 0
-                ? `${Math.min(100, (toReceive / income) * 100)}%`
-                : "0%",
-          }}
-        />
-      </div>
-    </article>
-
-    <article>
-      <span>Pago</span>
-      <b className="red">
-        − {fmt(paid)}
-      </b>
-      <small>
-        {spent > 0
-          ? `${Math.round((paid / spent) * 100)}% das despesas`
-          : "Sem despesas"}
-      </small>
-
-      <div className="status-progress expense">
-        <i
-          style={{
-            width:
-              spent > 0
-                ? `${Math.min(100, (paid / spent) * 100)}%`
-                : "0%",
-          }}
-        />
-      </div>
-    </article>
-
-    <article>
-      <span>A pagar</span>
-      <b>
-        {fmt(toPay)}
-      </b>
-      <small>
-        Compromissos pendentes
-      </small>
-
-      <div className="status-progress warning">
-        <i
-          style={{
-            width:
-              spent > 0
-                ? `${Math.min(100, (toPay / spent) * 100)}%`
-                : "0%",
-          }}
-        />
-      </div>
-    </article>
-  </div>
-
-  <div className="financial-status-footer">
-    <div>
-      <span>Saldo realizado</span>
-      <b>
-        {realizedBalance < 0 ? "− " : ""}
-        {fmt(realizedBalance)}
-      </b>
-    </div>
-
-    <div>
-      <span>Saldo previsto</span>
-      <b>
-        {projectedBalance < 0 ? "− " : ""}
-        {fmt(projectedBalance)}
-      </b>
-    </div>
-  </div>
-</section>
+              <OverviewChart entries={entries} month={month} />
 
               <section className="panel categories">
                 <PanelHead
@@ -2303,79 +1913,7 @@ const donutBackground =
           IMPORTAÇÃO
           =================================================== */}
 
-      {importOpen && (
-        <div className="modal-bg">
-          <div className="modal">
-            <ModalHead
-              title="Importar extrato"
-              sub="Cole as movimentações copiadas do seu banco."
-              close={() => {
-                setImportOpen(
-                  false
-                );
-
-                setNotice("");
-              }}
-              icon={
-                <Upload />
-              }
-            />
-
-            <label className="paste-label">
-              EXTRATO BANCÁRIO
-
-              <textarea
-                value={
-                  paste
-                }
-                onChange={(
-                  event
-                ) =>
-                  setPaste(
-                    event
-                      .target
-                      .value
-                  )
-                }
-                placeholder={
-                  "03/09 Supermercado -387,42\n05/09 Salário +5.498,70"
-                }
-              />
-            </label>
-
-            {notice && (
-              <p className="notice">
-                {notice}
-              </p>
-            )}
-
-            <div className="modal-foot">
-              <button
-                type="button"
-                onClick={() =>
-                  setImportOpen(
-                    false
-                  )
-                }
-              >
-                Cancelar
-              </button>
-
-              <button
-                className="primary"
-                type="button"
-                onClick={
-                  doImport
-                }
-              >
-                Analisar lançamentos
-
-                <ArrowUpRight />
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {importOpen && section === "Lançamentos" && <StatementImport accounts={investmentAccounts} entries={entries} onClose={() => setImportOpen(false)} onImport={async rows => { const updated = [...rows, ...entries]; await saveFinanceNamespace("ledger", updated); setEntries(updated); }} />}
 
       {/* ===================================================
           GUARDAR SALDO
@@ -2682,27 +2220,24 @@ function CardSourceBadge({
    ========================================================= */
 
 function TransactionsWorkspace({
+  importReady,
+  accounts,
+  setAccounts,
+  onImport,
   selectedMonth,
   entries,
   setEntries,
 }: {
+  accounts: FinanceAccount[];
+  importReady: boolean;
+  setAccounts: React.Dispatch<React.SetStateAction<FinanceAccount[]>>;
+  onImport: () => void;
   selectedMonth: string;
   entries: Ledger[];
   setEntries: React.Dispatch<
     React.SetStateAction<Ledger[]>
   >;
 }) {
-  const [
-    accounts,
-    setAccounts,
-  ] =
-    usePersistedFinance<
-      FinanceAccount[]
-    >(
-      "accounts",
-      initialAccounts
-    );
-
   const [cards] =
     usePersistedFinance<
       FinanceCard[]
@@ -4132,7 +3667,8 @@ function TransactionsWorkspace({
           </p>
         </div>
 
-        <div>
+        <div className="ledger-heading-actions">
+          <button className="primary" type="button" disabled={!importReady} onClick={onImport}><Upload />Importar extrato</button>
           <button
             className="category-btn"
             onClick={() =>

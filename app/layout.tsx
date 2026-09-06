@@ -5,8 +5,9 @@ export const metadata: Metadata = {
   title: "HAS Finanças — Inteligência Financeira",
   description: "Planejamento financeiro pessoal orientado por dados.",
   icons: {
-    icon: "/favicon.svg",
-    shortcut: "/favicon.svg",
+    icon: "/icon.png",
+    shortcut: "/icon.png",
+    apple: "/icon.png",
   },
 };
 

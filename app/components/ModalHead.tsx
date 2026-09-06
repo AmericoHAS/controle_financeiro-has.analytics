@@ -29,6 +29,7 @@ export default function ModalHead({
       </div>
 
       <button
+        aria-label="Fechar janela"
         onClick={
           close
         }
@@ -39,4 +40,3 @@ export default function ModalHead({
     </div>
   );
 }
-
