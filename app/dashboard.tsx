@@ -4462,8 +4462,8 @@ const [
           event.target.value
         )
     }
-    placeholder="Ícone opcional"
-    maxLength={4}
+    placeholder="Ícone (opcional)"
+maxLength={8}
   />
 
   <select

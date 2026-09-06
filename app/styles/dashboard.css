@@ -3345,3 +3345,323 @@ textarea:focus{
     margin-top:14px;
   }
 }
+
+
+
+/* =========================================================
+   AJUSTES - GERENCIADOR DE CATEGORIAS
+   ========================================================= */
+
+.category-manager form{
+  display:grid;
+  grid-template-columns:minmax(220px, 1.6fr) minmax(150px, .8fr) minmax(160px, .8fr) auto;
+  gap:12px;
+  width:100%;
+  align-items:center;
+  margin-top:16px;
+}
+
+.category-manager form input,
+.category-manager form select{
+  width:100%;
+  min-width:0;
+  height:44px;
+  padding:0 14px;
+  border:1px solid #d8e2e3;
+  border-radius:12px;
+  background:#ffffff;
+  color:#17383b;
+  font-size:14px;
+  outline:none;
+  box-sizing:border-box;
+}
+
+.category-manager form input::placeholder{
+  color:#7c8f91;
+  opacity:1;
+}
+
+.category-manager form select{
+  cursor:pointer;
+  appearance:auto;
+  color:#17383b !important;
+  background-color:#ffffff !important;
+}
+
+.category-manager form select option{
+  color:#17383b !important;
+  background:#ffffff !important;
+}
+
+.category-manager form input:focus,
+.category-manager form select:focus{
+  border-color:#078c94;
+  box-shadow:0 0 0 3px rgba(7,140,148,.10);
+}
+
+.category-manager form button{
+  height:44px;
+  min-width:165px;
+  padding:0 18px;
+  border:0;
+  border-radius:12px;
+  background:#078c94;
+  color:#ffffff;
+  font-weight:700;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  cursor:pointer;
+  white-space:nowrap;
+}
+
+.category-manager form button svg{
+  width:17px;
+  height:17px;
+}
+
+
+/* =========================================================
+   IMPORTADOR - MODO ARQUIVO / COLAR FATURA
+   ========================================================= */
+
+.statement-input-mode{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-bottom:18px;
+  padding:5px;
+  background:#f3f7f7;
+  border:1px solid #e1e9e9;
+  border-radius:14px;
+}
+
+.statement-input-mode button{
+  min-height:46px;
+  border:0;
+  border-radius:10px;
+  background:transparent;
+  color:#536769;
+  font-size:14px;
+  font-weight:700;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  cursor:pointer;
+  transition:.18s ease;
+}
+
+.statement-input-mode button svg{
+  width:18px;
+  height:18px;
+}
+
+.statement-input-mode button:hover{
+  background:#ffffff;
+  color:#17383b;
+}
+
+.statement-input-mode button.active{
+  background:#ffffff;
+  color:#078c94;
+  box-shadow:0 2px 10px rgba(20,52,55,.08);
+}
+
+
+/* =========================================================
+   ÁREA DE COLAR FATURA
+   ========================================================= */
+
+.statement-paste{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  padding:16px;
+  margin-bottom:18px;
+  background:#f8fbfb;
+  border:1px solid #e1e9e9;
+  border-radius:14px;
+}
+
+.statement-paste label{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  color:#17383b;
+  font-size:13px;
+  font-weight:700;
+}
+
+.statement-paste textarea{
+  width:100%;
+  min-height:180px;
+  resize:vertical;
+  padding:14px 16px;
+  border:1px solid #d8e2e3;
+  border-radius:12px;
+  background:#ffffff;
+  color:#17383b;
+  font:inherit;
+  font-size:14px;
+  line-height:1.55;
+  outline:none;
+  box-sizing:border-box;
+}
+
+.statement-paste textarea::placeholder{
+  color:#849496;
+  opacity:1;
+}
+
+.statement-paste textarea:focus{
+  border-color:#078c94;
+  box-shadow:0 0 0 3px rgba(7,140,148,.10);
+}
+
+.statement-paste > button{
+  align-self:flex-end;
+  min-width:210px;
+  min-height:44px;
+}
+
+
+/* =========================================================
+   IMPORTADOR - CONTEÚDO
+   ========================================================= */
+
+.statement-modal{
+  width:min(960px, calc(100vw - 32px));
+  max-height:92vh;
+  overflow:hidden;
+}
+
+.statement-body{
+  overflow-y:auto;
+  padding-right:4px;
+}
+
+.statement-kind{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+
+.statement-kind button{
+  min-width:0;
+}
+
+.statement-kind button span{
+  min-width:0;
+}
+
+.statement-kind button b,
+.statement-kind button small{
+  overflow-wrap:anywhere;
+}
+
+
+/* =========================================================
+   IMPORTADOR - REVISÃO DOS LANÇAMENTOS
+   ========================================================= */
+
+.statement-review{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+.statement-review-row{
+  display:grid;
+  grid-template-columns:28px minmax(200px, 1fr) 130px minmax(140px, 180px) 110px;
+  gap:10px;
+  align-items:center;
+  width:100%;
+  box-sizing:border-box;
+}
+
+.statement-review-main{
+  min-width:0;
+}
+
+.statement-edit-name,
+.statement-type-select,
+.statement-category-input{
+  width:100%;
+  min-width:0;
+  box-sizing:border-box;
+}
+
+.statement-type-select{
+  color:#17383b !important;
+  background:#ffffff !important;
+}
+
+.statement-type-select option{
+  color:#17383b !important;
+  background:#ffffff !important;
+}
+
+
+/* =========================================================
+   RESPONSIVO
+   ========================================================= */
+
+@media(max-width:800px){
+
+  .category-manager form{
+    grid-template-columns:1fr 1fr;
+  }
+
+  .category-manager form button{
+    width:100%;
+  }
+
+  .statement-review-row{
+    grid-template-columns:28px 1fr;
+    align-items:start;
+  }
+
+  .statement-review-row .statement-type-select,
+  .statement-review-row .statement-category-input,
+  .statement-review-row > b{
+    grid-column:2;
+  }
+}
+
+@media(max-width:600px){
+
+  .category-manager form{
+    grid-template-columns:1fr;
+  }
+
+  .category-manager form button{
+    min-width:0;
+  }
+
+  .statement-input-mode{
+    grid-template-columns:1fr;
+  }
+
+  .statement-kind{
+    grid-template-columns:1fr;
+  }
+
+  .statement-paste{
+    padding:12px;
+  }
+
+  .statement-paste textarea{
+    min-height:210px;
+  }
+
+  .statement-paste > button{
+    width:100%;
+    min-width:0;
+  }
+
+  .statement-modal{
+    width:calc(100vw - 18px);
+  }
+}
