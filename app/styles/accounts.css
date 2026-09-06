@@ -1,0 +1,173 @@
+/* =========================================================
+   HAS FINANCIAL — CONTAS
+   ========================================================= */
+
+
+/* =========================================================
+   ÁREA PRINCIPAL
+   ========================================================= */
+
+.finance-workspace{
+  min-width:0;
+}
+
+.finance-workspace .primary{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+
+  gap:8px;
+
+  width:auto;
+  min-height:42px;
+
+  flex-shrink:0;
+
+  white-space:nowrap;
+}
+
+.finance-workspace button:disabled{
+  opacity:.5;
+  cursor:wait;
+}
+
+
+/* =========================================================
+   CAMPOS
+   ========================================================= */
+
+.finance-workspace
+input:not([type=checkbox]):not([type=file]),
+.finance-workspace select{
+  max-width:100%;
+
+  padding:10px 12px;
+
+  border:1px solid var(--line);
+  border-radius:9px;
+
+  background:#fff;
+  color:var(--ink);
+}
+
+
+/* =========================================================
+   HISTÓRICO DA CONTA
+   ========================================================= */
+
+.finance-workspace .account-history{
+  margin:20px 0;
+  padding:24px;
+}
+
+.account-history .panel-head h3{
+  font-size:23px;
+  font-weight:800;
+
+  line-height:1.3;
+}
+
+.account-history .panel-head > div{
+  min-width:0;
+}
+
+
+/* =========================================================
+   TABELA
+   ========================================================= */
+
+.finance-table-scroll{
+  overflow-x:auto;
+}
+
+.finance-workspace table{
+  width:100%;
+
+  border-collapse:collapse;
+
+  text-align:left;
+}
+
+.finance-workspace th,
+.finance-workspace td{
+  padding:12px;
+
+  border-bottom:
+    1px solid #e8e8ee;
+
+  white-space:nowrap;
+}
+
+
+
+
+/* =========================================================
+   PROGRESSO
+   ========================================================= */
+
+.finance-workspace progress{
+  display:block;
+
+  width:100%;
+  height:12px;
+
+  margin-top:16px;
+
+  accent-color:
+    var(--hf-600);
+}
+
+
+
+
+/* =========================================================
+   AJUSTES DE MODAIS
+   ========================================================= */
+
+.finance-workspace .modal{
+  max-height:90vh;
+
+  overflow-y:auto;
+}
+
+
+/* =========================================================
+   RESPONSIVIDADE
+   ========================================================= */
+
+@media(max-width:640px){
+
+  .finance-workspace .bank-title,
+  .finance-workspace .panel-head{
+    flex-wrap:wrap;
+
+    gap:16px;
+  }
+
+  .finance-workspace .account-history{
+    padding:16px;
+  }
+
+  .account-history .panel-head{
+    display:grid;
+
+    gap:12px;
+  }
+
+  .account-history .panel-head h3{
+    font-size:22px;
+  }
+
+  
+ 
+
+  .finance-table-scroll{
+    max-width:100%;
+  }
+
+  .finance-workspace .primary{
+    width:100%;
+
+    white-space:normal;
+  }
+}

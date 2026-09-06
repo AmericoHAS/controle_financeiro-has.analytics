@@ -1,0 +1,496 @@
+/* =========================================================
+   HAS FINANCIAL — CARTÕES
+   ========================================================= */
+
+.bank-page{
+  max-width:1500px;
+  margin:auto;
+  padding:28px 30px 50px;
+}
+
+.bank-title{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:18px;
+}
+
+.bank-title > div:first-child{
+  min-width:0;
+}
+
+.bank-kicker{
+  display:block;
+  margin-bottom:7px;
+  color:var(--hf-600);
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:1.4px;
+}
+
+.bank-title h2{
+  margin:0;
+  font-size:27px;
+}
+
+.bank-title p{
+  margin:6px 0 0;
+  color:var(--muted);
+}
+
+/* =========================================================
+   AÇÕES DO TOPO
+   ========================================================= */
+
+.bank-title-actions{
+  display:flex;
+  align-items:center;
+  gap:9px;
+}
+
+.bank-title-actions label{
+  width:260px;
+  height:42px;
+  padding:0 12px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  background:#fff;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.bank-title-actions input{
+  width:100%;
+  border:0;
+  outline:0;
+}
+
+.bank-title-actions .primary{
+  min-height:42px;
+  height:auto;
+  padding:10px 16px !important;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  white-space:nowrap;
+  flex-shrink:0;
+}
+
+.bank-title-actions .primary svg{
+  width:17px;
+  height:17px;
+  flex:none;
+}
+
+/* =========================================================
+   CARTÕES SELECIONADOS
+   ========================================================= */
+
+.selected-banks{
+  margin:25px 0;
+}
+
+.selected-heading{
+  margin-bottom:11px;
+  display:flex !important;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+}
+
+.selected-heading h3{
+  margin:0;
+}
+
+.selected-heading small{
+  color:#6d8384;
+}
+
+.selected-banks > div:not(.selected-heading):not(.empty-cards){
+  display:flex;
+  gap:15px;
+  overflow:auto;
+  padding:5px 4px 14px;
+}
+
+/* =========================================================
+   CARTÃO VISUAL
+   ========================================================= */
+
+.credit-visual{
+  position:relative;
+  isolation:isolate;
+  min-width:310px;
+  height:188px;
+  padding:20px 21px;
+  overflow:hidden;
+  border:1px solid #ffffff2e;
+  border-radius:17px;
+  color:#fff;
+  display:flex;
+  flex-direction:column;
+  box-shadow:0 15px 28px #001d3d2e;
+
+  transition:
+    transform .2s ease,
+    box-shadow .2s ease;
+}
+
+.credit-visual:hover{
+  transform:translateY(-3px);
+  box-shadow:0 18px 34px rgba(0,29,61,.24);
+}
+
+.credit-visual::after{
+  content:"";
+  position:absolute;
+  width:180px;
+  height:180px;
+  right:-72px;
+  top:-74px;
+  border-radius:50%;
+  background:rgba(255,255,255,.08);
+  pointer-events:none;
+}
+
+.credit-visual .card-top{
+  position:relative;
+  z-index:1;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+
+.credit-visual .card-top > *{
+  min-width:0;
+}
+
+.credit-visual > b{
+  position:relative;
+  z-index:1;
+  margin-top:auto;
+  letter-spacing:2px;
+}
+
+.credit-visual > small{
+  position:relative;
+  z-index:1;
+  margin-top:9px;
+  color:#ffffffcf;
+  font-size:10px;
+}
+
+.credit-visual > strong{
+  position:absolute;
+  right:20px;
+  bottom:19px;
+  z-index:1;
+  font-size:11px;
+}
+
+/* =========================================================
+   EDITAR CARTÃO
+   ========================================================= */
+
+.edit-card{
+  position:absolute;
+  top:61px;
+  right:14px;
+  z-index:2;
+  padding:6px 8px;
+  border:1px solid #ffffff3d;
+  border-radius:8px;
+  background:#0000001d;
+  color:#fff;
+  display:flex;
+  align-items:center;
+  gap:5px;
+  font-size:10px;
+  backdrop-filter:blur(4px);
+}
+
+.edit-card:hover{
+  background:#00000036;
+}
+
+/* =========================================================
+   SELEÇÃO DE BANCOS
+   ========================================================= */
+
+.bank-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:10px;
+}
+
+.bank-option{
+  position:relative;
+  min-height:95px;
+  padding:13px;
+  border:1px solid var(--line);
+  border-radius:13px;
+  background:#fff;
+
+  display:grid;
+  grid-template-columns:44px 1fr;
+  grid-template-rows:1fr 1fr;
+
+  align-items:center;
+  gap:0 10px;
+
+  text-align:left;
+
+  transition:
+    border-color .16s ease,
+    box-shadow .16s ease,
+    transform .16s ease;
+}
+
+.bank-option:hover,
+.bank-option.chosen{
+  border-color:var(--hf-500);
+  box-shadow:0 5px 16px #078c941c;
+}
+
+.bank-option:hover{
+  transform:translateY(-1px);
+}
+
+.bank-logo{
+  grid-row:1 / 3;
+  width:44px;
+  height:44px;
+  border-radius:12px;
+  display:grid;
+  place-items:center;
+  font-size:12px;
+  font-weight:900;
+}
+
+.custom-bank .bank-logo{
+  background:var(--hf-100);
+  color:var(--hf-700);
+}
+
+/* =========================================================
+   ESTADO VAZIO
+   ========================================================= */
+
+.empty-cards{
+  min-height:180px;
+  padding:24px;
+
+  border:1px dashed #9fc8c5;
+  border-radius:15px;
+
+  background:#edf7f6;
+
+  display:flex !important;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+
+  color:#496e70;
+  text-align:center;
+}
+
+.empty-cards > svg{
+  width:28px;
+  margin-bottom:8px;
+}
+
+.empty-cards b{
+  font-size:13px;
+}
+
+.empty-cards span{
+  margin:5px 0 13px;
+  font-size:11px;
+}
+
+/* =========================================================
+   MODAL DO CARTÃO
+   ========================================================= */
+
+.card-modal{
+  width:min(700px,100%);
+}
+
+.card-preview{
+  height:125px;
+  margin:20px 24px 0;
+  padding:18px;
+
+  border-radius:14px;
+
+  color:#fff;
+
+  display:flex;
+  flex-direction:column;
+
+  box-shadow:0 12px 25px rgba(4,47,55,.15);
+}
+
+.card-preview b{
+  margin-top:auto;
+}
+
+.card-form{
+  padding:18px 24px;
+
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:13px;
+}
+
+.card-form label{
+  color:#486667;
+  font-size:11px;
+  font-weight:700;
+}
+
+.card-form input,
+.card-form select{
+  display:block;
+  width:100%;
+  height:42px;
+
+  margin-top:6px;
+  padding:0 11px;
+
+  border:1px solid #c7dcda;
+  border-radius:9px;
+
+  background:#fff;
+}
+
+/* =========================================================
+   RODAPÉ DO MODAL
+   ========================================================= */
+
+.card-modal-foot{
+  display:flex !important;
+  align-items:center;
+  justify-content:flex-end;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.card-modal-foot > span{
+  flex:1;
+}
+
+.card-modal-foot button{
+  min-height:42px !important;
+  height:auto !important;
+
+  padding:10px 16px !important;
+
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+
+  white-space:nowrap;
+}
+
+.card-modal-foot .primary{
+  min-width:145px;
+}
+
+/* =========================================================
+   EXCLUIR CARTÃO
+   ========================================================= */
+
+.delete-card{
+  color:#b34b48 !important;
+  border-color:#e6b9b7 !important;
+
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+
+.delete-card:hover{
+  background:var(--danger-soft) !important;
+}
+
+.delete-card svg{
+  width:14px;
+}
+
+/* =========================================================
+   RESPONSIVIDADE
+   ========================================================= */
+
+@media(max-width:1100px){
+
+  .bank-grid{
+    grid-template-columns:repeat(3,1fr);
+  }
+}
+
+@media(max-width:760px){
+
+  .bank-page{
+    padding:15px;
+  }
+
+  .bank-title{
+    display:block;
+  }
+
+  .bank-title-actions{
+    margin-top:15px;
+  }
+
+  .bank-grid{
+    grid-template-columns:1fr 1fr;
+  }
+
+  .card-form{
+    grid-template-columns:1fr;
+    max-height:60vh;
+    overflow:auto;
+  }
+}
+
+@media(max-width:600px){
+
+  .bank-title-actions{
+    width:100%;
+    flex-direction:column;
+    align-items:stretch;
+  }
+
+  .bank-title-actions label,
+  .bank-title-actions .primary{
+    width:100%;
+  }
+
+  .card-modal-foot > span{
+    display:none;
+  }
+
+  .card-modal-foot button{
+    flex:1 1 140px;
+  }
+
+  .credit-visual{
+    min-width:280px;
+  }
+}
+
+@media(max-width:430px){
+
+  .bank-grid{
+    grid-template-columns:1fr;
+  }
+
+  .credit-visual{
+    min-width:260px;
+  }
+}

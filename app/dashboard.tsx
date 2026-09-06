@@ -1247,76 +1247,86 @@ const donutBackground =
 
       <main>
         <header>
-          <button
-            className="hamb"
-            onClick={() =>
-              setMobile(true)
-            }
-          >
-            <Menu />
-          </button>
+  <button
+    className="hamb"
+    onClick={() => setMobile(true)}
+  >
+    <Menu />
+  </button>
 
-          <div>
-            <p>
-              MINHA VIDA FINANCEIRA
-              {" · "}
+  <div>
+    <p>
+      MINHA VIDA FINANCEIRA
+      {" · "}
 
-              {saveState ===
-              "salvando"
-                ? "SALVANDO…"
-                : saveState ===
-                  "erro"
-                ? "ERRO AO SALVAR"
-                : saveState ===
-                  "carregando"
-                ? "CARREGANDO…"
-                : "SALVO"}
-            </p>
+      {saveState === "salvando"
+        ? "SALVANDO…"
+        : saveState === "erro"
+        ? "ERRO AO SALVAR"
+        : saveState === "carregando"
+        ? "CARREGANDO…"
+        : "SALVO"}
+    </p>
 
-            <h1>
-              {section}
-            </h1>
-          </div>
-
-          <div className="header-actions">
-  <div className="month-navigation">
-    <button
-      type="button"
-      onClick={() =>
-        setMonth((current) =>
-          changeMonth(current, -1)
-        )
-      }
-    >
-      ‹
-    </button>
-
-    <label className="month-current">
-      <CalendarDays />
-
-      <input
-        type="month"
-        value={month}
-        onChange={(event) =>
-          setMonth(event.target.value)
-        }
-      />
-    </label>
-
-    <button
-      type="button"
-      onClick={() =>
-        setMonth((current) =>
-          changeMonth(current, 1)
-        )
-      }
-    >
-      ›
-    </button>
+    <h1>{section}</h1>
   </div>
 
-</div>
-        </header>
+  <div className="header-actions">
+    <div className="month-navigation">
+      <button
+        type="button"
+        onClick={() =>
+          setMonth((current) =>
+            changeMonth(current, -1)
+          )
+        }
+      >
+        ‹
+      </button>
+
+      <label className="month-current">
+        <CalendarDays />
+
+        <input
+          type="month"
+          value={month}
+          onChange={(event) =>
+            setMonth(event.target.value)
+          }
+        />
+      </label>
+
+      <button
+        type="button"
+        onClick={() =>
+          setMonth((current) =>
+            changeMonth(current, 1)
+          )
+        }
+      >
+        ›
+      </button>
+    </div>
+
+    <button
+      className="primary"
+      onClick={() =>
+        setImportOpen(true)
+      }
+    >
+      <Upload />
+      Importar extrato
+    </button>
+
+    <button
+      className="iconbtn"
+      onClick={onLogout}
+      title="Sair"
+    >
+      <LogOut />
+    </button>
+  </div>
+</header>
 
         {section ===
         "Cartões" ? (

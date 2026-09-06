@@ -1,0 +1,389 @@
+/* =========================================================
+   HAS FINANCIAL — MENU DE PERFIL
+   ========================================================= */
+
+.profile-menu{
+  position:relative;
+
+  width:100%;
+
+  margin:0;
+  padding:0;
+}
+
+.profile-menu > summary{
+  list-style:none;
+}
+
+.profile-menu > summary::-webkit-details-marker{
+  display:none;
+}
+
+
+/* =========================================================
+   BOTÃO PRINCIPAL DO PERFIL
+   ========================================================= */
+
+.profile-menu .profile{
+  width:100%;
+  min-height:58px;
+
+  margin-top:12px;
+  padding:9px 10px;
+
+  border:1px solid transparent;
+  border-top-color:rgba(255,255,255,.11);
+  border-radius:12px;
+
+  background:transparent;
+
+  display:grid;
+
+  grid-template-columns:
+    38px minmax(0,1fr) 18px;
+
+  align-items:center;
+
+  gap:9px;
+
+  cursor:pointer;
+
+  transition:
+    background .18s ease,
+    border-color .18s ease;
+}
+
+.profile-menu .profile:hover,
+.profile-menu[open] .profile{
+  background:
+    rgba(255,255,255,.07);
+
+  border-color:
+    rgba(255,255,255,.09);
+}
+
+
+/* =========================================================
+   AVATAR
+   ========================================================= */
+
+.profile-avatar{
+  width:38px;
+  height:38px;
+
+  border-radius:10px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  background:
+    rgba(255,255,255,.12);
+
+  color:#fff;
+
+  font-size:12px;
+  font-weight:800;
+
+  letter-spacing:.03em;
+}
+
+
+/* =========================================================
+   INFORMAÇÕES DO USUÁRIO
+   ========================================================= */
+
+.profile-info{
+  min-width:0;
+
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+}
+
+.profile-info b{
+  width:100%;
+
+  color:#fff;
+
+  font-size:12px;
+  font-weight:750;
+
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.profile-info small{
+  margin-top:2px;
+
+  color:
+    rgba(255,255,255,.58);
+
+  font-size:10px;
+}
+
+
+/* =========================================================
+   SETA
+   ========================================================= */
+
+.profile-chevron{
+  width:16px;
+  height:16px;
+
+  color:
+    rgba(255,255,255,.62);
+
+  transition:
+    transform .18s ease;
+}
+
+.profile-menu[open]
+.profile-chevron{
+  transform:
+    rotate(180deg);
+}
+
+
+/* =========================================================
+   POPOVER
+   ========================================================= */
+
+.profile-popover{
+  position:absolute;
+
+  left:4px;
+  bottom:calc(100% + 8px);
+
+  z-index:200;
+
+  width:248px;
+  max-width:
+    calc(100vw - 32px);
+
+  padding:7px;
+
+  border:
+    1px solid #dfe9e7;
+
+  border-radius:13px;
+
+  background:#fff;
+
+  box-shadow:
+    0 14px 36px
+    rgba(7,45,50,.16);
+
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+}
+
+
+/* =========================================================
+   CABEÇALHO DO POPOVER
+   ========================================================= */
+
+.profile-popover-head{
+  padding:9px 10px 11px;
+
+  margin-bottom:4px;
+
+  border-bottom:
+    1px solid #e8eeee;
+
+  overflow:hidden;
+}
+
+.profile-popover-head strong{
+  display:block;
+
+  color:#183c40;
+
+  font-size:12px;
+  font-weight:800;
+
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.profile-popover-head small{
+  display:block;
+
+  margin-top:3px;
+
+  color:#7a8d8f;
+
+  font-size:10px;
+
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+
+/* =========================================================
+   OPÇÕES
+   ========================================================= */
+
+.profile-popover > button,
+.profile-popover > a{
+  width:100%;
+  min-height:36px;
+
+  padding:8px 9px;
+
+  border:0;
+  border-radius:8px;
+
+  background:transparent;
+  color:#294c50;
+
+  display:flex;
+  align-items:center;
+  gap:8px;
+
+  font-family:inherit;
+
+  font-size:11px;
+  font-weight:650;
+
+  text-align:left;
+  text-decoration:none;
+
+  cursor:pointer;
+
+  transition:
+    background .15s ease,
+    color .15s ease;
+}
+
+.profile-popover > button:hover,
+.profile-popover > a:hover{
+  background:#eef8f7;
+  color:#087f7d;
+}
+
+.profile-popover > button svg,
+.profile-popover > a svg{
+  width:15px;
+  height:15px;
+
+  flex:none;
+}
+
+
+/* =========================================================
+   DIVISOR
+   ========================================================= */
+
+.profile-popover-divider{
+  width:100%;
+  height:1px;
+
+  margin:4px 0;
+
+  background:#e8eeee;
+}
+
+
+/* =========================================================
+   SAIR
+   ========================================================= */
+
+.profile-popover > .profile-logout{
+  color:#b44843;
+}
+
+.profile-popover >
+.profile-logout:hover{
+  background:#fff0ef;
+  color:#9c332f;
+}
+
+
+/* =========================================================
+   SIDEBAR RECOLHIDA
+   ========================================================= */
+
+.sidebar-collapsed
+.profile-menu
+.profile{
+  grid-template-columns:38px;
+
+  justify-content:center;
+}
+
+.sidebar-collapsed
+.profile-info,
+.sidebar-collapsed
+.profile-chevron{
+  display:none;
+}
+
+.sidebar-collapsed
+.profile-popover{
+  left:
+    calc(100% + 10px);
+
+  bottom:0;
+}
+
+
+/* =========================================================
+   SIDEBAR MOBILE ABERTA
+   ========================================================= */
+
+@media(max-width:760px){
+
+  .sidebar-collapsed
+  .sidebar.open
+  .profile-info{
+    display:flex;
+  }
+
+  .sidebar-collapsed
+  .sidebar.open
+  .profile-chevron{
+    display:block;
+  }
+
+  .sidebar-collapsed
+  .sidebar.open
+  .profile-menu
+  .profile{
+    grid-template-columns:
+      38px minmax(0,1fr) 18px;
+
+    justify-content:initial;
+  }
+
+  .sidebar-collapsed
+  .sidebar.open
+  .profile-popover{
+    left:0;
+    bottom:
+      calc(100% + 8px);
+  }
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media(max-width:700px){
+
+  .profile-popover{
+    left:0;
+    right:auto;
+
+    width:
+      min(
+        248px,
+        calc(100vw - 32px)
+      );
+  }
+}

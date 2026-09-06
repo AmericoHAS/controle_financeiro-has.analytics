@@ -1,0 +1,1010 @@
+/* =========================================================
+   HAS FINANCIAL — TELA DE ACESSO
+   ========================================================= */
+
+.access-page{
+  min-height:100vh;
+  padding:24px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  background:
+    radial-gradient(
+      circle at 10% 10%,
+      rgba(15,151,146,.10),
+      transparent 30%
+    ),
+    #f4f8f8;
+}
+
+.access-shell{
+  width:min(1120px,100%);
+  min-height:680px;
+
+  display:grid;
+  grid-template-columns:
+    minmax(0,1fr)
+    minmax(420px,.82fr);
+
+  overflow:hidden;
+
+  border:1px solid #dce8e7;
+  border-radius:24px;
+
+  background:#fff;
+
+  box-shadow:
+    0 24px 70px rgba(12,61,65,.13);
+}
+
+
+/* =========================================================
+   LADO INSTITUCIONAL
+   ========================================================= */
+
+.access-brand-panel{
+  min-width:0;
+  padding:46px;
+
+  display:flex;
+  flex-direction:column;
+
+  color:#fff;
+
+  background:
+    linear-gradient(
+      145deg,
+      #063b3e 0%,
+      #075d5f 55%,
+      #078f8d 100%
+    );
+}
+
+.access-brand{
+  display:flex;
+  align-items:center;
+  gap:14px;
+}
+
+.access-logo{
+  width:58px;
+  height:58px;
+
+  object-fit:contain;
+  object-position:center;
+
+  flex:none;
+}
+
+.access-brand > div{
+  min-width:0;
+
+  display:flex;
+  flex-direction:column;
+}
+
+.access-brand strong{
+  font-size:19px;
+  font-weight:800;
+  letter-spacing:-.02em;
+}
+
+.access-brand span{
+  margin-top:2px;
+
+  color:rgba(255,255,255,.68);
+
+  font-size:11px;
+}
+
+.access-brand-copy{
+  max-width:520px;
+
+  margin:auto 0;
+  padding:70px 0;
+}
+
+.access-kicker{
+  display:block;
+
+  margin-bottom:18px;
+
+  color:#98ded9;
+
+  font-size:11px;
+  font-weight:800;
+
+  letter-spacing:.13em;
+}
+
+.access-brand-copy h1{
+  max-width:500px;
+
+  margin:0;
+
+  color:#fff;
+
+  font-size:
+    clamp(38px,4.5vw,60px);
+
+  line-height:1.02;
+
+  letter-spacing:-.045em;
+}
+
+.access-brand-copy p{
+  max-width:470px;
+
+  margin:24px 0 0;
+
+  color:
+    rgba(255,255,255,.72);
+
+  font-size:15px;
+
+  line-height:1.7;
+}
+
+.access-brand-footer{
+  margin-top:auto;
+  padding-top:20px;
+
+  border-top:
+    1px solid rgba(255,255,255,.13);
+
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+
+  gap:16px;
+
+  color:
+    rgba(255,255,255,.55);
+
+  font-size:10px;
+}
+
+.access-brand-footer a{
+  color:
+    rgba(255,255,255,.75);
+
+  font-weight:650;
+
+  text-decoration:none;
+}
+
+.access-brand-footer a:hover{
+  color:#fff;
+}
+
+
+/* =========================================================
+   LADO DO FORMULÁRIO
+   ========================================================= */
+
+.access-form-panel{
+  min-width:0;
+
+  padding:56px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  background:#fff;
+}
+
+.access-form-card{
+  width:100%;
+  max-width:390px;
+}
+
+.access-form-head{
+  margin-bottom:30px;
+
+  display:flex;
+  align-items:flex-start;
+
+  gap:13px;
+}
+
+.access-form-icon{
+  width:42px;
+  height:42px;
+
+  flex:none;
+
+  border-radius:12px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  background:#e9f7f5;
+  color:#087e7a;
+}
+
+.access-form-icon svg{
+  width:20px;
+  height:20px;
+}
+
+.access-form-head h2{
+  margin:0;
+
+  color:#173c40;
+
+  font-size:25px;
+  line-height:1.15;
+
+  letter-spacing:-.025em;
+}
+
+.access-form-head p{
+  margin:7px 0 0;
+
+  color:#718587;
+
+  font-size:12px;
+
+  line-height:1.5;
+}
+
+
+/* =========================================================
+   FORMULÁRIO
+   ========================================================= */
+
+.access-form{
+  display:flex;
+  flex-direction:column;
+
+  gap:17px;
+}
+
+.access-form > label{
+  display:flex;
+  flex-direction:column;
+
+  gap:7px;
+
+  color:#35565a;
+
+  font-size:11px;
+  font-weight:750;
+}
+
+.access-input{
+  width:100%;
+  min-height:46px;
+
+  padding:0 12px;
+
+  border:1px solid #d7e3e2;
+  border-radius:11px;
+
+  background:#fff;
+
+  display:flex;
+  align-items:center;
+
+  gap:9px;
+
+  transition:
+    border-color .16s ease,
+    box-shadow .16s ease;
+}
+
+.access-input:focus-within{
+  border-color:#169a95;
+
+  box-shadow:
+    0 0 0 3px rgba(22,154,149,.10);
+}
+
+.access-input > svg{
+  width:17px;
+  height:17px;
+
+  flex:none;
+
+  color:#83999a;
+}
+
+.access-input input{
+  width:100%;
+  min-width:0;
+  height:44px;
+
+  padding:0;
+
+  border:0;
+  outline:0;
+
+  background:transparent;
+  color:#183d41;
+
+  font-family:inherit;
+  font-size:13px;
+}
+
+.access-input input::placeholder{
+  color:#a2b1b2;
+}
+
+
+/* =========================================================
+   MOSTRAR / OCULTAR SENHA
+   ========================================================= */
+
+.password-toggle{
+  width:32px !important;
+  height:32px !important;
+  min-height:0 !important;
+
+  padding:0 !important;
+
+  border:0 !important;
+  border-radius:8px !important;
+
+  background:transparent !important;
+  color:#83999a !important;
+
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+
+  flex:none;
+
+  cursor:pointer;
+}
+
+.password-toggle:hover{
+  background:#edf7f6 !important;
+  color:#087e7a !important;
+}
+
+.password-toggle svg{
+  width:16px;
+  height:16px;
+}
+
+
+/* =========================================================
+   ESQUECI A SENHA
+   ========================================================= */
+
+.forgot-password{
+  width:max-content;
+
+  margin-top:-7px;
+  margin-left:auto;
+
+  color:#087e7a;
+
+  font-size:11px;
+  font-weight:700;
+
+  text-decoration:none;
+}
+
+.forgot-password:hover{
+  text-decoration:underline;
+}
+
+
+/* =========================================================
+   MENSAGENS
+   ========================================================= */
+
+.access-message{
+  margin:0;
+
+  padding:10px 12px;
+
+  border-radius:9px;
+
+  font-size:11px;
+
+  line-height:1.45;
+}
+
+.access-message.error{
+  border:1px solid #efc6c2;
+
+  background:#fff1f0;
+  color:#a4433d;
+}
+
+.access-message.success{
+  border:1px solid #b8dfda;
+
+  background:#edf9f7;
+  color:#16736d;
+}
+
+
+/* =========================================================
+   BOTÃO PRINCIPAL
+   ========================================================= */
+
+.access-submit{
+  width:100%;
+  min-height:47px;
+
+  margin-top:3px;
+  padding:0 16px;
+
+  border:0;
+  border-radius:11px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #087f7c,
+      #0a9f99
+    );
+
+  color:#fff;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  gap:8px;
+
+  font-family:inherit;
+  font-size:12px;
+  font-weight:800;
+
+  cursor:pointer;
+
+  box-shadow:
+    0 8px 20px rgba(8,127,124,.18);
+
+  transition:
+    transform .15s ease,
+    box-shadow .15s ease,
+    opacity .15s ease;
+}
+
+.access-submit:hover:not(:disabled){
+  transform:
+    translateY(-1px);
+
+  box-shadow:
+    0 11px 25px rgba(8,127,124,.24);
+}
+
+.access-submit:disabled{
+  cursor:not-allowed;
+
+  opacity:.62;
+}
+
+.access-submit svg{
+  width:17px;
+  height:17px;
+}
+
+
+/* =========================================================
+   ALTERNAÇÃO LOGIN / SOLICITAÇÃO
+   ========================================================= */
+
+.access-switch{
+  margin-top:24px;
+  padding-top:20px;
+
+  border-top:
+    1px solid #e5eeee;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  gap:5px;
+
+  color:#7b8f91;
+
+  font-size:11px;
+}
+
+.access-switch button{
+  padding:0;
+
+  border:0;
+
+  background:transparent;
+  color:#087f7c;
+
+  font-family:inherit;
+  font-size:11px;
+  font-weight:800;
+
+  cursor:pointer;
+}
+
+.access-switch button:hover{
+  text-decoration:underline;
+}
+
+
+/* =========================================================
+   SUPORTE
+   ========================================================= */
+
+.access-support{
+  margin-top:18px;
+
+  color:#92a2a3;
+
+  font-size:10px;
+
+  text-align:center;
+}
+
+.access-support a{
+  color:#627d7f;
+
+  font-weight:700;
+
+  text-decoration:none;
+}
+
+.access-support a:hover{
+  color:#087f7c;
+
+  text-decoration:underline;
+}
+
+
+/* =========================================================
+   DEFINIR SENHA
+   ========================================================= */
+
+.password-page{
+  min-height:100vh;
+
+  padding:24px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  background:
+    radial-gradient(
+      circle at 15% 10%,
+      rgba(15,151,146,.10),
+      transparent 30%
+    ),
+    #f4f8f8;
+}
+
+.password-card{
+  width:min(460px,100%);
+
+  padding:34px;
+
+  border:1px solid #dce8e7;
+  border-radius:20px;
+
+  background:#fff;
+
+  box-shadow:
+    0 20px 55px rgba(12,61,65,.12);
+}
+
+.password-logo{
+  width:58px;
+  height:58px;
+
+  margin-bottom:24px;
+
+  object-fit:contain;
+}
+
+.password-head{
+  display:flex;
+  align-items:flex-start;
+
+  gap:12px;
+
+  margin-bottom:26px;
+}
+
+.password-head > span{
+  width:42px;
+  height:42px;
+
+  flex:none;
+
+  border-radius:12px;
+
+  background:#eaf7f5;
+  color:#087f7c;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.password-head > span svg{
+  width:20px;
+  height:20px;
+}
+
+.password-head h1{
+  margin:0;
+
+  color:#173c40;
+
+  font-size:24px;
+  line-height:1.15;
+}
+
+.password-head p{
+  margin:6px 0 0;
+
+  color:#75898b;
+
+  font-size:12px;
+
+  line-height:1.5;
+}
+
+.password-form{
+  display:flex;
+  flex-direction:column;
+
+  gap:16px;
+}
+
+.password-form label{
+  display:flex;
+  flex-direction:column;
+
+  gap:7px;
+
+  color:#35565a;
+
+  font-size:11px;
+  font-weight:750;
+}
+
+.password-input{
+  width:100%;
+  min-height:46px;
+
+  padding:0 12px;
+
+  border:1px solid #d7e3e2;
+  border-radius:11px;
+
+  background:#fff;
+
+  display:flex;
+  align-items:center;
+
+  gap:9px;
+}
+
+.password-input:focus-within{
+  border-color:#169a95;
+
+  box-shadow:
+    0 0 0 3px rgba(22,154,149,.10);
+}
+
+.password-input > svg{
+  width:17px;
+  height:17px;
+
+  flex:none;
+
+  color:#83999a;
+}
+
+.password-input input{
+  width:100%;
+  min-width:0;
+  height:44px;
+
+  padding:0;
+
+  border:0;
+  outline:0;
+
+  background:transparent;
+  color:#183d41;
+
+  font-family:inherit;
+  font-size:13px;
+}
+
+.password-input input::placeholder{
+  color:#a2b1b2;
+}
+
+.password-input button{
+  width:32px;
+  height:32px;
+
+  padding:0;
+
+  border:0;
+  border-radius:8px;
+
+  background:transparent;
+  color:#83999a;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  cursor:pointer;
+}
+
+.password-input button:hover{
+  background:#edf7f6;
+  color:#087e7a;
+}
+
+.password-input button svg{
+  width:16px;
+  height:16px;
+}
+
+.password-submit{
+  width:100%;
+  min-height:47px;
+
+  margin-top:4px;
+  padding:0 16px;
+
+  border:0;
+  border-radius:11px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #087f7c,
+      #0a9f99
+    );
+
+  color:#fff;
+
+  font-family:inherit;
+  font-size:12px;
+  font-weight:800;
+
+  cursor:pointer;
+
+  box-shadow:
+    0 8px 20px rgba(8,127,124,.18);
+}
+
+.password-submit:hover:not(:disabled){
+  transform:
+    translateY(-1px);
+}
+
+.password-submit:disabled{
+  opacity:.6;
+
+  cursor:not-allowed;
+}
+
+.password-loading{
+  margin:0;
+
+  padding:14px;
+
+  border-radius:10px;
+
+  background:#f3f8f7;
+  color:#607a7d;
+
+  font-size:12px;
+
+  text-align:center;
+}
+
+.password-support{
+  margin:20px 0 0;
+
+  color:#8a9b9d;
+
+  font-size:10px;
+
+  text-align:center;
+}
+
+.password-support a{
+  color:#087f7c;
+
+  font-weight:700;
+
+  text-decoration:none;
+}
+
+.password-support a:hover{
+  text-decoration:underline;
+}
+
+.password-success{
+  padding:18px 0 4px;
+
+  text-align:center;
+}
+
+.password-success > svg{
+  width:44px;
+  height:44px;
+
+  color:#13917f;
+}
+
+.password-success h1{
+  margin:14px 0 0;
+
+  color:#173c40;
+
+  font-size:24px;
+}
+
+.password-success p{
+  max-width:320px;
+
+  margin:8px auto 0;
+
+  color:#718587;
+
+  font-size:12px;
+
+  line-height:1.5;
+}
+
+
+/* =========================================================
+   RESPONSIVIDADE
+   ========================================================= */
+
+@media(max-width:900px){
+
+  .access-page{
+    padding:14px;
+  }
+
+  .access-shell{
+    min-height:0;
+
+    grid-template-columns:1fr;
+
+    border-radius:18px;
+  }
+
+  .access-brand-panel{
+    padding:28px 30px;
+  }
+
+  .access-brand-copy{
+    margin:42px 0 20px;
+
+    padding:0;
+  }
+
+  .access-brand-copy h1{
+    max-width:620px;
+
+    font-size:
+      clamp(31px,7vw,47px);
+  }
+
+  .access-brand-copy p{
+    max-width:620px;
+  }
+
+  .access-brand-footer{
+    margin-top:32px;
+  }
+
+  .access-form-panel{
+    padding:44px 30px;
+  }
+
+  .access-form-card{
+    max-width:480px;
+  }
+}
+
+
+@media(max-width:540px){
+
+  .access-page{
+    padding:0;
+
+    align-items:flex-start;
+
+    background:#fff;
+  }
+
+  .access-shell{
+    width:100%;
+
+    border:0;
+    border-radius:0;
+
+    box-shadow:none;
+  }
+
+  .access-brand-panel{
+    padding:24px 20px 28px;
+  }
+
+  .access-logo{
+    width:48px;
+    height:48px;
+  }
+
+  .access-brand strong{
+    font-size:16px;
+  }
+
+  .access-brand-copy{
+    margin:36px 0 10px;
+  }
+
+  .access-brand-copy h1{
+    font-size:34px;
+  }
+
+  .access-brand-copy p{
+    margin-top:16px;
+
+    font-size:13px;
+  }
+
+  .access-brand-footer{
+    flex-direction:column;
+    align-items:flex-start;
+  }
+
+  .access-form-panel{
+    padding:36px 20px 42px;
+  }
+
+  .access-form-head h2{
+    font-size:22px;
+  }
+
+  .access-switch{
+    flex-wrap:wrap;
+  }
+}
+
+
+@media(max-width:520px){
+
+  .password-page{
+    padding:0;
+
+    align-items:flex-start;
+
+    background:#fff;
+  }
+
+  .password-card{
+    width:100%;
+    min-height:100vh;
+
+    padding:28px 20px;
+
+    border:0;
+    border-radius:0;
+
+    box-shadow:none;
+  }
+}

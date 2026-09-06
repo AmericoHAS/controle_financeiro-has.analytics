@@ -1,0 +1,583 @@
+/* =========================================================
+   HAS FINANCIAL — PLANEJAMENTO
+   ========================================================= */
+
+
+/* =========================================================
+   PÁGINA
+   ========================================================= */
+
+.planning-page,
+.planning-v2{
+  max-width:1500px;
+  margin:auto;
+
+  padding:28px 30px 50px;
+}
+
+
+/* =========================================================
+   CABEÇALHO ANTIGO
+   ========================================================= */
+
+.planning-top{
+  min-height:190px;
+
+  padding:30px 34px;
+
+  border-radius:20px;
+
+  color:#fff;
+
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+
+  gap:24px;
+
+  background:
+    radial-gradient(
+      circle at 84% 18%,
+      #27c5bb36,
+      transparent 28%
+    ),
+    linear-gradient(
+      120deg,
+      #052f37,
+      #075159 62%,
+      #08777a
+    );
+
+  box-shadow:
+    0 16px 32px #063c442b;
+}
+
+.planning-kicker{
+  display:flex;
+  align-items:center;
+
+  gap:8px;
+
+  color:#78ddd5;
+
+  font-size:10px;
+  font-weight:800;
+
+  letter-spacing:1.4px;
+}
+
+.planning-top h2{
+  margin:12px 0 7px;
+
+  font-size:30px;
+}
+
+.planning-top p{
+  margin:0;
+
+  color:#b4d9d7;
+}
+
+
+/* =========================================================
+   SCORE
+   ========================================================= */
+
+.planning-score{
+  width:230px;
+
+  padding:19px;
+
+  border:
+    1px solid #ffffff1e;
+
+  border-radius:15px;
+
+  background:#ffffff0c;
+}
+
+.planning-score > b{
+  display:block;
+
+  margin:6px 0;
+
+  font-size:32px;
+}
+
+.planning-score > div{
+  height:6px;
+
+  overflow:hidden;
+
+  border-radius:8px;
+
+  background:#ffffff1c;
+}
+
+.planning-score i{
+  height:100%;
+
+  display:block;
+
+  background:
+    linear-gradient(
+      90deg,
+      var(--hf-500),
+      #40d2c6
+    );
+}
+
+
+/* =========================================================
+   INTRODUÇÃO V2
+   ========================================================= */
+
+.planning-intro{
+  padding:24px;
+
+  border:1px solid var(--line);
+  border-radius:20px;
+
+  background:var(--hf-50);
+}
+
+.planning-intro h2{
+  margin:8px 0;
+
+  font-size:
+    clamp(23px,3vw,30px);
+}
+
+.planning-intro p{
+  max-width:850px;
+
+  line-height:1.65;
+}
+
+
+/* =========================================================
+   RESUMO ANTIGO
+   ========================================================= */
+
+.plan-summary{
+  display:grid;
+
+  grid-template-columns:
+    repeat(4,1fr);
+
+  gap:12px;
+
+  margin:16px 0;
+}
+
+.plan-summary article{
+  padding:18px;
+
+  border:1px solid var(--line);
+  border-radius:15px;
+
+  background:#fbfefd;
+
+  box-shadow:
+    0 5px 18px #063c4409;
+}
+
+.plan-summary article > span{
+  display:flex;
+  align-items:center;
+
+  gap:8px;
+
+  color:#627d7e;
+
+  font-size:11px;
+  font-weight:700;
+}
+
+.plan-summary b,
+.plan-summary label{
+  display:block;
+
+  margin:13px 0 4px;
+
+  font-size:21px;
+  font-weight:800;
+}
+
+.plan-summary input{
+  width:130px;
+
+  border:0;
+  border-bottom:
+    1px dashed #92b0ae;
+
+  outline:0;
+
+  background:transparent;
+  color:var(--ink);
+
+  font:inherit;
+  font-weight:800;
+}
+
+.plan-summary .free-card{
+  border-color:#9ed7d2;
+
+  background:
+    linear-gradient(
+      145deg,
+      #ddf4f1,
+      #c8e9e5
+    );
+}
+
+.plan-summary .free-card.danger{
+  border-color:#f0b5aa;
+
+  background:#fff0ed;
+}
+
+
+/* =========================================================
+   MÉTRICAS V2
+   ========================================================= */
+
+.planning-metrics{
+  display:grid;
+
+  grid-template-columns:
+    repeat(4,minmax(0,1fr));
+
+  gap:16px;
+
+  margin:20px 0;
+}
+
+.planning-metrics article{
+  min-width:0;
+
+  display:flex;
+  flex-direction:column;
+
+  gap:10px;
+}
+
+.planning-metrics strong{
+  font-size:
+    clamp(20px,2vw,28px);
+}
+
+.planning-metrics small{
+  color:var(--muted);
+
+  line-height:1.6;
+}
+
+
+/* =========================================================
+   COLUNAS
+   ========================================================= */
+
+.planning-grid{
+  display:grid;
+
+  grid-template-columns:
+    1.3fr .9fr;
+
+  gap:13px;
+}
+
+.planning-columns{
+  display:grid;
+
+  grid-template-columns:
+    minmax(0,1.3fr)
+    minmax(0,1fr);
+
+  gap:20px;
+
+  align-items:start;
+}
+
+
+/* =========================================================
+   CAIXAS
+   ========================================================= */
+
+.planning-box{
+  min-width:0;
+
+  margin-bottom:20px;
+  padding:24px;
+}
+
+.planning-box h3{
+  margin-bottom:8px;
+
+  font-size:19px;
+  font-weight:750;
+}
+
+.planning-box p,
+.planning-box small{
+  color:var(--muted);
+
+  line-height:1.6;
+}
+
+.planning-box .panel-head{
+  flex-wrap:wrap;
+
+  gap:14px;
+}
+
+
+/* =========================================================
+   EXEMPLO
+   ========================================================= */
+
+.planning-example{
+  margin:18px 0;
+
+  padding:16px;
+
+  border-left:
+    3px solid var(--hf-500);
+
+  border-radius:10px;
+
+  background:var(--hf-50);
+}
+
+
+/* =========================================================
+   COMPROMISSOS ANTIGOS
+   ========================================================= */
+
+.commitment-list article{
+  padding:10px 7px;
+
+  border-bottom:
+    1px solid #e2eceb;
+
+  display:flex;
+  align-items:center;
+
+  gap:11px;
+}
+
+.plan-check,
+.plan-remove{
+  padding:0;
+
+  border:0;
+
+  background:transparent;
+}
+
+.plan-check{
+  color:var(--hf-600);
+}
+
+.plan-remove{
+  color:#a65b58;
+}
+
+.add-commitment{
+  width:100%;
+  height:38px;
+
+  border:
+    1px dashed #78bbb8;
+
+  border-radius:9px;
+
+  background:var(--hf-50);
+  color:var(--hf-700);
+}
+
+
+/* =========================================================
+   LINHAS V2
+   ========================================================= */
+
+.planning-rows article{
+  padding:17px 0;
+
+  border-bottom:
+    1px solid var(--line);
+
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+
+  gap:14px;
+}
+
+.planning-rows article >
+div:first-child{
+  flex:1 1 160px;
+
+  min-width:0;
+}
+
+.planning-rows strong,
+.planning-rows small{
+  display:block;
+
+  overflow-wrap:anywhere;
+}
+
+.planning-status{
+  padding:5px 10px;
+
+  border-radius:20px;
+
+  background:var(--hf-50);
+
+  font-size:12px;
+}
+
+
+/* =========================================================
+   ORÇAMENTO
+   ========================================================= */
+
+.planning-budget{
+  padding:18px 0;
+
+  border-bottom:
+    1px solid var(--line);
+}
+
+.planning-budget label{
+  display:grid;
+
+  grid-template-columns:
+    minmax(0,1fr)
+    minmax(100px,140px);
+
+  gap:5px 12px;
+
+  align-items:center;
+}
+
+.planning-budget label span{
+  grid-column:1;
+
+  font-size:12px;
+}
+
+.planning-budget input{
+  grid-column:2;
+  grid-row:1 / 3;
+
+  width:100%;
+  min-width:0;
+}
+
+
+/* =========================================================
+   MODO COMPACTO
+   ========================================================= */
+
+.compact-view .planning-v2,
+.compact-view .planning-page{
+  padding-top:16px;
+}
+
+
+/* =========================================================
+   RESPONSIVIDADE
+   ========================================================= */
+
+@media(max-width:1100px){
+
+  .plan-summary{
+    grid-template-columns:
+      1fr 1fr;
+  }
+
+  .planning-grid{
+    grid-template-columns:1fr;
+  }
+}
+
+
+@media(max-width:1050px){
+
+  .planning-columns{
+    grid-template-columns:
+      minmax(0,1fr);
+  }
+
+  .planning-metrics{
+    grid-template-columns:
+      repeat(2,minmax(0,1fr));
+  }
+}
+
+
+@media(max-width:760px){
+
+  .planning-page,
+  .planning-v2{
+    padding:15px;
+  }
+
+  .planning-top{
+    display:block;
+  }
+
+  .planning-score{
+    width:100%;
+
+    margin-top:20px;
+  }
+
+  .plan-summary{
+    grid-template-columns:
+      1fr 1fr;
+
+    gap:9px;
+  }
+}
+
+
+@media(max-width:640px){
+
+  .planning-v2{
+    padding:16px 12px 32px;
+  }
+
+  .planning-intro,
+  .planning-box{
+    padding:18px;
+  }
+
+  .planning-metrics{
+    gap:10px;
+  }
+
+  .planning-metrics article{
+    padding:13px;
+  }
+
+  .planning-metrics strong{
+    font-size:20px;
+  }
+
+  .planning-metrics span,
+  .planning-metrics small{
+    font-size:12px;
+  }
+}
+
+
+@media(max-width:430px){
+
+  .plan-summary,
+  .planning-metrics{
+    grid-template-columns:1fr;
+  }
+}

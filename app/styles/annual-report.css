@@ -1,0 +1,306 @@
+/* =========================================================
+   HAS FINANCIAL — RELATÓRIO ANUAL
+   ========================================================= */
+
+
+/* =========================================================
+   PÁGINA
+   ========================================================= */
+
+.annual-report-page{
+  max-width:1500px;
+
+  margin:auto;
+
+  padding:28px 30px 50px;
+}
+
+
+/* =========================================================
+   CABEÇALHO
+   ========================================================= */
+
+.annual-report-page .bank-title{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+
+  gap:18px;
+}
+
+.annual-report-page .bank-title > div:first-child{
+  min-width:0;
+}
+
+
+/* =========================================================
+   SELETOR DE ANO
+   ========================================================= */
+
+.annual-year{
+  width:160px;
+  max-width:100%;
+
+  flex:0 0 auto;
+
+  padding:0;
+
+  border:0;
+
+  background:transparent;
+
+  display:grid;
+
+  gap:7px;
+}
+
+.annual-year span,
+.annual-year label{
+  color:var(--muted);
+
+  font-size:11px;
+  font-weight:700;
+}
+
+.annual-year input,
+.annual-year select{
+  width:100%;
+  height:42px;
+
+  padding:0 11px;
+
+  border:1px solid var(--line);
+  border-radius:9px;
+
+  background:#fff;
+  color:var(--ink);
+
+  font-weight:700;
+}
+
+
+/* =========================================================
+   PAINÉIS
+   ========================================================= */
+
+.annual-report-page .panel{
+  min-width:0;
+}
+
+.annual-report-page .panel-head{
+  min-width:0;
+
+  gap:14px;
+
+  flex-wrap:wrap;
+}
+
+
+/* =========================================================
+   GRÁFICOS
+   ========================================================= */
+
+.finance-chart-panel{
+  min-width:0;
+
+  margin-bottom:20px;
+}
+
+.finance-chart{
+  width:100%;
+  height:310px;
+
+  min-width:0;
+}
+
+
+/* =========================================================
+   TABELAS
+   ========================================================= */
+
+.annual-report-table{
+  width:100%;
+
+  overflow-x:auto;
+}
+
+.annual-report-page table{
+  width:100%;
+
+  border-collapse:collapse;
+
+  text-align:left;
+}
+
+.annual-report-page th,
+.annual-report-page td{
+  padding:12px;
+
+  border-bottom:
+    1px solid #e8eeee;
+
+  white-space:nowrap;
+}
+
+.annual-report-page th{
+  color:var(--muted);
+
+  font-size:10px;
+  font-weight:800;
+
+  text-transform:uppercase;
+}
+
+.annual-report-page td{
+  color:#4d686b;
+
+  font-size:12px;
+}
+
+
+/* =========================================================
+   RESUMO ANUAL
+   ========================================================= */
+
+.annual-summary{
+  display:grid;
+
+  grid-template-columns:
+    repeat(4,minmax(0,1fr));
+
+  gap:13px;
+
+  margin:18px 0;
+}
+
+.annual-summary article{
+  min-width:0;
+
+  padding:18px;
+
+  border:1px solid var(--line);
+  border-radius:15px;
+
+  background:#fbfefd;
+
+  box-shadow:
+    0 5px 18px #063c4409;
+}
+
+.annual-summary span{
+  display:block;
+
+  color:var(--muted);
+
+  font-size:11px;
+  font-weight:700;
+}
+
+.annual-summary strong{
+  display:block;
+
+  margin-top:10px;
+
+  color:var(--ink);
+
+  font-size:22px;
+}
+
+.annual-summary small{
+  display:block;
+
+  margin-top:5px;
+
+  color:#899b9b;
+
+  font-size:10px;
+}
+
+
+/* =========================================================
+   VARIAÇÕES
+   ========================================================= */
+
+.annual-positive{
+  color:#078c82 !important;
+}
+
+.annual-negative{
+  color:var(--danger) !important;
+}
+
+.annual-neutral{
+  color:var(--gold) !important;
+}
+
+
+/* =========================================================
+   DICA MOBILE
+   ========================================================= */
+
+.mobile-table-hint{
+  display:none;
+}
+
+
+/* =========================================================
+   RESPONSIVIDADE
+   ========================================================= */
+
+@media(max-width:1100px){
+
+  .annual-summary{
+    grid-template-columns:
+      repeat(2,minmax(0,1fr));
+  }
+}
+
+
+@media(max-width:760px){
+
+  .annual-report-page{
+    padding:15px;
+  }
+
+  .annual-report-page .bank-title{
+    display:block;
+  }
+
+  .annual-year{
+    width:100%;
+
+    margin-top:15px;
+  }
+}
+
+
+@media(max-width:640px){
+
+  .annual-report-page .panel-head{
+    display:grid;
+
+    gap:12px;
+  }
+
+  .finance-chart{
+    height:280px;
+  }
+
+  .mobile-table-hint{
+    display:block;
+
+    margin-bottom:12px;
+
+    color:var(--muted);
+
+    font-size:12px;
+  }
+}
+
+
+@media(max-width:430px){
+
+  .annual-summary{
+    grid-template-columns:1fr;
+  }
+}

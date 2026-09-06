@@ -1,0 +1,261 @@
+/* =========================================================
+   HAS FINANCIAL — METAS E RESERVAS
+   ========================================================= */
+
+
+/* =========================================================
+   AÇÕES
+   ========================================================= */
+
+.goal-actions{
+  display:flex;
+  align-items:center;
+
+  gap:12px;
+
+  flex-wrap:wrap;
+}
+
+.goal-actions .primary{
+  min-height:42px;
+
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+
+  gap:8px;
+}
+
+
+/* =========================================================
+   MOVIMENTAÇÕES DA META
+   ========================================================= */
+
+.goal-movements{
+  max-height:240px;
+
+  margin:16px 0;
+  padding:12px;
+
+  overflow:auto;
+
+  border:1px solid var(--line);
+  border-radius:12px;
+
+  background:#fbfefd;
+}
+
+.goal-movements label{
+  display:flex;
+  align-items:center;
+
+  gap:8px;
+
+  margin:12px 0;
+
+  color:var(--ink);
+
+  font-size:12px;
+}
+
+
+/* =========================================================
+   JORNADA DA META
+   ========================================================= */
+
+.goal-journey{
+  margin:22px 0 12px;
+}
+
+.goal-journey-label,
+.goal-milestones{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+
+  gap:10px;
+}
+
+.goal-journey-label{
+  margin-bottom:16px;
+
+  font-size:13px;
+}
+
+.goal-journey-label strong{
+  color:var(--ink);
+}
+
+.goal-journey-label span{
+  color:var(--muted);
+}
+
+
+/* =========================================================
+   TRILHA
+   ========================================================= */
+
+.goal-track{
+  position:relative;
+
+  height:16px;
+
+  border-radius:30px;
+
+  background:var(--hf-100);
+
+  overflow:visible;
+}
+
+.goal-fill{
+  position:relative;
+
+  height:100%;
+
+  border-radius:inherit;
+
+  background:
+    linear-gradient(
+      90deg,
+      var(--hf-600),
+      var(--hf-400)
+    );
+
+  overflow:hidden;
+
+  transition:
+    width .8s ease;
+}
+
+.goal-fill::after{
+  content:"";
+
+  position:absolute;
+  inset:0;
+
+  background:
+    linear-gradient(
+      110deg,
+      transparent 25%,
+      #fff6 50%,
+      transparent 75%
+    );
+
+  animation:
+    goal-shimmer 3s ease-in-out infinite;
+}
+
+
+/* =========================================================
+   MARCADOR DA META
+   ========================================================= */
+
+.goal-traveler{
+  position:absolute;
+
+  top:-12px;
+
+  transform:
+    translateX(-50%);
+
+  font-size:25px;
+
+  transition:
+    left .8s ease;
+}
+
+
+/* =========================================================
+   MARCOS
+   ========================================================= */
+
+.goal-milestones{
+  margin-top:12px;
+
+  color:var(--muted);
+
+  font-size:10px;
+}
+
+
+/* =========================================================
+   META CONCLUÍDA
+   ========================================================= */
+
+.goal-journey.complete .goal-fill{
+  background:
+    linear-gradient(
+      90deg,
+      var(--hf-600),
+      var(--gold)
+    );
+}
+
+
+/* =========================================================
+   ANIMAÇÃO
+   ========================================================= */
+
+@keyframes goal-shimmer{
+
+  from{
+    transform:
+      translateX(-120%);
+  }
+
+  to{
+    transform:
+      translateX(120%);
+  }
+}
+
+
+/* =========================================================
+   ACESSIBILIDADE
+   ========================================================= */
+
+.reduce-motion .goal-fill,
+.reduce-motion .goal-traveler,
+.reduce-motion .goal-fill::after{
+  animation:none !important;
+  transition:none !important;
+}
+
+@media(prefers-reduced-motion:reduce){
+
+  .goal-fill::after{
+    animation:none;
+  }
+
+  .goal-fill,
+  .goal-traveler{
+    transition:none;
+  }
+}
+
+
+/* =========================================================
+   RESPONSIVIDADE
+   ========================================================= */
+
+@media(max-width:640px){
+
+  .goal-actions{
+    width:100%;
+
+    flex-direction:column;
+    align-items:stretch;
+  }
+
+  .goal-actions button{
+    width:100%;
+  }
+
+  .goal-movements{
+    max-height:200px;
+  }
+
+  .goal-traveler{
+    font-size:22px;
+  }
+}

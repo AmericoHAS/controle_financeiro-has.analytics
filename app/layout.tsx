@@ -1,5 +1,16 @@
 import type { Metadata } from "next";
+
 import "./globals.css";
+
+import "./styles/dashboard.css";
+import "./styles/profile-menu.css";
+import "./styles/access.css";
+import "./styles/admin-access.css";
+import "./styles/cards.css";
+import "./styles/accounts.css";
+import "./styles/planning.css";
+import "./styles/goals.css";
+import "./styles/annual-report.css";
 
 export const metadata: Metadata = {
   title: {
@@ -24,16 +35,6 @@ export const metadata: Metadata = {
   metadataBase: new URL(
     "https://financial.hasanalytics.com.br"
   ),
-
-  openGraph: {
-    title: "HAS Financial",
-    description:
-      "Controle e planejamento financeiro pessoal.",
-    url: "https://financial.hasanalytics.com.br",
-    siteName: "HAS Financial",
-    locale: "pt_BR",
-    type: "website",
-  },
 };
 
 export default function RootLayout({
@@ -43,9 +44,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR">
-      <body>
-        {children}
-      </body>
+      <body>{children}</body>
     </html>
   );
 }
