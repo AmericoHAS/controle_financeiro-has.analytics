@@ -350,29 +350,24 @@
 }
 
 .month-current{
-  min-width:165px;
+  min-width:180px;
+  height:42px;
 
-  padding:0 10px;
+  padding:0 12px;
+
+  border:1px solid var(--line);
+  border-radius:10px;
+
+  background:#fff;
 
   display:flex;
   align-items:center;
-  gap:7px;
-
-  border-left:
-    1px solid var(--line);
-
-  border-right:
-    1px solid var(--line);
-}
-
-.month-current svg{
-  width:16px;
-
-  color:var(--hf-600);
+  gap:8px;
 }
 
 .month-current input{
-  width:135px;
+  width:145px;
+  min-width:145px;
 
   border:0;
   outline:0;
@@ -381,8 +376,6 @@
   color:var(--ink);
 
   font-weight:700;
-
-  cursor:pointer;
 }
 
 
@@ -892,16 +885,28 @@
 
 
 /* =========================================================
-   GRID PRINCIPAL
+   VISÃO GERAL — GRÁFICOS COM A MESMA ALTURA
    ========================================================= */
 
 .grid-main{
-  display:grid;
+  align-items:stretch;
+}
 
-  grid-template-columns:
-    1.55fr 1fr;
+.grid-main > .panel{
+  height:100%;
+  min-height:420px;
+}
 
-  gap:13px;
+.grid-main > .panel.categories{
+  display:flex;
+  flex-direction:column;
+}
+
+.grid-main > .panel.categories .donut-wrap{
+  flex:1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
 }
 
 
@@ -2874,5 +2879,28 @@ textarea:focus{
   .kpis,
   .ledger-summary{
     grid-template-columns:1fr;
+  }
+}
+
+
+
+@media(max-width:600px){
+
+  .month-current{
+    min-width:165px;
+  }
+
+  .month-current input{
+    width:132px;
+    min-width:132px;
+  }
+}
+
+
+
+@media(max-width:900px){
+
+  .grid-main > .panel{
+    min-height:auto;
   }
 }
