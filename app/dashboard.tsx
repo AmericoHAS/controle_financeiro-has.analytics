@@ -8,6 +8,7 @@ import type {
 } from "../lib/finance-types";
 
 import {
+  useEffect,
   useMemo,
   useState,
 } from "react";
@@ -230,6 +231,108 @@ function addMonthsToDateKey(
   ).padStart(2, "0")}-${String(
     safeDay
   ).padStart(2, "0")}`;
+}
+
+
+function guessCategoryIcon(
+  name: string,
+  type:
+    | "Receita"
+    | "Despesa"
+) {
+  const text =
+    name
+      .normalize("NFD")
+      .replace(
+        /[\u0300-\u036f]/g,
+        ""
+      )
+      .toLowerCase();
+
+  if (
+    text.includes("salario") ||
+    text.includes("trabalho")
+  ) {
+    return "💼";
+  }
+
+  if (
+    text.includes("bolsa") ||
+    text.includes("estudo")
+  ) {
+    return "🎓";
+  }
+
+  if (
+    text.includes("mercado") ||
+    text.includes("supermercado")
+  ) {
+    return "🛒";
+  }
+
+  if (
+    text.includes("aliment") ||
+    text.includes("restaurante") ||
+    text.includes("comida")
+  ) {
+    return "🍽️";
+  }
+
+  if (
+    text.includes("combust") ||
+    text.includes("posto")
+  ) {
+    return "⛽";
+  }
+
+  if (
+    text.includes("transporte") ||
+    text.includes("uber")
+  ) {
+    return "🚗";
+  }
+
+  if (
+    text.includes("saude") ||
+    text.includes("farmacia")
+  ) {
+    return "❤️";
+  }
+
+  if (
+    text.includes("casa") ||
+    text.includes("moradia") ||
+    text.includes("aluguel")
+  ) {
+    return "🏠";
+  }
+
+  if (
+    text.includes("educacao") ||
+    text.includes("curso")
+  ) {
+    return "📚";
+  }
+
+  if (
+    text.includes("assinatura")
+  ) {
+    return "🎵";
+  }
+
+  if (
+    text.includes("invest")
+  ) {
+    return "💰";
+  }
+
+  if (
+    type === "Receita"
+  ) {
+    return "📈";
+  }
+
+  return "✨";
 }
 
 async function saveFinanceNamespace(
@@ -2671,6 +2774,46 @@ function TransactionsWorkspace({
       categorySeed
     );
 
+    useEffect(() => {
+  setCategories(
+    current => {
+      const next =
+        [...current];
+
+      let changed =
+        false;
+
+      categorySeed.forEach(
+        defaultCategory => {
+          const exists =
+            next.some(
+              category =>
+                category[0] ===
+                  defaultCategory[0] &&
+                category[2] ===
+                  defaultCategory[2]
+            );
+
+          if (!exists) {
+            next.push([
+              ...defaultCategory,
+            ]);
+
+            changed =
+              true;
+          }
+        }
+      );
+
+      return changed
+        ? next
+        : current;
+    }
+  );
+}, [
+  setCategories,
+]);
+
   const [
     entryType,
     setEntryType,
@@ -2741,6 +2884,23 @@ function TransactionsWorkspace({
     setNewCat,
   ] =
     useState("");
+
+    const [
+  newCatIcon,
+  setNewCatIcon,
+] =
+  useState("");
+
+const [
+  newCatType,
+  setNewCatType,
+] =
+  useState<
+    | "Receita"
+    | "Despesa"
+  >(
+    "Despesa"
+  );
 
   const [
     filterCategory,
@@ -4227,52 +4387,112 @@ function TransactionsWorkspace({
           </div>
 
           <form
-            onSubmit={
-              event => {
-                event.preventDefault();
+  onSubmit={
+    event => {
+      event.preventDefault();
 
-                if (
-                  !newCat.trim()
-                ) {
-                  return;
-                }
+      const name =
+        newCat.trim();
 
-                setCategories(
-                  list => [
-                    ...list,
+      if (!name) {
+        return;
+      }
 
-                    [
-                      newCat,
-                      "✨",
-                      "Despesa",
-                    ],
-                  ]
-                );
+      const exists =
+        categories.some(
+          category =>
+            category[0]
+              .toLowerCase() ===
+              name.toLowerCase() &&
+            category[2] ===
+              newCatType
+        );
 
-                setNewCat("");
-              }
-            }
-          >
-            <input
-              value={
-                newCat
-              }
-              onChange={
-                event =>
-                  setNewCat(
-                    event
-                      .target
-                      .value
-                  )
-              }
-              placeholder="Nova categoria"
-            />
+      if (exists) {
+        alert(
+          "Essa categoria já existe."
+        );
 
-            <button>
-              <Plus />
-              Criar categoria
-            </button>
-          </form>
+        return;
+      }
+
+      const icon =
+        newCatIcon.trim() ||
+        guessCategoryIcon(
+          name,
+          newCatType
+        );
+
+      setCategories(
+        list => [
+          ...list,
+          [
+            name,
+            icon,
+            newCatType,
+          ],
+        ]
+      );
+
+      setNewCat("");
+      setNewCatIcon("");
+    }
+  }
+>
+  <input
+    value={
+      newCat
+    }
+    onChange={
+      event =>
+        setNewCat(
+          event.target.value
+        )
+    }
+    placeholder="Nome da categoria"
+  />
+
+  <input
+    value={
+      newCatIcon
+    }
+    onChange={
+      event =>
+        setNewCatIcon(
+          event.target.value
+        )
+    }
+    placeholder="Ícone opcional"
+    maxLength={4}
+  />
+
+  <select
+    value={
+      newCatType
+    }
+    onChange={
+      event =>
+        setNewCatType(
+          event.target.value as
+            | "Receita"
+            | "Despesa"
+        )
+    }
+  >
+    <option value="Despesa">
+      Despesa
+    </option>
+
+    <option value="Receita">
+      Receita
+    </option>
+  </select>
+
+  <button type="submit">
+    <Plus />
+    Criar categoria
+  </button>
+</form>
         </section>
       )}
 
