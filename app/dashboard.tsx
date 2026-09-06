@@ -1116,74 +1116,163 @@ export default function Home({
           )
     );
 
-  async function toggleEntryStatus(
-    entry: Ledger
+ async function toggleEntryStatus(
+  entry: Ledger
+) {
+  let nextStatus:
+    LedgerStatus;
+
+  const currentStatus =
+    normalizedStatus(
+      entry
+    );
+
+  if (
+    entry.type ===
+    "Receita"
   ) {
-    let nextStatus:
-      LedgerStatus;
+    nextStatus =
+      currentStatus ===
+      "Recebido"
+        ? "A receber"
+        : "Recebido";
+  } else if (
+    entry.type ===
+    "Despesa"
+  ) {
+    nextStatus =
+      currentStatus ===
+      "Pago"
+        ? "A pagar"
+        : "Pago";
+  } else {
+    return;
+  }
 
-    const currentStatus =
-      normalizedStatus(
-        entry
-      );
+  /* =====================================================
+     ATUALIZA SALDO DA CONTA
+     ===================================================== */
 
-    if (
-      entry.type ===
-      "Receita"
-    ) {
-      nextStatus =
-        currentStatus ===
-        "Recebido"
-          ? "A receber"
-          : "Recebido";
-    } else if (
-      entry.type ===
-      "Despesa"
-    ) {
-      nextStatus =
-        currentStatus ===
-        "Pago"
-          ? "A pagar"
-          : "Pago";
-    } else {
-      return;
-    }
+  if (
+    entry.sourceType ===
+      "account" &&
+    entry.sourceId != null
+  ) {
+    const updatedAccounts =
+      investmentAccounts.map(
+        account => {
+          if (
+            account.id !==
+            entry.sourceId
+          ) {
+            return account;
+          }
 
-    const updatedEntries =
-      entries.map(
-        item =>
-          item.id ===
-          entry.id
-            ? {
-                ...item,
-                status:
-                  nextStatus,
-              }
-            : item
+          let newBalance =
+            account.balance;
+
+          /* DESPESA */
+
+          if (
+            entry.type ===
+            "Despesa"
+          ) {
+            if (
+              nextStatus ===
+              "Pago"
+            ) {
+              newBalance -=
+                entry.value;
+            } else {
+              newBalance +=
+                entry.value;
+            }
+          }
+
+          /* RECEITA */
+
+          if (
+            entry.type ===
+            "Receita"
+          ) {
+            if (
+              nextStatus ===
+              "Recebido"
+            ) {
+              newBalance +=
+                entry.value;
+            } else {
+              newBalance -=
+                entry.value;
+            }
+          }
+
+          return {
+            ...account,
+            balance:
+              newBalance,
+          };
+        }
       );
 
     try {
       await saveFinanceNamespace(
-        "ledger",
-        updatedEntries
+        "accounts",
+        updatedAccounts
       );
 
-      setEntries(
-        updatedEntries
+      setInvestmentAccounts(
+        updatedAccounts
       );
-    } catch (
-      error
-    ) {
+    } catch (error) {
       console.error(
         error
       );
 
       alert(
-        "Não foi possível alterar o status."
+        "Não foi possível atualizar o saldo da conta."
       );
+
+      return;
     }
   }
 
+  /* =====================================================
+     ATUALIZA STATUS DO LANÇAMENTO
+     ===================================================== */
+
+  const updatedEntries =
+    entries.map(
+      item =>
+        item.id ===
+        entry.id
+          ? {
+              ...item,
+              status:
+                nextStatus,
+            }
+          : item
+    );
+
+  try {
+    await saveFinanceNamespace(
+      "ledger",
+      updatedEntries
+    );
+
+    setEntries(
+      updatedEntries
+    );
+  } catch (error) {
+    console.error(
+      error
+    );
+
+    alert(
+      "Não foi possível alterar o status."
+    );
+  }
+}
   async function submitInvestment(
     event:
       React.FormEvent<HTMLFormElement>
@@ -3289,13 +3378,11 @@ const [
 
     /* CONTA */
 
-    if (
-      type ===
-        "Despesa" &&
-      destination.startsWith(
-        "account:"
-      )
-    ) {
+   if (
+  destination.startsWith(
+    "account:"
+  )
+) {
       const accountId =
         Number(
           destination.replace(
@@ -3502,17 +3589,18 @@ const [
 
             value,
 
-            account:
-              "Receita",
+           account:
+  accountLabel,
 
-            frequency:
-              "Mensal até dezembro",
+frequency:
+  "Mensal até dezembro",
 
-            status:
-              "A receber",
+status:
+  "A receber",
 
-            sourceType:
-              "cash",
+sourceType,
+
+sourceId,
           })
         );
     }
@@ -3735,17 +3823,9 @@ const [
               ? "A receber"
               : "A pagar",
 
-          sourceType:
-            type ===
-            "Receita"
-              ? "cash"
-              : sourceType,
+          sourceType,
 
-          sourceId:
-            type ===
-            "Receita"
-              ? undefined
-              : sourceId,
+sourceId,
         },
       ];
     }
@@ -4068,59 +4148,89 @@ const [
     }
 
     if (
-      entry.type ===
-        "Despesa" &&
-      entry.sourceType ===
-        "account" &&
-      entry.sourceId !=
-        null
-    ) {
-      const becomingPaid =
-        next ===
-        "Pago";
+  entry.sourceType ===
+    "account" &&
+  entry.sourceId !=
+    null
+) {
+  const updatedAccounts =
+    accounts.map(
+      account => {
+        if (
+          account.id !==
+          entry.sourceId
+        ) {
+          return account;
+        }
 
-      const updatedAccounts =
-        accounts.map(
-          account =>
-            account.id ===
-            entry.sourceId
-              ? {
-                  ...account,
+        let newBalance =
+          account.balance;
 
-                  balance:
-                    becomingPaid
-                      ? account.balance -
-                        entry.value
-                      : account.balance +
-                        entry.value,
-                }
-              : account
-        );
+        /* DESPESA */
 
-      try {
-        await saveFinanceNamespace(
-          "accounts",
-          updatedAccounts
-        );
+        if (
+          entry.type ===
+          "Despesa"
+        ) {
+          if (
+            next ===
+            "Pago"
+          ) {
+            newBalance -=
+              entry.value;
+          } else {
+            newBalance +=
+              entry.value;
+          }
+        }
 
-        setAccounts(
-          updatedAccounts
-        );
-      } catch (
-        error
-      ) {
-        console.error(
-          error
-        );
+        /* RECEITA */
 
-        alert(
-          "Erro ao atualizar o saldo da conta."
-        );
+        if (
+          entry.type ===
+          "Receita"
+        ) {
+          if (
+            next ===
+            "Recebido"
+          ) {
+            newBalance +=
+              entry.value;
+          } else {
+            newBalance -=
+              entry.value;
+          }
+        }
 
-        return;
+        return {
+          ...account,
+          balance:
+            newBalance,
+        };
       }
-    }
+    );
 
+  try {
+    await saveFinanceNamespace(
+      "accounts",
+      updatedAccounts
+    );
+
+    setAccounts(
+      updatedAccounts
+    );
+  } catch (error) {
+    console.error(
+      error
+    );
+
+    alert(
+      "Erro ao atualizar o saldo da conta."
+    );
+
+    return;
+  }
+}
     const updatedEntries =
       entries.map(
         item =>
@@ -5088,6 +5198,39 @@ maxLength={8}
               {entryType ===
               "Receita" ? (
                 <>
+                <label>
+  Conta de recebimento
+
+  <select
+    name="account"
+    required
+  >
+    <option value="">
+      Selecione
+    </option>
+
+    {accounts.map(
+      account => (
+        <option
+          key={`income-account-${account.id}`}
+          value={`account:${account.id}`}
+        >
+          🏦 {account.name}
+          {" · "}
+          {account.bank}
+          {" · "}
+          {fmt(
+            account.balance
+          )}
+        </option>
+      )
+    )}
+
+    <option value="cash">
+      💵 Dinheiro
+    </option>
+  </select>
+</label>
                   <label>
                     Repetição
 
