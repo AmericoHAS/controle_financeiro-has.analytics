@@ -2340,3 +2340,32 @@ textarea:focus {
 .invest-balance svg{
   width:16px;
 }
+
+.ledger-card-source{
+  display:inline-flex;
+  align-items:center;
+  min-height:27px;
+  padding:4px 9px;
+  border-radius:8px;
+  color:#fff;
+  font-size:12px;
+  font-weight:700;
+  box-shadow:0 2px 6px rgba(0,0,0,.08);
+}
+
+.ledger-category{
+  display:flex;
+  align-items:center;
+  gap:7px;
+}
+
+.ledger-category-icon{
+  width:27px;
+  height:27px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:8px;
+  background:var(--hf-50);
+  font-size:15px;
+}

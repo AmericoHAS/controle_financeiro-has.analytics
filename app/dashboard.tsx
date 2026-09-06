@@ -155,6 +155,28 @@ function dateBelongsToMonth(
   );
 }
 
+function normalizedStatus(entry: Ledger) {
+  if (entry.status === "Confirmado") {
+    return entry.type === "Receita"
+      ? "Recebido"
+      : entry.type === "Despesa"
+      ? "Pago"
+      : "Confirmado";
+  }
+
+  if (entry.status === "Previsto") {
+    return entry.type === "Receita"
+      ? "A receber"
+      : entry.type === "Despesa"
+      ? "A pagar"
+      : "Previsto";
+  }
+
+  return entry.status;
+}
+
+
+
 /*
   Adiciona meses preservando o dia sempre que possível.
 
@@ -310,8 +332,12 @@ type Ledger = {
   remaining?: number;
 
   status:
-    | "Confirmado"
-    | "Previsto";
+  | "Recebido"
+  | "A receber"
+  | "Pago"
+  | "A pagar"
+  | "Confirmado"
+  | "Previsto";
 
   sourceType?:
     | "account"
@@ -819,6 +845,66 @@ export default function Home({
         0
       );
 
+      const cardExpenses = monthEntries
+  .filter(
+    (entry) =>
+      entry.type === "Despesa" &&
+      entry.sourceType === "card"
+  )
+  .reduce(
+    (total, entry) =>
+      total + entry.value,
+    0
+  );
+
+      const received = monthEntries
+  .filter(
+    (entry) =>
+      entry.type === "Receita" &&
+      normalizedStatus(entry) === "Recebido"
+  )
+  .reduce(
+    (total, entry) =>
+      total + entry.value,
+    0
+  );
+
+const toReceive = monthEntries
+  .filter(
+    (entry) =>
+      entry.type === "Receita" &&
+      normalizedStatus(entry) === "A receber"
+  )
+  .reduce(
+    (total, entry) =>
+      total + entry.value,
+    0
+  );
+
+const paid = monthEntries
+  .filter(
+    (entry) =>
+      entry.type === "Despesa" &&
+      normalizedStatus(entry) === "Pago"
+  )
+  .reduce(
+    (total, entry) =>
+      total + entry.value,
+    0
+  );
+
+const toPay = monthEntries
+  .filter(
+    (entry) =>
+      entry.type === "Despesa" &&
+      normalizedStatus(entry) === "A pagar"
+  )
+  .reduce(
+    (total, entry) =>
+      total + entry.value,
+    0
+  );
+
   const invested =
     monthEntries
       .filter(
@@ -840,6 +926,90 @@ export default function Home({
     income -
     spent -
     invested;
+
+    const flowData = useMemo(() => {
+  const buckets = [
+    { label: "01", from: 1, to: 5 },
+    { label: "06", from: 6, to: 11 },
+    { label: "12", from: 12, to: 17 },
+    { label: "18", from: 18, to: 23 },
+    { label: "24", from: 24, to: 29 },
+    { label: "30", from: 30, to: 31 },
+  ];
+
+  const data = buckets.map((bucket) => {
+    const records =
+      monthEntries.filter((entry) => {
+        if (
+          !/^\d{4}-\d{2}-\d{2}$/.test(
+            entry.date
+          )
+        ) {
+          return false;
+        }
+
+        const day =
+          Number(
+            entry.date.split("-")[2]
+          );
+
+        return (
+          day >= bucket.from &&
+          day <= bucket.to
+        );
+      });
+
+    const income =
+      records
+        .filter(
+          (entry) =>
+            entry.type === "Receita"
+        )
+        .reduce(
+          (total, entry) =>
+            total + entry.value,
+          0
+        );
+
+    const expense =
+      records
+        .filter(
+          (entry) =>
+            entry.type === "Despesa"
+        )
+        .reduce(
+          (total, entry) =>
+            total + entry.value,
+          0
+        );
+
+    return {
+      label: bucket.label,
+      income,
+      expense,
+    };
+  });
+
+  const max =
+    Math.max(
+      1,
+      ...data.flatMap((item) => [
+        item.income,
+        item.expense,
+      ])
+    );
+
+  return data.map((item) => ({
+    ...item,
+
+    incomeHeight:
+      (item.income / max) * 100,
+
+    expenseHeight:
+      (item.expense / max) * 100,
+  }));
+}, [monthEntries]);
+
 
   const filtered =
     monthEntries.filter(
@@ -1656,66 +1826,60 @@ export default function Home({
 
               <div className="forecast-right">
                 <div>
-                  <span>
-                    Saldo
-                    projetado
-                  </span>
+  <span>Saldo projetado</span>
 
-                  <b>
-                    {projectedBalance <
-                    0
-                      ? "− "
-                      : ""}
+  <b>
+    {projectedBalance < 0
+      ? "− "
+      : ""}
 
-                    {fmt(
-                      projectedBalance
-                    )}
-                  </b>
-                </div>
+    {fmt(projectedBalance)}
+  </b>
+</div>
 
-                <div className="line" />
+<div className="line" />
 
-                <div>
-                  <span>
-                    A receber
-                  </span>
+<div>
+  <span>Recebido</span>
 
-                  <b className="green">
-                    +{" "}
-                    {fmt(
-                      income
-                    )}
-                  </b>
-                </div>
+  <b className="green">
+    + {fmt(received)}
+  </b>
+</div>
 
-                <div>
-                  <span>
-                    A pagar
-                  </span>
+<div>
+  <span>A receber</span>
 
-                  <b className="red">
-                    −{" "}
-                    {fmt(
-                      spent
-                    )}
-                  </b>
-                </div>
+  <b className="green">
+    + {fmt(toReceive)}
+  </b>
+</div>
 
-                {invested >
-                  0 && (
-                  <div>
-                    <span>
-                      Guardado
-                    </span>
+<div>
+  <span>Pago</span>
 
-                    <b>
-                      −{" "}
-                      {fmt(
-                        invested
-                      )}
-                    </b>
-                  </div>
-                )}
+  <b className="red">
+    − {fmt(paid)}
+  </b>
+</div>
+
+<div>
+  <span>A pagar</span>
+
+  <b className="red">
+    − {fmt(toPay)}
+  </b>
+</div>
+
+{invested > 0 && (
+  <div>
+    <span>Guardado</span>
+
+    <b>
+      − {fmt(invested)}
+    </b>
+  </div>
+)}
               </div>
             </section>
 
@@ -1785,13 +1949,17 @@ export default function Home({
                 kind="coral"
               />
 
-              <Kpi
-                title="Cartões"
-                value="R$ 0,00"
-                sub="Faturas do período"
-                foot="Integração em desenvolvimento"
-                kind="cards"
-              />
+             <Kpi
+  title="Cartões"
+  value={fmt(cardExpenses)}
+  sub="Compras no cartão"
+  foot={`${monthEntries.filter(
+    (entry) =>
+      entry.type === "Despesa" &&
+      entry.sourceType === "card"
+  ).length} lançamentos`}
+  kind="cards"
+/>
 
               <Kpi
                 title="Reservas"
@@ -1859,55 +2027,38 @@ export default function Home({
                   </div>
 
                   <div className="plot">
-                    {[
-                      0,
-                      0,
-                      0,
-                      0,
-                      0,
-                      0,
-                    ].map(
-                      (
-                        height,
-                        index
-                      ) => (
-                        <div
-                          className="bars"
-                          key={
-                            index
-                          }
-                        >
-                          <i
-                            className="in"
-                            style={{
-                              height: `${height}%`,
-                            }}
-                          />
+                    {flowData.map((item) => (
+  <div
+    className="bars"
+    key={item.label}
+  >
+    <i
+      className="in"
+      title={`Entradas: ${fmt(
+        item.income
+      )}`}
+      style={{
+        height:
+          `${item.incomeHeight}%`,
+      }}
+    />
 
-                          <i
-                            className="out"
-                            style={{
-                              height: `${height}%`,
-                            }}
-                          />
+    <i
+      className="out"
+      title={`Saídas: ${fmt(
+        item.expense
+      )}`}
+      style={{
+        height:
+          `${item.expenseHeight}%`,
+      }}
+    />
 
-                          <span>
-                            {
-                              [
-                                "01",
-                                "06",
-                                "12",
-                                "18",
-                                "24",
-                                "30",
-                              ][
-                                index
-                              ]
-                            }
-                          </span>
-                        </div>
-                      )
-                    )}
+    <span>
+      {item.label}
+    </span>
+  </div>
+))}
                   </div>
                 </div>
               </section>
@@ -3017,9 +3168,9 @@ function TransactionsWorkspace({
                 "Mensal até dezembro",
 
               status:
-                index === 0
-                  ? "Confirmado"
-                  : "Previsto",
+  index === 0
+    ? "Recebido"
+    : "A receber",
 
               sourceType:
                 "cash",
@@ -3100,9 +3251,9 @@ function TransactionsWorkspace({
                 1,
 
               status:
-                index === 0
-                  ? "Confirmado"
-                  : "Previsto",
+  index === 0
+    ? "Pago"
+    : "A pagar",
 
               sourceType,
 
@@ -3185,9 +3336,9 @@ function TransactionsWorkspace({
               "Mensal",
 
             status:
-              index === 0
-                ? "Confirmado"
-                : "Previsto",
+  index === 0
+    ? "Pago"
+    : "A pagar",
 
             sourceType,
 
@@ -3243,7 +3394,9 @@ function TransactionsWorkspace({
             "Único",
 
           status:
-            "Confirmado",
+  type === "Receita"
+    ? "Recebido"
+    : "Pago",
 
           sourceType:
             type ===
@@ -3485,13 +3638,9 @@ function TransactionsWorkspace({
         ),
 
       status:
-        String(
-          fd.get(
-            "status"
-          )
-        ) as
-          | "Confirmado"
-          | "Previsto",
+  String(
+    fd.get("status")
+  ) as Ledger["status"],
     };
 
     const updatedEntries =
@@ -3526,6 +3675,47 @@ function TransactionsWorkspace({
       );
     }
   }
+
+
+  function getCardForEntry(entry: Ledger) {
+  if (
+    entry.sourceType !== "card" ||
+    entry.sourceId == null
+  ) {
+    return undefined;
+  }
+
+  return cards.find(
+    (card) =>
+      card.id === entry.sourceId
+  );
+}
+
+function getCategoryIcon(entry: Ledger) {
+  const category =
+    categories.find(
+      (item) =>
+        item[0] ===
+        entry.category
+    );
+
+  return (
+    category?.[1] ||
+    entry.icon ||
+    "✨"
+  );
+}
+
+
+
+
+
+
+
+
+
+
+
 
   return (
     <div className="ledger-page">
@@ -3941,16 +4131,34 @@ function TransactionsWorkspace({
                 </div>
 
                 <span className="ledger-category">
-                  {
-                    entry.category
-                  }
-                </span>
+  <span className="ledger-category-icon">
+    {getCategoryIcon(entry)}
+  </span>
+
+  {entry.category}
+</span>
 
                 <span>
-                  {
-                    entry.account
-                  }
-                </span>
+  {entry.sourceType === "card" ? (
+    <span
+      className="ledger-card-source"
+      style={{
+        background: (() => {
+          const card =
+            getCardForEntry(entry);
+
+          return card
+            ? `linear-gradient(135deg, ${card.color}, ${card.color2})`
+            : undefined;
+        })(),
+      }}
+    >
+      {entry.account}
+    </span>
+  ) : (
+    entry.account
+  )}
+</span>
 
                 <div>
                   <b className="frequency">
@@ -4445,23 +4653,41 @@ function TransactionsWorkspace({
               </label>
 
               <label>
-                Status
+  Situação
 
-                <select
-                  name="status"
-                  defaultValue={
-                    editingEntry.status
-                  }
-                >
-                  <option>
-                    Confirmado
-                  </option>
+  <select
+    name="status"
+    defaultValue={
+      normalizedStatus(editingEntry)
+    }
+  >
+    {editingEntry.type === "Receita" ? (
+      <>
+        <option value="Recebido">
+          Recebido
+        </option>
 
-                  <option>
-                    Previsto
-                  </option>
-                </select>
-              </label>
+        <option value="A receber">
+          A receber
+        </option>
+      </>
+    ) : editingEntry.type === "Despesa" ? (
+      <>
+        <option value="Pago">
+          Pago
+        </option>
+
+        <option value="A pagar">
+          A pagar
+        </option>
+      </>
+    ) : (
+      <option value="Confirmado">
+        Confirmado
+      </option>
+    )}
+  </select>
+</label>
             </div>
 
             <div className="modal-foot">
