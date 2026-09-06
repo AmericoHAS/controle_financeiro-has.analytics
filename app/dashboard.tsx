@@ -5339,127 +5339,183 @@ function BankCatalog({
           </small>
         </div>
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         {cards.length ? (
-          <div>
-            {cards.map(
-  (card) => {
-    const {
-      totalLimit,
-      usedLimit,
-      availableLimit,
-    } =
-      getCardLimitInfo(card);
+  <div>
+    {cards.map((card) => {
+      const {
+        totalLimit,
+        usedLimit,
+        availableLimit,
+      } = getCardLimitInfo(card);
 
-    return (
-      <article
-                  className="credit-visual"
-                  key={
-                    card.id
-                  }
-                  style={{
-                    background:
-                      `linear-gradient(135deg, ${card.color}, ${card.color2})`,
-                  }}
-                >
-                  <div className="card-shine" />
+      return (
+        <article
+          className="credit-visual"
+          key={card.id}
+          style={{
+            background: `linear-gradient(135deg, ${card.color}, ${card.color2})`,
+          }}
+        >
+          <div className="card-shine" />
 
-                  <div className="card-top">
-                    <span>
-                      {
-                        card.logo
-                      }
-                    </span>
-
-                    <CreditCard />
-                  </div>
-
-                  <b>
-                    ••••&nbsp;{" "}
-                    {
-                      card.last4
-                    }
-                  </b>
-
-                  <small>
-  Fechamento dia {card.closing}
-  {" · "}
-  Vencimento dia {card.due}
-</small>
-
-<div className="card-limit-info">
-  <span>
-    Disponível
-    <b>
-      {fmt(availableLimit)}
-    </b>
-  </span>
-
-  <span>
-    Utilizado
-    <b>
-      {fmt(usedLimit)}
-    </b>
-  </span>
-
-  <span>
-    Limite
-    <b>
-      {fmt(totalLimit)}
-    </b>
-  </span>
-</div>
-                  <button
-                    type="button"
-                    className="edit-card"
-                    onClick={() =>
-                      setEditing(
-                        card
-                      )
-                    }
-                  >
-                    <Pencil />
-
-                    Editar
-                  </button>
-
-                  <strong>
-                    {
-                      card.bank
-                    }
-                  </strong>
-                </article>
-    );
-  }
-)}
-          </div>
-        ) : (
-          <div className="empty-cards">
-            <CreditCard />
-
-            <b>
-              Nenhum cartão
-              cadastrado
-            </b>
-
+          <div className="card-top">
             <span>
-              Adicione seu
-              primeiro cartão.
+              {card.logo}
             </span>
 
-            <button
-              className="primary"
-              type="button"
-              onClick={() =>
-                openCard()
-              }
-            >
-              <Plus />
-
-              Adicionar cartão
-            </button>
+            <CreditCard />
           </div>
-        )}
-      </div>
+
+          <b>
+            ••••&nbsp; {card.last4}
+          </b>
+
+          <small>
+            Fechamento dia {card.closing}
+            {" · "}
+            Vencimento dia {card.due}
+          </small>
+
+          <div className="card-limit-info">
+            <span>
+              Disponível
+              <b>
+                {fmt(availableLimit)}
+              </b>
+            </span>
+
+            <span>
+              Utilizado
+              <b>
+                {fmt(usedLimit)}
+              </b>
+            </span>
+
+            <span>
+              Limite
+              <b>
+                {fmt(totalLimit)}
+              </b>
+            </span>
+          </div>
+
+          <button
+            type="button"
+            className="edit-card"
+            onClick={() =>
+              setEditing(card)
+            }
+          >
+            <Pencil />
+            Editar
+          </button>
+
+          <strong>
+            {card.bank}
+          </strong>
+        </article>
+      );
+    })}
+  </div>
+) : (
+  <div className="empty-cards">
+    <CreditCard />
+
+    <b>
+      Nenhum cartão cadastrado
+    </b>
+
+    <span>
+      Adicione seu primeiro cartão.
+    </span>
+
+    <button
+      className="primary"
+      type="button"
+      onClick={() =>
+        openCard()
+      }
+    >
+      <Plus />
+      Adicionar cartão
+    </button>
+  </div>
+)}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
       <h3>
         Catálogo de instituições
