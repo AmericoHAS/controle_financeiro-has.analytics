@@ -1,25 +1,33 @@
 "use client";
 
-import type { LedgerStatus, Ledger, FinanceCard, FinanceAccount } from "../lib/finance-types";
+import type {
+  LedgerStatus,
+  Ledger,
+  FinanceCard,
+  FinanceAccount,
+} from "../lib/finance-types";
+
+import { useMemo, useState } from "react";
+import { supabase } from "../lib/supabase";
+import { usePersistedFinance } from "../lib/use-persisted-finance";
+
 import OverviewChart from "./components/OverviewChart";
 import StatementImport from "./components/StatementImport";
 import ProfileMenu from "./components/ProfileMenu";
-import PreferencesWorkspace, { defaultPreferences } from "./components/PreferencesWorkspace";
+import PreferencesWorkspace, {
+  defaultPreferences,
+} from "./components/PreferencesWorkspace";
 import ModalHead from "./components/ModalHead";
 import PlanningWorkspace from "./components/PlanningWorkspace";
 import AccountsWorkspace from "./components/AccountsWorkspace";
 import GoalsWorkspace from "./components/GoalsWorkspace";
 import AnnualReportWorkspace from "./components/AnnualReportWorkspace";
-import { useMemo, useState } from "react";
-import { supabase } from "../lib/supabase";
 
 import {
   ArrowDownLeft,
   ArrowUpRight,
   CalendarDays,
   Check,
-  Circle,
-  CircleCheck,
   CreditCard,
   Filter,
   KeyRound,
@@ -31,20 +39,15 @@ import {
   Pencil,
   PiggyBank,
   Plus,
-  ReceiptText,
   Search,
   Settings,
   Sparkles,
   Target,
   Trash2,
-  TrendingUp,
   Upload,
-  Wallet,
   WalletCards,
   X,
 } from "lucide-react";
-
-import { usePersistedFinance } from "../lib/use-persisted-finance";
 
 /* =========================================================
    UTILIDADES
@@ -98,34 +101,48 @@ function monthLabel(key: string) {
     .split("-")
     .map(Number);
 
-  return new Intl.DateTimeFormat("pt-BR", {
-    month: "long",
-    year: "numeric",
-  }).format(
-    new Date(year, month - 1, 1)
+  return new Intl.DateTimeFormat(
+    "pt-BR",
+    {
+      month: "long",
+      year: "numeric",
+    }
+  ).format(
+    new Date(
+      year,
+      month - 1,
+      1
+    )
   );
 }
 
 function defaultDateForMonth(
   month: string
 ) {
-  if (month === currentMonthKey()) {
+  if (
+    month === currentMonthKey()
+  ) {
     return currentDateKey();
   }
 
   return `${month}-01`;
 }
 
-function formatDate(date: string) {
+function formatDate(
+  date: string
+) {
   if (
-    !/^\d{4}-\d{2}-\d{2}$/.test(date)
+    !/^\d{4}-\d{2}-\d{2}$/.test(
+      date
+    )
   ) {
     return date;
   }
 
-  const [year, month, day] = date
-    .split("-")
-    .map(Number);
+  const [year, month, day] =
+    date
+      .split("-")
+      .map(Number);
 
   return new Intl.DateTimeFormat(
     "pt-BR",
@@ -135,7 +152,11 @@ function formatDate(date: string) {
     }
   )
     .format(
-      new Date(year, month - 1, day)
+      new Date(
+        year,
+        month - 1,
+        day
+      )
     )
     .replace(".", "");
 }
@@ -178,7 +199,10 @@ function addMonthsToDateKey(
     ).getDate();
 
   const safeDay =
-    Math.min(day, lastDay);
+    Math.min(
+      day,
+      lastDay
+    );
 
   return `${targetYear}-${String(
     targetMonth + 1
@@ -207,9 +231,13 @@ async function saveFinanceNamespace(
       .from("finance_records")
       .upsert(
         {
-          user_id: user.id,
+          user_id:
+            user.id,
+
           namespace,
+
           payload,
+
           updated_at:
             new Date().toISOString(),
         },
@@ -225,27 +253,26 @@ async function saveFinanceNamespace(
 }
 
 /* =========================================================
-   TIPOS
-   ========================================================= */
-
-/* =========================================================
-   NORMALIZAÇÃO DOS STATUS ANTIGOS
+   STATUS
    ========================================================= */
 
 function normalizedStatus(
   entry: Ledger
 ): LedgerStatus {
   if (
-    entry.status === "Confirmado"
+    entry.status ===
+    "Confirmado"
   ) {
     if (
-      entry.type === "Receita"
+      entry.type ===
+      "Receita"
     ) {
       return "Recebido";
     }
 
     if (
-      entry.type === "Despesa"
+      entry.type ===
+      "Despesa"
     ) {
       return "Pago";
     }
@@ -254,16 +281,19 @@ function normalizedStatus(
   }
 
   if (
-    entry.status === "Previsto"
+    entry.status ===
+    "Previsto"
   ) {
     if (
-      entry.type === "Receita"
+      entry.type ===
+      "Receita"
     ) {
       return "A receber";
     }
 
     if (
-      entry.type === "Despesa"
+      entry.type ===
+      "Despesa"
     ) {
       return "A pagar";
     }
@@ -278,7 +308,8 @@ function normalizedStatus(
    VALORES INICIAIS
    ========================================================= */
 
-const ledgerSeed: Ledger[] = [];
+const ledgerSeed:
+  Ledger[] = [];
 
 const initialCards:
   FinanceCard[] = [];
@@ -287,40 +318,140 @@ const initialAccounts:
   FinanceAccount[] = [];
 
 const categorySeed = [
-  ["Salário", "💼", "Receita"],
-  ["Bolsa", "🎓", "Receita"],
-  ["Freelance", "💻", "Receita"],
-  ["Renda extra", "📈", "Receita"],
-  ["Investimentos", "💰", "Receita"],
-  ["Reembolso", "↩️", "Receita"],
-  ["Outras receitas", "✨", "Receita"],
+  [
+    "Salário",
+    "💼",
+    "Receita",
+  ],
+  [
+    "Bolsa",
+    "🎓",
+    "Receita",
+  ],
+  [
+    "Freelance",
+    "💻",
+    "Receita",
+  ],
+  [
+    "Renda extra",
+    "📈",
+    "Receita",
+  ],
+  [
+    "Investimentos",
+    "💰",
+    "Receita",
+  ],
+  [
+    "Reembolso",
+    "↩️",
+    "Receita",
+  ],
+  [
+    "Outras receitas",
+    "✨",
+    "Receita",
+  ],
 
-  ["Moradia", "🏠", "Despesa"],
-  ["Mercado", "🛒", "Despesa"],
-  ["Alimentação", "🍽️", "Despesa"],
-  ["Transporte", "🚗", "Despesa"],
-  ["Combustível", "⛽", "Despesa"],
-  ["Saúde", "❤️", "Despesa"],
-  ["Educação", "📚", "Despesa"],
-  ["Lazer", "🎮", "Despesa"],
-  ["Compras", "🛍️", "Despesa"],
-  ["Assinaturas", "🎵", "Despesa"],
-  ["Contas da casa", "💡", "Despesa"],
-  ["Impostos", "🧾", "Despesa"],
-  ["Outras despesas", "✨", "Despesa"],
+  [
+    "Moradia",
+    "🏠",
+    "Despesa",
+  ],
+  [
+    "Mercado",
+    "🛒",
+    "Despesa",
+  ],
+  [
+    "Alimentação",
+    "🍽️",
+    "Despesa",
+  ],
+  [
+    "Transporte",
+    "🚗",
+    "Despesa",
+  ],
+  [
+    "Combustível",
+    "⛽",
+    "Despesa",
+  ],
+  [
+    "Saúde",
+    "❤️",
+    "Despesa",
+  ],
+  [
+    "Educação",
+    "📚",
+    "Despesa",
+  ],
+  [
+    "Lazer",
+    "🎮",
+    "Despesa",
+  ],
+  [
+    "Compras",
+    "🛍️",
+    "Despesa",
+  ],
+  [
+    "Assinaturas",
+    "🎵",
+    "Despesa",
+  ],
+  [
+    "Contas da casa",
+    "💡",
+    "Despesa",
+  ],
+  [
+    "Impostos",
+    "🧾",
+    "Despesa",
+  ],
+  [
+    "Outras despesas",
+    "✨",
+    "Despesa",
+  ],
 ];
 
 const bankCatalog = [
-  ["Nubank", "#820ad1", "#4c0677", "NU"],
-  ["Inter", "#ff7a00", "#c94d00", "inter"],
-  ["Itaú", "#ec7000", "#073f87", "itaú"],
+  [
+    "Nubank",
+    "#820ad1",
+    "#4c0677",
+    "NU",
+  ],
+  [
+    "Inter",
+    "#ff7a00",
+    "#c94d00",
+    "inter",
+  ],
+  [
+    "Itaú",
+    "#ec7000",
+    "#073f87",
+    "itaú",
+  ],
   [
     "Banco do Brasil",
     "#f9dc16",
     "#173863",
     "BB",
   ],
-  ["Caixa", "#087bb8", "#005ca9", "CAIXA"],
+  [
+    "Caixa",
+    "#087bb8",
+    "#005ca9",
+    "CAIXA",
+  ],
   [
     "Bradesco",
     "#cc092f",
@@ -345,7 +476,12 @@ const bankCatalog = [
     "#071a34",
     "BTG",
   ],
-  ["XP", "#171717", "#000000", "XP"],
+  [
+    "XP",
+    "#171717",
+    "#000000",
+    "XP",
+  ],
   [
     "Sicredi",
     "#68a82f",
@@ -399,7 +535,9 @@ export default function Home({
     section,
     setSection,
   ] =
-    useState("Visão geral");
+    useState(
+      "Visão geral"
+    );
 
   const [
     mobile,
@@ -417,11 +555,9 @@ export default function Home({
     month,
     setMonth,
   ] =
-    useState(currentMonthKey);
-
-
-
-
+    useState(
+      currentMonthKey
+    );
 
   const [
     entries,
@@ -455,7 +591,9 @@ export default function Home({
       initialCards
     );
 
-  const [homeCategories] =
+  const [
+    homeCategories,
+  ] =
     usePersistedFinance<
       string[][]
     >(
@@ -481,44 +619,45 @@ export default function Home({
   ] =
     useState("");
 
-  const [preferences, setPreferences, preferencesState] = usePersistedFinance("preferences", defaultPreferences);
+  const [
+    preferences,
+    setPreferences,
+    preferencesState,
+  ] =
+    usePersistedFinance(
+      "preferences",
+      defaultPreferences
+    );
 
   const nav = [
     [
       "Visão geral",
       LayoutDashboard,
     ],
-
     [
       "Planejamento",
       CalendarDays,
     ],
-
     [
       "Lançamentos",
       ArrowUpRight,
     ],
-
     [
       "Cartões",
       CreditCard,
     ],
-
     [
       "Contas",
       Landmark,
     ],
-
     [
       "Metas e reservas",
       Target,
     ],
-
     [
       "Relatório anual",
       PiggyBank,
     ],
-
     [
       "Acessos",
       KeyRound,
@@ -529,7 +668,9 @@ export default function Home({
     useMemo(
       () =>
         entries.filter(
-          (entry) =>
+          (
+            entry
+          ) =>
             dateBelongsToMonth(
               entry.date,
               month
@@ -542,13 +683,15 @@ export default function Home({
     );
 
   /* =======================================================
-     RESUMO FINANCEIRO
+     RESUMO
      ======================================================= */
 
   const income =
     monthEntries
       .filter(
-        (entry) =>
+        (
+          entry
+        ) =>
           entry.type ===
           "Receita"
       )
@@ -565,7 +708,9 @@ export default function Home({
   const spent =
     monthEntries
       .filter(
-        (entry) =>
+        (
+          entry
+        ) =>
           entry.type ===
           "Despesa"
       )
@@ -582,7 +727,9 @@ export default function Home({
   const invested =
     monthEntries
       .filter(
-        (entry) =>
+        (
+          entry
+        ) =>
           entry.type ===
           "Investimento"
       )
@@ -596,12 +743,6 @@ export default function Home({
         0
       );
 
-  /*
-    Este é o valor previsto considerando
-    TODAS as receitas e despesas,
-    independentemente de já terem sido
-    recebidas ou pagas.
-  */
   const projectedBalance =
     income -
     spent -
@@ -610,7 +751,9 @@ export default function Home({
   const received =
     monthEntries
       .filter(
-        (entry) =>
+        (
+          entry
+        ) =>
           entry.type ===
             "Receita" &&
           normalizedStatus(
@@ -631,7 +774,9 @@ export default function Home({
   const toReceive =
     monthEntries
       .filter(
-        (entry) =>
+        (
+          entry
+        ) =>
           entry.type ===
             "Receita" &&
           normalizedStatus(
@@ -652,7 +797,9 @@ export default function Home({
   const paid =
     monthEntries
       .filter(
-        (entry) =>
+        (
+          entry
+        ) =>
           entry.type ===
             "Despesa" &&
           normalizedStatus(
@@ -673,7 +820,9 @@ export default function Home({
   const toPay =
     monthEntries
       .filter(
-        (entry) =>
+        (
+          entry
+        ) =>
           entry.type ===
             "Despesa" &&
           normalizedStatus(
@@ -691,10 +840,6 @@ export default function Home({
         0
       );
 
-  /*
-    Dinheiro efetivamente realizado
-    até o momento.
-  */
   const realizedBalance =
     received -
     paid -
@@ -703,7 +848,9 @@ export default function Home({
   const cardExpenses =
     monthEntries
       .filter(
-        (entry) =>
+        (
+          entry
+        ) =>
           entry.type ===
             "Despesa" &&
           entry.sourceType ===
@@ -721,45 +868,63 @@ export default function Home({
 
   const cardEntryCount =
     monthEntries.filter(
-      (entry) =>
+      (
+        entry
+      ) =>
         entry.type ===
           "Despesa" &&
         entry.sourceType ===
           "card"
     ).length;
 
-
-    const totalCardLimit =
-  cards.reduce(
-    (total, card) =>
-      total +
-      Number(card.limit || 0),
-    0
-  );
-
-const usedCardLimit =
-  entries
-    .filter(
-      (entry) =>
-        entry.type === "Despesa" &&
-        entry.sourceType === "card" &&
-        normalizedStatus(entry) ===
-          "A pagar"
-    )
-    .reduce(
-      (total, entry) =>
-        total + entry.value,
+  const totalCardLimit =
+    cards.reduce(
+      (
+        total,
+        card
+      ) =>
+        total +
+        Number(
+          card.limit ||
+            0
+        ),
       0
     );
 
-const availableCardLimit =
-  Math.max(
-    0,
-    totalCardLimit -
-      usedCardLimit
-  );
+  const usedCardLimit =
+    entries
+      .filter(
+        (
+          entry
+        ) =>
+          entry.type ===
+            "Despesa" &&
+          entry.sourceType ===
+            "card" &&
+          normalizedStatus(
+            entry
+          ) ===
+            "A pagar"
+      )
+      .reduce(
+        (
+          total,
+          entry
+        ) =>
+          total +
+          entry.value,
+        0
+      );
+
+  const availableCardLimit =
+    Math.max(
+      0,
+      totalCardLimit -
+        usedCardLimit
+    );
+
   /* =======================================================
-     PROGRESSO DOS KPIs
+     KPI
      ======================================================= */
 
   const kpiMaximum =
@@ -791,16 +956,14 @@ const availableCardLimit =
       kpiMaximum) *
     100;
 
-  /* =======================================================
-     CATEGORIAS
-     ======================================================= */
-
   function getCategoryIcon(
     categoryName: string
   ) {
     const category =
       homeCategories.find(
-        (item) =>
+        (
+          item
+        ) =>
           item[0] ===
           categoryName
       );
@@ -816,7 +979,9 @@ const availableCardLimit =
       const totals =
         monthEntries
           .filter(
-            (entry) =>
+            (
+              entry
+            ) =>
               entry.type ===
               "Despesa"
           )
@@ -831,7 +996,8 @@ const availableCardLimit =
                 (
                   acc[
                     entry.category
-                  ] || 0
+                  ] ||
+                  0
                 ) +
                 entry.value;
 
@@ -846,7 +1012,10 @@ const availableCardLimit =
       return Object.entries(
         totals
       ).sort(
-        (a, b) =>
+        (
+          a,
+          b
+        ) =>
           b[1] -
           a[1]
       );
@@ -854,59 +1023,86 @@ const availableCardLimit =
       monthEntries,
     ]);
 
-   const categoryColors = [
-  "#118f8b",
-  "#4c73c9",
-  "#d6a63b",
-  "#d76b61",
-  "#7c6db0",
-];
+  const categoryColors = [
+    "#118f8b",
+    "#4c73c9",
+    "#d6a63b",
+    "#d76b61",
+    "#7c6db0",
+  ];
 
-const topCategories =
-  cats.slice(0, 5);
+  const topCategories =
+    cats.slice(
+      0,
+      5
+    );
 
-const categoryTotal =
-  topCategories.reduce(
-    (total, [, value]) =>
-      total + value,
+  const categoryTotal =
+    topCategories.reduce(
+      (
+        total,
+        [
+          ,
+          value,
+        ]
+      ) =>
+        total +
+        value,
+      0
+    );
+
+  const donutBackground =
+    categoryTotal >
     0
-  );
-
-const donutBackground =
-  categoryTotal > 0
-    ? `conic-gradient(${topCategories
-        .map(
-          ([, value], index) => {
-            const previous =
-              topCategories
-                .slice(0, index)
-                .reduce(
-                  (
-                    sum,
-                    [, current]
-                  ) =>
-                    sum +
-                    current,
-                  0
-                ) /
-              categoryTotal *
-              100;
-
-            const current =
-              previous +
-              (value /
-                categoryTotal) *
+      ? `conic-gradient(${topCategories
+          .map(
+            (
+              [
+                ,
+                value,
+              ],
+              index
+            ) => {
+              const previous =
+                topCategories
+                  .slice(
+                    0,
+                    index
+                  )
+                  .reduce(
+                    (
+                      sum,
+                      [
+                        ,
+                        current,
+                      ]
+                    ) =>
+                      sum +
+                      current,
+                    0
+                  ) /
+                categoryTotal *
                 100;
 
-            return `${categoryColors[index]} ${previous}% ${current}%`;
-          }
-        )
-        .join(", ")})`
-    : "#edf2f2";
+              const current =
+                previous +
+                (value /
+                  categoryTotal) *
+                  100;
+
+              return `${categoryColors[index]} ${previous}% ${current}%`;
+            }
+          )
+          .join(
+            ", "
+          )})`
+      : "#edf2f2";
 
   const filtered =
     monthEntries.filter(
-      (entry) =>
+      (
+        entry
+      ) =>
         entry.type ===
           "Despesa" &&
         (
@@ -919,12 +1115,6 @@ const donutBackground =
             query.toLowerCase()
           )
     );
-
-  
-
-  /* =======================================================
-     ALTERAR STATUS CLICANDO
-     ======================================================= */
 
   async function toggleEntryStatus(
     entry: Ledger
@@ -961,7 +1151,9 @@ const donutBackground =
 
     const updatedEntries =
       entries.map(
-        (item) =>
+        (
+          item
+        ) =>
           item.id ===
           entry.id
             ? {
@@ -992,10 +1184,6 @@ const donutBackground =
     }
   }
 
-  /* =======================================================
-     IMPORTAÇÃO
-     ======================================================= */
-
   async function submitInvestment(
     event:
       React.FormEvent<HTMLFormElement>
@@ -1020,16 +1208,17 @@ const donutBackground =
           fd.get(
             "investmentValue"
           )
-        ) || 0
+        ) ||
+          0
       );
 
     if (
-      amount <= 0
+      amount <=
+      0
     ) {
       alert(
         "Informe um valor válido."
       );
-
       return;
     }
 
@@ -1040,13 +1229,14 @@ const donutBackground =
       alert(
         "O valor não pode ser maior que o saldo previsto."
       );
-
       return;
     }
 
     const account =
       investmentAccounts.find(
-        (item) =>
+        (
+          item
+        ) =>
           item.id ===
           accountId
       );
@@ -1055,18 +1245,18 @@ const donutBackground =
       alert(
         "Selecione uma conta."
       );
-
       return;
     }
 
     const updatedAccounts =
       investmentAccounts.map(
-        (item) =>
+        (
+          item
+        ) =>
           item.id ===
           accountId
             ? {
                 ...item,
-
                 balance:
                   item.balance +
                   amount,
@@ -1156,7 +1346,19 @@ const donutBackground =
 
   return (
     <div
-      className={`app-shell ${collapsed ? "sidebar-collapsed" : ""} ${preferences.animations ? "" : "reduce-motion"} ${preferences.compact ? "compact-view" : ""}`}
+      className={`app-shell ${
+        collapsed
+          ? "sidebar-collapsed"
+          : ""
+      } ${
+        preferences.animations
+          ? ""
+          : "reduce-motion"
+      } ${
+        preferences.compact
+          ? "compact-view"
+          : ""
+      }`}
     >
       <aside
         className={
@@ -1169,7 +1371,9 @@ const donutBackground =
           className="collapse-sidebar"
           onClick={() =>
             setCollapsed(
-              (value) =>
+              (
+                value
+              ) =>
                 !value
             )
           }
@@ -1188,8 +1392,16 @@ const donutBackground =
 
         <div className="brand">
           <img
-            className={collapsed ? "brandmark has-icon" : "brandmark has-logo"}
-            src={collapsed ? "/icon.png" : "/has-financial-logo.png"}
+            className={
+              collapsed
+                ? "brandmark has-icon"
+                : "brandmark has-logo"
+            }
+            src={
+              collapsed
+                ? "/icon.png"
+                : "/has-financial-logo.png"
+            }
             alt="HAS Financial"
           />
 
@@ -1206,7 +1418,9 @@ const donutBackground =
           <button
             className="close-mobile"
             onClick={() =>
-              setMobile(false)
+              setMobile(
+                false
+              )
             }
           >
             <X />
@@ -1220,7 +1434,9 @@ const donutBackground =
               Icon,
             ]) => (
               <button
-                key={name}
+                key={
+                  name
+                }
                 className={
                   section ===
                   name
@@ -1258,9 +1474,29 @@ const donutBackground =
         </nav>
 
         <div className="side-bottom">
-          
+          <ProfileMenu
+            name={
+              preferences.displayName ||
+              userEmail.split(
+                "@"
+              )[0]
+            }
+            email={
+              userEmail
+            }
+            onProfile={() => {
+              setSection(
+                "Minha conta"
+              );
 
-          <ProfileMenu name={preferences.displayName || userEmail.split("@")[0]} email={userEmail} onProfile={() => { setSection("Minha conta"); setMobile(false); }} onLogout={onLogout} />
+              setMobile(
+                false
+              );
+            }}
+            onLogout={
+              onLogout
+            }
+          />
         </div>
       </aside>
 
@@ -1268,7 +1504,9 @@ const donutBackground =
         <button
           className="backdrop"
           onClick={() =>
-            setMobile(false)
+            setMobile(
+              false
+            )
           }
           aria-label="Fechar menu"
         />
@@ -1276,94 +1514,175 @@ const donutBackground =
 
       <main>
         <header>
-  <button
-    className="hamb"
-    onClick={() => setMobile(true)}
-  >
-    <Menu />
-  </button>
+          <button
+            className="hamb"
+            onClick={() =>
+              setMobile(
+                true
+              )
+            }
+          >
+            <Menu />
+          </button>
 
-  <div>
-    <p>
-      MINHA VIDA FINANCEIRA
-      {" · "}
+          <div>
+            <p>
+              MINHA VIDA FINANCEIRA
+              {" · "}
 
-      {saveState === "salvando"
-        ? "SALVANDO…"
-        : saveState === "erro"
-        ? "ERRO AO SALVAR"
-        : saveState === "carregando"
-        ? "CARREGANDO…"
-        : "SALVO"}
-    </p>
+              {saveState ===
+              "salvando"
+                ? "SALVANDO…"
+                : saveState ===
+                  "erro"
+                ? "ERRO AO SALVAR"
+                : saveState ===
+                  "carregando"
+                ? "CARREGANDO…"
+                : "SALVO"}
+            </p>
 
-    <h1>{section}</h1>
-  </div>
+            <h1>
+              {section}
+            </h1>
+          </div>
 
-  <div className="header-actions">
-    <div className="month-navigation">
-      <button
-        type="button"
-        onClick={() =>
-          setMonth((current) =>
-            changeMonth(current, -1)
-          )
-        }
-      >
-        ‹
-      </button>
+          <div className="header-actions">
+            <div className="month-navigation">
+              <button
+                type="button"
+                onClick={() =>
+                  setMonth(
+                    (
+                      current
+                    ) =>
+                      changeMonth(
+                        current,
+                        -1
+                      )
+                  )
+                }
+              >
+                ‹
+              </button>
 
-      <div className="month-current">
-  <CalendarDays />
+              <div className="month-current">
+                <CalendarDays />
 
-  <span>
-    {new Intl.DateTimeFormat("pt-BR", {
-      month: "short",
-      year: "numeric",
-    })
-      .format(
-        new Date(
-          Number(month.split("-")[0]),
-          Number(month.split("-")[1]) - 1,
-          1
-        )
-      )
-      .replace(".", "")}
-  </span>
-</div>
+                <span>
+                  {new Intl.DateTimeFormat(
+                    "pt-BR",
+                    {
+                      month:
+                        "short",
+                      year:
+                        "numeric",
+                    }
+                  )
+                    .format(
+                      new Date(
+                        Number(
+                          month.split(
+                            "-"
+                          )[0]
+                        ),
+                        Number(
+                          month.split(
+                            "-"
+                          )[1]
+                        ) -
+                          1,
+                        1
+                      )
+                    )
+                    .replace(
+                      ".",
+                      ""
+                    )}
+                </span>
+              </div>
 
-      <button
-        type="button"
-        onClick={() =>
-          setMonth((current) =>
-            changeMonth(current, 1)
-          )
-        }
-      >
-        ›
-      </button>
-    </div>
-
-    
-  </div>
-</header>
+              <button
+                type="button"
+                onClick={() =>
+                  setMonth(
+                    (
+                      current
+                    ) =>
+                      changeMonth(
+                        current,
+                        1
+                      )
+                  )
+                }
+              >
+                ›
+              </button>
+            </div>
+          </div>
+        </header>
 
         {section ===
         "Cartões" ? (
-          <BankCatalog entries={entries} />
+          <BankCatalog
+            entries={
+              entries
+            }
+          />
         ) : section ===
           "Contas" ? (
-          <AccountsWorkspace accounts={investmentAccounts} setAccounts={setInvestmentAccounts} entries={entries} saveState={accountsSaveState} />
+          <AccountsWorkspace
+            accounts={
+              investmentAccounts
+            }
+            setAccounts={
+              setInvestmentAccounts
+            }
+            entries={
+              entries
+            }
+            saveState={
+              accountsSaveState
+            }
+          />
         ) : section ===
           "Planejamento" ? (
-          <PlanningWorkspace key={month} entries={entries} selectedMonth={month} onEntries={() => setSection("Lançamentos")} />
+          <PlanningWorkspace
+            key={
+              month
+            }
+            entries={
+              entries
+            }
+            selectedMonth={
+              month
+            }
+            onEntries={() =>
+              setSection(
+                "Lançamentos"
+              )
+            }
+          />
         ) : section ===
           "Lançamentos" ? (
           <TransactionsWorkspace
-            importReady={saveState === "salvo" && accountsSaveState === "salvo"}
-            accounts={investmentAccounts}
-            setAccounts={setInvestmentAccounts}
-            onImport={() => setImportOpen(true)}
+            importReady={
+              saveState ===
+                "salvo" &&
+              accountsSaveState ===
+                "salvo"
+            }
+            accounts={
+              investmentAccounts
+            }
+            setAccounts={
+              setInvestmentAccounts
+            }
+            onImport={() =>
+              setImportOpen(
+                true
+              )
+            }
             selectedMonth={
               month
             }
@@ -1374,12 +1693,61 @@ const donutBackground =
               setEntries
             }
           />
-        ) : section === "Metas e reservas" ? (
-          <GoalsWorkspace entries={entries} accounts={investmentAccounts} />
-        ) : section === "Relatório anual" ? (
-          <AnnualReportWorkspace entries={entries} selectedMonth={month} />
-        ) : section === "Preferências" || section === "Minha conta" ? (
-          preferencesState === "carregando" ? <p className="preferences-page">Carregando preferências…</p> : <PreferencesWorkspace key={section} preferences={preferences} onSave={setPreferences} state={preferencesState} email={userEmail} onLogout={onLogout} profile={section === "Minha conta"} />
+        ) : section ===
+          "Metas e reservas" ? (
+          <GoalsWorkspace
+            entries={
+              entries
+            }
+            accounts={
+              investmentAccounts
+            }
+          />
+        ) : section ===
+          "Relatório anual" ? (
+          <AnnualReportWorkspace
+            entries={
+              entries
+            }
+            selectedMonth={
+              month
+            }
+          />
+        ) : section ===
+            "Preferências" ||
+          section ===
+            "Minha conta" ? (
+          preferencesState ===
+          "carregando" ? (
+            <p className="preferences-page">
+              Carregando preferências…
+            </p>
+          ) : (
+            <PreferencesWorkspace
+              key={
+                section
+              }
+              preferences={
+                preferences
+              }
+              onSave={
+                setPreferences
+              }
+              state={
+                preferencesState
+              }
+              email={
+                userEmail
+              }
+              onLogout={
+                onLogout
+              }
+              profile={
+                section ===
+                "Minha conta"
+              }
+            />
+          )
         ) : section !==
           "Visão geral" ? (
           <div className="section-placeholder">
@@ -1392,17 +1760,11 @@ const donutBackground =
             </h2>
 
             <p>
-              Esta área faz parte do seu
-              controle financeiro.
+              Esta área faz parte do seu controle financeiro.
             </p>
           </div>
         ) : (
           <div className="content">
-
-            {/* ============================================
-                PAINEL PRINCIPAL
-                ============================================ */}
-
             <section className="forecast forecast-new">
               <div className="forecast-main">
                 <span className="eyebrow">
@@ -1424,9 +1786,8 @@ const donutBackground =
                 </h2>
 
                 <p>
-                  Valor previsto após considerar
-                  todas as receitas, despesas e
-                  reservas do mês.
+                  Valor previsto após considerar todas as receitas,
+                  despesas e reservas do mês.
                 </p>
 
                 {projectedBalance >
@@ -1570,9 +1931,8 @@ const donutBackground =
                 </b>
 
                 <span>
-                  O saldo projetado considera
-                  também valores ainda não pagos
-                  ou recebidos.
+                  O saldo projetado considera também valores ainda não
+                  pagos ou recebidos.
                 </span>
               </div>
 
@@ -1587,10 +1947,6 @@ const donutBackground =
               </button>
             </div>
 
-            {/* ============================================
-                KPIs
-                ============================================ */}
-
             <section className="kpis">
               <Kpi
                 title="Receitas"
@@ -1601,7 +1957,9 @@ const donutBackground =
                   month
                 )}
                 foot={`${monthEntries.filter(
-                  (entry) =>
+                  (
+                    entry
+                  ) =>
                     entry.type ===
                     "Receita"
                 ).length} lançamentos`}
@@ -1620,7 +1978,9 @@ const donutBackground =
                   month
                 )}
                 foot={`${monthEntries.filter(
-                  (entry) =>
+                  (
+                    entry
+                  ) =>
                     entry.type ===
                     "Despesa"
                 ).length} lançamentos`}
@@ -1631,19 +1991,24 @@ const donutBackground =
               />
 
               <Kpi
-  title="Cartões"
-  value={fmt(cardExpenses)}
-  sub={
-    totalCardLimit > 0
-      ? `Limite disponível: ${fmt(
-          availableCardLimit
-        )}`
-      : "Cadastre o limite dos cartões"
-  }
-  foot={`${cardEntryCount} lançamentos`}
-  kind="cards"
-  progress={cardProgress}
-/>
+                title="Cartões"
+                value={fmt(
+                  cardExpenses
+                )}
+                sub={
+                  totalCardLimit >
+                  0
+                    ? `Limite disponível: ${fmt(
+                        availableCardLimit
+                      )}`
+                    : "Cadastre o limite dos cartões"
+                }
+                foot={`${cardEntryCount} lançamentos`}
+                kind="cards"
+                progress={
+                  cardProgress
+                }
+              />
 
               <Kpi
                 title="Reservas"
@@ -1652,7 +2017,8 @@ const donutBackground =
                 )}
                 sub="Guardado no período"
                 foot={
-                  invested > 0
+                  invested >
+                  0
                     ? "Valor destinado a reservas"
                     : "Nenhum valor guardado"
                 }
@@ -1663,12 +2029,15 @@ const donutBackground =
               />
             </section>
 
-            {/* ============================================
-                GRÁFICOS
-                ============================================ */}
-
             <div className="grid-main">
-              <OverviewChart entries={entries} month={month} />
+              <OverviewChart
+                entries={
+                  entries
+                }
+                month={
+                  month
+                }
+              />
 
               <section className="panel categories">
                 <PanelHead
@@ -1679,12 +2048,13 @@ const donutBackground =
                 />
 
                 <div className="donut-wrap">
-                 <div
-  className="donut"
-  style={{
-    background: donutBackground,
-  }}
->
+                  <div
+                    className="donut"
+                    style={{
+                      background:
+                        donutBackground,
+                    }}
+                  >
                     <div>
                       <b>
                         {fmt(
@@ -1699,55 +2069,50 @@ const donutBackground =
                   </div>
 
                   <div className="cat-list">
-                   {topCategories.map(
-                        (
-                          [
-                            category,
-                            value,
-                          ],
-                          index
-                        ) => (
-                          <div
-                            key={
-                              category
-                            }
-                          >
-                            <span>
-                              <i
-  className={`c${index}`}
-  style={{
-  background:
-    categoryColors[index],
-}}
-/>
+                    {topCategories.map(
+                      ([
+                        category,
+                        value,
+                      ], index) => (
+                        <div
+                          key={
+                            category
+                          }
+                        >
+                          <span>
+                            <i
+                              className={`c${index}`}
+                              style={{
+                                background:
+                                  categoryColors[
+                                    index
+                                  ],
+                              }}
+                            />
 
-                              <span className="category-emoji">
-                                {getCategoryIcon(
-                                  category
-                                )}
-                              </span>
-
-                              {
+                            <span className="category-emoji">
+                              {getCategoryIcon(
                                 category
-                              }
+                              )}
                             </span>
 
-                            <b>
-                              {fmt(
-                                value
-                              )}
-                            </b>
-                          </div>
-                        )
-                      )}
+                            {
+                              category
+                            }
+                          </span>
+
+                          <b>
+                            {fmt(
+                              value
+                            )}
+                          </b>
+                        </div>
+                      )
+                    )}
                   </div>
                 </div>
               </section>
             </div>
-
-            {/* ============================================
-                DESPESAS DO MÊS
-                ============================================ */}
 
             <section className="panel transactions">
               <div className="panel-head">
@@ -1760,8 +2125,7 @@ const donutBackground =
                   </h3>
 
                   <p>
-                    Clique no status para marcar
-                    uma despesa como paga ou
+                    Clique no status para marcar uma despesa como paga ou
                     pendente.
                   </p>
                 </div>
@@ -1795,7 +2159,6 @@ const donutBackground =
                     }
                   >
                     <Plus />
-
                     Adicionar
                   </button>
                 </div>
@@ -1808,23 +2171,18 @@ const donutBackground =
                       <th>
                         Data
                       </th>
-
                       <th>
                         Descrição
                       </th>
-
                       <th>
                         Categoria
                       </th>
-
                       <th>
                         Conta / cartão
                       </th>
-
                       <th>
                         Status
                       </th>
-
                       <th>
                         Valor
                       </th>
@@ -1939,155 +2297,231 @@ const donutBackground =
           </div>
         )}
 
-
-
-  <footer className="app-footer">
-  <span>
-    HAS Financial
-  </span>
-
-  <span>
-    Desenvolvido por{" "}
-    <a
-      href="https://hasanalytics.com.br"
-      target="_blank"
-      rel="noreferrer"
-    >
-      Haward Antunny · HAS Analytics
-    </a>
-  </span>
-
-  <a href="mailto:antunnyamerico@gmail.com">
-    Suporte
-  </a>
-</footer>
-      </main>
-
-      {/* ===================================================
-          IMPORTAÇÃO
-          =================================================== */}
-
-      {importOpen && section === "Lançamentos" && <StatementImport accounts={investmentAccounts} entries={entries} onClose={() => setImportOpen(false)} onImport={async rows => { const updated = [...rows, ...entries]; await saveFinanceNamespace("ledger", updated); setEntries(updated); }} />}
-
-      {/* ===================================================
-          GUARDAR SALDO
-          =================================================== */}
-
-      
-{investOpen && (
-  <div className="modal-bg">
-    {investmentAccounts.length === 0 ? (
-      <div className="modal small investment-modal">
-        <ModalHead
-          title="Guardar saldo"
-          sub="Você ainda não possui uma conta cadastrada."
-          close={() => setInvestOpen(false)}
-          icon={<PiggyBank />}
-        />
-
-        <div className="empty-cards">
-          <Landmark />
-
-          <b>Crie uma conta primeiro</b>
-
+        <footer className="app-footer">
           <span>
-            Para guardar dinheiro, você precisa ter pelo menos uma conta cadastrada.
+            HAS Financial
           </span>
 
-          <button
-            type="button"
-            className="primary"
-            onClick={() => {
-              setInvestOpen(false);
-              setSection("Contas");
-            }}
-          >
-            <Plus />
-            Criar conta
-          </button>
-        </div>
-      </div>
-    ) : (
-      <form
-        className="modal small investment-modal"
-        onSubmit={submitInvestment}
-      >
-        <ModalHead
-          title="Guardar saldo"
-          sub={`Disponível previsto em ${monthLabel(month)}: ${
-            projectedBalance < 0 ? "− " : ""
-          }${fmt(projectedBalance)}`}
-          close={() => setInvestOpen(false)}
-          icon={<PiggyBank />}
-        />
-
-        <div className="form-grid">
-          <label className="wide">
-            Valor para guardar
-
-            <input
-              name="investmentValue"
-              type="number"
-              step="0.01"
-              min="0.01"
-              max={projectedBalance}
-              defaultValue={projectedBalance.toFixed(2)}
-              required
-            />
-          </label>
-
-          <label className="wide">
-            Conta de destino
-
-            <select
-              name="investmentAccount"
-              required
+          <span>
+            Desenvolvido por{" "}
+            <a
+              href="https://hasanalytics.com.br"
+              target="_blank"
+              rel="noreferrer"
             >
-              <option value="">
-                Selecione
-              </option>
+              Haward Antunny · HAS Analytics
+            </a>
+          </span>
 
-              {investmentAccounts.map((account) => (
-                <option
-                  key={account.id}
-                  value={account.id}
+          <a href="mailto:antunnyamerico@gmail.com">
+            Suporte
+          </a>
+        </footer>
+      </main>
+
+      {importOpen &&
+        section ===
+          "Lançamentos" && (
+          <StatementImport
+            accounts={
+              investmentAccounts
+            }
+            entries={
+              entries
+            }
+            onClose={() =>
+              setImportOpen(
+                false
+              )
+            }
+            onImport={async (
+              rows
+            ) => {
+              const updated =
+                [
+                  ...rows,
+                  ...entries,
+                ];
+
+              await saveFinanceNamespace(
+                "ledger",
+                updated
+              );
+
+              setEntries(
+                updated
+              );
+            }}
+          />
+        )}
+
+      {investOpen && (
+        <div className="modal-bg">
+          {investmentAccounts.length ===
+          0 ? (
+            <div className="modal small investment-modal">
+              <ModalHead
+                title="Guardar saldo"
+                sub="Você ainda não possui uma conta cadastrada."
+                close={() =>
+                  setInvestOpen(
+                    false
+                  )
+                }
+                icon={
+                  <PiggyBank />
+                }
+              />
+
+              <div className="empty-cards">
+                <Landmark />
+
+                <b>
+                  Crie uma conta primeiro
+                </b>
+
+                <span>
+                  Para guardar dinheiro, você precisa ter pelo menos uma
+                  conta cadastrada.
+                </span>
+
+                <button
+                  type="button"
+                  className="primary"
+                  onClick={() => {
+                    setInvestOpen(
+                      false
+                    );
+
+                    setSection(
+                      "Contas"
+                    );
+                  }}
                 >
-                  {account.name}
-                  {" · "}
-                  {account.bank}
-                  {" · "}
-                  {fmt(account.balance)}
-                </option>
-              ))}
-            </select>
-          </label>
+                  <Plus />
+                  Criar conta
+                </button>
+              </div>
+            </div>
+          ) : (
+            <form
+              className="modal small investment-modal"
+              onSubmit={
+                submitInvestment
+              }
+            >
+              <ModalHead
+                title="Guardar saldo"
+                sub={`Disponível previsto em ${monthLabel(
+                  month
+                )}: ${
+                  projectedBalance <
+                  0
+                    ? "− "
+                    : ""
+                }${fmt(
+                  projectedBalance
+                )}`}
+                close={() =>
+                  setInvestOpen(
+                    false
+                  )
+                }
+                icon={
+                  <PiggyBank />
+                }
+              />
+
+              <div className="form-grid">
+                <label className="wide">
+                  Valor para guardar
+
+                  <input
+                    name="investmentValue"
+                    type="number"
+                    step="0.01"
+                    min="0.01"
+                    max={
+                      projectedBalance
+                    }
+                    defaultValue={projectedBalance.toFixed(
+                      2
+                    )}
+                    required
+                  />
+                </label>
+
+                <label className="wide">
+                  Conta de destino
+
+                  <select
+                    name="investmentAccount"
+                    required
+                  >
+                    <option value="">
+                      Selecione
+                    </option>
+
+                    {investmentAccounts.map(
+                      (
+                        account
+                      ) => (
+                        <option
+                          key={
+                            account.id
+                          }
+                          value={
+                            account.id
+                          }
+                        >
+                          {
+                            account.name
+                          }
+                          {" · "}
+                          {
+                            account.bank
+                          }
+                          {" · "}
+                          {fmt(
+                            account.balance
+                          )}
+                        </option>
+                      )
+                    )}
+                  </select>
+                </label>
+              </div>
+
+              <div className="modal-foot investment-modal-foot">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setInvestOpen(
+                      false
+                    )
+                  }
+                >
+                  Cancelar
+                </button>
+
+                <button
+                  className="primary"
+                  type="submit"
+                >
+                  <PiggyBank />
+                  Guardar dinheiro
+                </button>
+              </div>
+            </form>
+          )}
         </div>
-
-        <div className="modal-foot investment-modal-foot">
-          <button
-            type="button"
-            onClick={() => setInvestOpen(false)}
-          >
-            Cancelar
-          </button>
-
-          <button
-            className="primary"
-            type="submit"
-          >
-            <PiggyBank />
-            Guardar dinheiro
-          </button>
-        </div>
-      </form>
-    )}
-  </div>
-)}
-
-
+      )}
+    </div>
+  );
+}
 
 /* =========================================================
-   KPI E COMPONENTES AUXILIARES
+   KPI
    ========================================================= */
 
 function Kpi({
@@ -2206,11 +2640,7 @@ function PanelHead({
 }
 
 /* =========================================================
-   CABEÇALHO DE MODAL
-   ========================================================= */
-
-/* =========================================================
-   IDENTIFICAÇÃO COLORIDA DO CARTÃO
+   IDENTIFICAÇÃO DO CARTÃO
    ========================================================= */
 
 function CardSourceBadge({
@@ -2248,7 +2678,9 @@ function CardSourceBadge({
       }}
     >
       <CreditCard
-        size={13}
+        size={
+          13
+        }
       />
 
       {card.bank}
@@ -2275,13 +2707,21 @@ function TransactionsWorkspace({
 }: {
   accounts: FinanceAccount[];
   importReady: boolean;
-  setAccounts: React.Dispatch<React.SetStateAction<FinanceAccount[]>>;
+  setAccounts:
+    React.Dispatch<
+      React.SetStateAction<
+        FinanceAccount[]
+      >
+    >;
   onImport: () => void;
   selectedMonth: string;
   entries: Ledger[];
-  setEntries: React.Dispatch<
-    React.SetStateAction<Ledger[]>
-  >;
+  setEntries:
+    React.Dispatch<
+      React.SetStateAction<
+        Ledger[]
+      >
+    >;
 }) {
   const [cards] =
     usePersistedFinance<
@@ -2307,8 +2747,11 @@ function TransactionsWorkspace({
     setEntryType,
   ] =
     useState<
-      "Receita" | "Despesa"
-    >("Despesa");
+      | "Receita"
+      | "Despesa"
+    >(
+      "Despesa"
+    );
 
   const [
     frequency,
@@ -2319,7 +2762,9 @@ function TransactionsWorkspace({
       | "Mensal"
       | "Mensal até dezembro"
       | "Parcelado"
-    >("Único");
+    >(
+      "Único"
+    );
 
   const [
     view,
@@ -2329,7 +2774,9 @@ function TransactionsWorkspace({
       | "Todos"
       | "Receitas"
       | "Despesas"
-    >("Todos");
+    >(
+      "Todos"
+    );
 
   const [
     search,
@@ -2349,7 +2796,9 @@ function TransactionsWorkspace({
   ] =
     useState<
       Ledger | null
-    >(null);
+    >(
+      null
+    );
 
   const [
     catOpen,
@@ -2363,27 +2812,29 @@ function TransactionsWorkspace({
   ] =
     useState("");
 
-  /* =======================================================
-     FILTROS
-     ======================================================= */
-
   const [
     filterCategory,
     setFilterCategory,
   ] =
-    useState("Todas");
+    useState(
+      "Todas"
+    );
 
   const [
     filterSource,
     setFilterSource,
   ] =
-    useState("Todos");
+    useState(
+      "Todos"
+    );
 
   const [
     filterStatus,
     setFilterStatus,
   ] =
-    useState("Todos");
+    useState(
+      "Todos"
+    );
 
   const [
     filtersOpen,
@@ -2393,7 +2844,9 @@ function TransactionsWorkspace({
 
   const monthEntries =
     entries.filter(
-      (entry) =>
+      (
+        entry
+      ) =>
         dateBelongsToMonth(
           entry.date,
           selectedMonth
@@ -2404,7 +2857,9 @@ function TransactionsWorkspace({
     Array.from(
       new Set(
         monthEntries.map(
-          (entry) =>
+          (
+            entry
+          ) =>
             entry.category
         )
       )
@@ -2415,16 +2870,22 @@ function TransactionsWorkspace({
       new Set(
         monthEntries
           .map(
-            (entry) =>
+            (
+              entry
+            ) =>
               entry.account
           )
-          .filter(Boolean)
+          .filter(
+            Boolean
+          )
       )
     ).sort();
 
   const shown =
     monthEntries.filter(
-      (entry) => {
+      (
+        entry
+      ) => {
         const matchesView =
           view ===
             "Todos" ||
@@ -2484,14 +2945,12 @@ function TransactionsWorkspace({
       }
     );
 
-  /* =======================================================
-     RESUMOS
-     ======================================================= */
-
   const revenues =
     monthEntries
       .filter(
-        (entry) =>
+        (
+          entry
+        ) =>
           entry.type ===
           "Receita"
       )
@@ -2508,7 +2967,9 @@ function TransactionsWorkspace({
   const expenses =
     monthEntries
       .filter(
-        (entry) =>
+        (
+          entry
+        ) =>
           entry.type ===
           "Despesa"
       )
@@ -2525,7 +2986,9 @@ function TransactionsWorkspace({
   const investments =
     monthEntries
       .filter(
-        (entry) =>
+        (
+          entry
+        ) =>
           entry.type ===
           "Investimento"
       )
@@ -2542,7 +3005,9 @@ function TransactionsWorkspace({
   const toReceive =
     monthEntries
       .filter(
-        (entry) =>
+        (
+          entry
+        ) =>
           entry.type ===
             "Receita" &&
           normalizedStatus(
@@ -2563,7 +3028,9 @@ function TransactionsWorkspace({
   const received =
     monthEntries
       .filter(
-        (entry) =>
+        (
+          entry
+        ) =>
           entry.type ===
             "Receita" &&
           normalizedStatus(
@@ -2584,7 +3051,9 @@ function TransactionsWorkspace({
   const toPay =
     monthEntries
       .filter(
-        (entry) =>
+        (
+          entry
+        ) =>
           entry.type ===
             "Despesa" &&
           normalizedStatus(
@@ -2605,7 +3074,9 @@ function TransactionsWorkspace({
   const paid =
     monthEntries
       .filter(
-        (entry) =>
+        (
+          entry
+        ) =>
           entry.type ===
             "Despesa" &&
           normalizedStatus(
@@ -2626,7 +3097,9 @@ function TransactionsWorkspace({
   const futureInstallments =
     entries
       .filter(
-        (entry) =>
+        (
+          entry
+        ) =>
           entry.frequency ===
             "Parcelado" &&
           entry.date >
@@ -2647,7 +3120,9 @@ function TransactionsWorkspace({
   ) {
     const category =
       categories.find(
-        (item) =>
+        (
+          item
+        ) =>
           item[0] ===
           categoryName
       );
@@ -2657,10 +3132,6 @@ function TransactionsWorkspace({
       "✨"
     );
   }
-
-  /* =======================================================
-     LIMPAR FILTROS
-     ======================================================= */
 
   function clearFilters() {
     setFilterCategory(
@@ -2685,81 +3156,8 @@ function TransactionsWorkspace({
       "Todos" ||
     filterStatus !==
       "Todos" ||
-    search.trim() !== "";
-
-  /* =======================================================
-     ALTERAR STATUS
-     ======================================================= */
-
-  async function toggleStatus(
-    entry: Ledger
-  ) {
-    const current =
-      normalizedStatus(
-        entry
-      );
-
-    let next:
-      LedgerStatus;
-
-    if (
-      entry.type ===
-      "Receita"
-    ) {
-      next =
-        current ===
-        "Recebido"
-          ? "A receber"
-          : "Recebido";
-    } else if (
-      entry.type ===
-      "Despesa"
-    ) {
-      next =
-        current ===
-        "Pago"
-          ? "A pagar"
-          : "Pago";
-    } else {
-      return;
-    }
-
-    const updatedEntries =
-      entries.map(
-        (item) =>
-          item.id ===
-          entry.id
-            ? {
-                ...item,
-                status:
-                  next,
-              }
-            : item
-      );
-
-    try {
-      await saveFinanceNamespace(
-        "ledger",
-        updatedEntries
-      );
-
-      setEntries(
-        updatedEntries
-      );
-    } catch (error) {
-      console.error(
-        error
-      );
-
-      alert(
-        "Não foi possível alterar o status."
-      );
-    }
-  }
-
-  /* =======================================================
-     NOVO LANÇAMENTO
-     ======================================================= */
+    search.trim() !==
+      "";
 
   async function submit(
     event:
@@ -2774,7 +3172,9 @@ function TransactionsWorkspace({
 
     const type =
       String(
-        fd.get("type")
+        fd.get(
+          "type"
+        )
       ) as
         | "Receita"
         | "Despesa";
@@ -2793,7 +3193,8 @@ function TransactionsWorkspace({
           fd.get(
             "parts"
           )
-        ) || 1
+        ) ||
+          1
       );
 
     const value =
@@ -2802,14 +3203,16 @@ function TransactionsWorkspace({
           fd.get(
             "value"
           )
-        ) || 0
+        ) ||
+          0
       );
 
     const destination =
       String(
         fd.get(
           "account"
-        ) || ""
+        ) ||
+          ""
       );
 
     const baseDate =
@@ -2823,7 +3226,8 @@ function TransactionsWorkspace({
       Date.now();
 
     let accountLabel =
-      type === "Receita"
+      type ===
+      "Receita"
         ? "Receita"
         : "Dinheiro";
 
@@ -2837,12 +3241,9 @@ function TransactionsWorkspace({
       | number
       | undefined;
 
-    /* =====================================================
-       IDENTIFICA A CONTA
-       ===================================================== */
-
     if (
-      type === "Despesa" &&
+      type ===
+        "Despesa" &&
       destination.startsWith(
         "account:"
       )
@@ -2857,7 +3258,9 @@ function TransactionsWorkspace({
 
       const selectedAccount =
         accounts.find(
-          (account) =>
+          (
+            account
+          ) =>
             account.id ===
             accountId
         );
@@ -2868,7 +3271,6 @@ function TransactionsWorkspace({
         alert(
           "Conta não encontrada."
         );
-
         return;
       }
 
@@ -2882,12 +3284,9 @@ function TransactionsWorkspace({
         `${selectedAccount.name} · ${selectedAccount.bank}`;
     }
 
-    /* =====================================================
-       IDENTIFICA O CARTÃO
-       ===================================================== */
-
     if (
-      type === "Despesa" &&
+      type ===
+        "Despesa" &&
       destination.startsWith(
         "card:"
       )
@@ -2902,7 +3301,9 @@ function TransactionsWorkspace({
 
       const selectedCard =
         cards.find(
-          (card) =>
+          (
+            card
+          ) =>
             card.id ===
             cardId
         );
@@ -2913,7 +3314,6 @@ function TransactionsWorkspace({
         alert(
           "Cartão não encontrado."
         );
-
         return;
       }
 
@@ -2930,17 +3330,13 @@ function TransactionsWorkspace({
     let newEntries:
       Ledger[] = [];
 
-    /* =====================================================
-       RECEITA MENSAL ATÉ DEZEMBRO
-       ===================================================== */
-
     if (
       type ===
         "Receita" &&
       selectedFrequency ===
         "Mensal até dezembro"
     ) {
-      const month =
+      const currentMonth =
         Number(
           baseDate.split(
             "-"
@@ -2949,7 +3345,7 @@ function TransactionsWorkspace({
 
       const monthsRemaining =
         12 -
-        month +
+        currentMonth +
         1;
 
       newEntries =
@@ -3015,13 +3411,7 @@ function TransactionsWorkspace({
               "cash",
           })
         );
-    }
-
-    /* =====================================================
-       DESPESA PARCELADA
-       ===================================================== */
-
-    else if (
+    } else if (
       type ===
         "Despesa" &&
       selectedFrequency ===
@@ -3099,19 +3489,13 @@ function TransactionsWorkspace({
             sourceId,
           })
         );
-    }
-
-    /* =====================================================
-       DESPESA MENSAL ATÉ DEZEMBRO
-       ===================================================== */
-
-    else if (
+    } else if (
       type ===
         "Despesa" &&
       selectedFrequency ===
         "Mensal"
     ) {
-      const month =
+      const currentMonth =
         Number(
           baseDate.split(
             "-"
@@ -3120,7 +3504,7 @@ function TransactionsWorkspace({
 
       const monthsRemaining =
         12 -
-        month +
+        currentMonth +
         1;
 
       newEntries =
@@ -3187,13 +3571,7 @@ function TransactionsWorkspace({
             sourceId,
           })
         );
-    }
-
-    /* =====================================================
-       ÚNICO
-       ===================================================== */
-
-    else {
+    } else {
       newEntries = [
         {
           id:
@@ -3235,10 +3613,6 @@ function TransactionsWorkspace({
           frequency:
             "Único",
 
-          /*
-            Todo novo lançamento começa
-            como pendente.
-          */
           status:
             type ===
             "Receita"
@@ -3298,19 +3672,6 @@ function TransactionsWorkspace({
     }
   }
 
-
-
-
-
-
-
-
-
-
-    /* =========================================================
-     EXCLUIR E EDITAR LANÇAMENTO
-     ========================================================= */
-
   async function deleteEntry(
     entry: Ledger
   ) {
@@ -3322,20 +3683,17 @@ function TransactionsWorkspace({
       return;
     }
 
-    /*
-      Se for uma despesa já paga
-      e vinculada a uma conta,
-      devolve o valor ao saldo.
-    */
     if (
       entry.type ===
         "Despesa" &&
       normalizedStatus(
         entry
-      ) === "Pago" &&
+      ) ===
+        "Pago" &&
       entry.sourceType ===
         "account" &&
-      entry.sourceId != null
+      entry.sourceId !=
+        null
     ) {
       const updatedAccounts =
         accounts.map(
@@ -3346,7 +3704,6 @@ function TransactionsWorkspace({
             entry.sourceId
               ? {
                   ...account,
-
                   balance:
                     account.balance +
                     entry.value,
@@ -3376,17 +3733,13 @@ function TransactionsWorkspace({
       }
     }
 
-    /*
-      Ao excluir investimento,
-      retira o valor da conta
-      que recebeu a reserva.
-    */
     if (
       entry.type ===
         "Investimento" &&
       entry.sourceType ===
         "account" &&
-      entry.sourceId != null
+      entry.sourceId !=
+        null
     ) {
       const updatedAccounts =
         accounts.map(
@@ -3397,7 +3750,6 @@ function TransactionsWorkspace({
             entry.sourceId
               ? {
                   ...account,
-
                   balance:
                     account.balance -
                     entry.value,
@@ -3490,7 +3842,8 @@ function TransactionsWorkspace({
             fd.get(
               "value"
             )
-          ) || 0
+          ) ||
+            0
         ),
 
       date:
@@ -3559,10 +3912,6 @@ function TransactionsWorkspace({
     }
   }
 
-  /* =========================================================
-     STATUS + MOVIMENTAÇÃO DE SALDO
-     ========================================================= */
-
   async function handleStatusClick(
     entry: Ledger
   ) {
@@ -3598,19 +3947,17 @@ function TransactionsWorkspace({
           : "Pago";
     }
 
-    /*
-      Ajusta saldo da conta somente
-      para despesas vinculadas a conta.
-    */
     if (
       entry.type ===
         "Despesa" &&
       entry.sourceType ===
         "account" &&
-      entry.sourceId != null
+      entry.sourceId !=
+        null
     ) {
       const becomingPaid =
-        next === "Pago";
+        next ===
+        "Pago";
 
       const updatedAccounts =
         accounts.map(
@@ -3706,14 +4053,26 @@ function TransactionsWorkspace({
           </h2>
 
           <p>
-            Cadastre receitas,
-            despesas, recorrências
-            e compras parceladas.
+            Cadastre receitas, despesas, recorrências e compras
+            parceladas.
           </p>
         </div>
 
         <div className="ledger-heading-actions">
-          <button className="primary" type="button" disabled={!importReady} onClick={onImport}><Upload />Importar extrato</button>
+          <button
+            className="primary"
+            type="button"
+            disabled={
+              !importReady
+            }
+            onClick={
+              onImport
+            }
+          >
+            <Upload />
+            Importar extrato
+          </button>
+
           <button
             className="category-btn"
             onClick={() =>
@@ -3726,7 +4085,6 @@ function TransactionsWorkspace({
             }
           >
             <Settings />
-
             Categorias
           </button>
 
@@ -3747,15 +4105,10 @@ function TransactionsWorkspace({
             }}
           >
             <Plus />
-
             Novo lançamento
           </button>
         </div>
       </section>
-
-      {/* ===================================================
-          RESUMO
-          =================================================== */}
 
       <section className="ledger-summary">
         <article>
@@ -3840,10 +4193,6 @@ function TransactionsWorkspace({
         </article>
       </section>
 
-      {/* ===================================================
-          CATEGORIAS
-          =================================================== */}
-
       {catOpen && (
         <section className="category-manager">
           <div>
@@ -3852,8 +4201,7 @@ function TransactionsWorkspace({
             </h3>
 
             <p>
-              Organize receitas e
-              despesas do seu jeito.
+              Organize receitas e despesas do seu jeito.
             </p>
           </div>
 
@@ -3946,16 +4294,11 @@ function TransactionsWorkspace({
 
             <button>
               <Plus />
-
               Criar categoria
             </button>
           </form>
         </section>
       )}
-
-      {/* ===================================================
-          TABELA E FILTROS
-          =================================================== */}
 
       <section className="panel ledger-panel">
         <div className="ledger-toolbar ledger-toolbar-new">
@@ -4053,7 +4396,6 @@ function TransactionsWorkspace({
               }
             >
               <Filter />
-
               Filtros
             </button>
 
@@ -4209,31 +4551,24 @@ function TransactionsWorkspace({
             <span>
               Data
             </span>
-
             <span>
               Lançamento
             </span>
-
             <span>
               Categoria
             </span>
-
             <span>
               Conta / cartão
             </span>
-
             <span>
               Repetição
             </span>
-
             <span>
               Status
             </span>
-
             <span>
               Valor
             </span>
-
             <span>
               Ações
             </span>
@@ -4423,17 +4758,12 @@ function TransactionsWorkspace({
               </b>
 
               <span>
-                Ajuste os filtros ou
-                cadastre um novo lançamento.
+                Ajuste os filtros ou cadastre um novo lançamento.
               </span>
             </div>
           )}
         </div>
       </section>
-
-      {/* ===================================================
-          NOVO LANÇAMENTO
-          =================================================== */}
 
       {form && (
         <div className="modal-bg">
@@ -4479,7 +4809,6 @@ function TransactionsWorkspace({
                   }}
                 >
                   <ArrowUpRight />
-
                   Despesa
                 </button>
 
@@ -4502,7 +4831,6 @@ function TransactionsWorkspace({
                   }}
                 >
                   <ArrowDownLeft />
-
                   Receita
                 </button>
               </div>
@@ -4635,9 +4963,11 @@ function TransactionsWorkspace({
                     <Sparkles />
 
                     <span>
-                      Toda receita nova
-                      será criada inicialmente
-                      como <b>A receber</b>.
+                      Toda receita nova será criada inicialmente como{" "}
+                      <b>
+                        A receber
+                      </b>
+                      .
                     </span>
                   </div>
                 </>
@@ -4756,9 +5086,11 @@ function TransactionsWorkspace({
                     <Sparkles />
 
                     <span>
-                      Toda despesa nova
-                      será criada inicialmente
-                      como <b>A pagar</b>.
+                      Toda despesa nova será criada inicialmente como{" "}
+                      <b>
+                        A pagar
+                      </b>
+                      .
                     </span>
                   </div>
                 </>
@@ -4782,17 +5114,12 @@ function TransactionsWorkspace({
                 type="submit"
               >
                 <Check />
-
                 Salvar lançamento
               </button>
             </div>
           </form>
         </div>
       )}
-
-      {/* ===================================================
-          EDITAR
-          =================================================== */}
 
       {editingEntry && (
         <div className="modal-bg">
@@ -4963,7 +5290,6 @@ function TransactionsWorkspace({
                 type="submit"
               >
                 <Check />
-
                 Salvar alteração
               </button>
             </div>
@@ -4973,17 +5299,6 @@ function TransactionsWorkspace({
     </div>
   );
 }
-
-
-
-
-
-
-
-
-/* =========================================================
-   PLANEJAMENTO
-   ========================================================= */
 
 /* =========================================================
    CARTÕES
@@ -5017,7 +5332,9 @@ function BankCatalog({
   ] =
     useState<
       FinanceCard | null
-    >(null);
+    >(
+      null
+    );
 
   const banks =
     bankCatalog.filter(
@@ -5032,14 +5349,17 @@ function BankCatalog({
     );
 
   function openCard(
-    bank?: (typeof bankCatalog)[number]
+    bank?: (
+      typeof bankCatalog
+    )[number]
   ) {
     setEditing({
       id:
         Date.now(),
 
       bank:
-        bank?.[0] || "",
+        bank?.[0] ||
+        "",
 
       color:
         bank?.[1] ||
@@ -5062,44 +5382,60 @@ function BankCatalog({
       due:
         10,
 
-        limit: 0,
+      limit:
+        0,
     });
   }
 
   function getCardLimitInfo(
-  card: FinanceCard
-) {
-  const totalLimit =
-    Number(card.limit || 0);
-
-  const usedLimit =
-    entries
-      .filter(
-        (entry) =>
-          entry.type === "Despesa" &&
-          entry.sourceType === "card" &&
-          entry.sourceId === card.id &&
-          normalizedStatus(entry) ===
-            "A pagar"
-      )
-      .reduce(
-        (total, entry) =>
-          total + entry.value,
-        0
+    card: FinanceCard
+  ) {
+    const totalLimit =
+      Number(
+        card.limit ||
+          0
       );
 
-  const availableLimit =
-    Math.max(
-      0,
-      totalLimit - usedLimit
-    );
+    const usedLimit =
+      entries
+        .filter(
+          (
+            entry
+          ) =>
+            entry.type ===
+              "Despesa" &&
+            entry.sourceType ===
+              "card" &&
+            entry.sourceId ===
+              card.id &&
+            normalizedStatus(
+              entry
+            ) ===
+              "A pagar"
+        )
+        .reduce(
+          (
+            total,
+            entry
+          ) =>
+            total +
+            entry.value,
+          0
+        );
 
-  return {
-    totalLimit,
-    usedLimit,
-    availableLimit,
-  };
-}
+    const availableLimit =
+      Math.max(
+        0,
+        totalLimit -
+          usedLimit
+      );
+
+    return {
+      totalLimit,
+      usedLimit,
+      availableLimit,
+    };
+  }
 
   function saveCard(
     event:
@@ -5107,9 +5443,7 @@ function BankCatalog({
   ) {
     event.preventDefault();
 
-    if (
-      !editing
-    ) {
+    if (!editing) {
       return;
     }
 
@@ -5148,7 +5482,9 @@ function BankCatalog({
             /\D/g,
             ""
           )
-          .slice(-4)
+          .slice(
+            -4
+          )
           .padStart(
             4,
             "0"
@@ -5168,13 +5504,16 @@ function BankCatalog({
           )
         ),
 
-        limit:
-  Math.max(
-    0,
-    Number(
-      fd.get("limit")
-    ) || 0
-  ),
+      limit:
+        Math.max(
+          0,
+          Number(
+            fd.get(
+              "limit"
+            )
+          ) ||
+            0
+        ),
 
       color:
         String(
@@ -5231,15 +5570,11 @@ function BankCatalog({
           </span>
 
           <h2>
-            Meus cartões
-            e bancos
+            Meus cartões e bancos
           </h2>
 
           <p>
-            Cadastre seus
-            cartões e configure
-            fechamento e
-            vencimento.
+            Cadastre seus cartões e configure fechamento, vencimento e limite.
           </p>
         </div>
 
@@ -5272,7 +5607,6 @@ function BankCatalog({
             }
           >
             <Plus />
-
             Adicionar cartão
           </button>
         </div>
@@ -5296,286 +5630,243 @@ function BankCatalog({
           </small>
         </div>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
         {cards.length ? (
-  <div>
-    {cards.map((card) => {
-      const {
-        totalLimit,
-        usedLimit,
-        availableLimit,
-      } = getCardLimitInfo(card);
+          <div>
+            {cards.map(
+              (
+                card
+              ) => {
+                const {
+                  totalLimit,
+                  usedLimit,
+                  availableLimit,
+                } =
+                  getCardLimitInfo(
+                    card
+                  );
 
-      return (
-        <article
-          className="credit-visual"
-          key={card.id}
-          style={{
-            background: `linear-gradient(135deg, ${card.color}, ${card.color2})`,
-          }}
-        >
-          <div className="card-shine" />
+                return (
+                  <article
+                    className="credit-visual"
+                    key={
+                      card.id
+                    }
+                    style={{
+                      background:
+                        `linear-gradient(135deg, ${card.color}, ${card.color2})`,
+                    }}
+                  >
+                    <div className="card-shine" />
 
-          <div className="card-top">
-            <span>
-              {card.logo}
-            </span>
+                    <div className="card-top">
+                      <span>
+                        {
+                          card.logo
+                        }
+                      </span>
 
+                      <CreditCard />
+                    </div>
+
+                    <b>
+                      ••••&nbsp;{" "}
+                      {
+                        card.last4
+                      }
+                    </b>
+
+                    <small>
+                      Fechamento dia{" "}
+                      {
+                        card.closing
+                      }
+                      {" · "}
+                      Vencimento dia{" "}
+                      {
+                        card.due
+                      }
+                    </small>
+
+                    <div className="card-limit-info">
+                      <span>
+                        Disponível
+                        <b>
+                          {fmt(
+                            availableLimit
+                          )}
+                        </b>
+                      </span>
+
+                      <span>
+                        Utilizado
+                        <b>
+                          {fmt(
+                            usedLimit
+                          )}
+                        </b>
+                      </span>
+
+                      <span>
+                        Limite
+                        <b>
+                          {fmt(
+                            totalLimit
+                          )}
+                        </b>
+                      </span>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="edit-card"
+                      onClick={() =>
+                        setEditing(
+                          card
+                        )
+                      }
+                    >
+                      <Pencil />
+                      Editar
+                    </button>
+
+                    <strong>
+                      {
+                        card.bank
+                      }
+                    </strong>
+                  </article>
+                );
+              }
+            )}
+          </div>
+        ) : (
+          <div className="empty-cards">
             <CreditCard />
+
+            <b>
+              Nenhum cartão cadastrado
+            </b>
+
+            <span>
+              Adicione seu primeiro cartão.
+            </span>
+
+            <button
+              className="primary"
+              type="button"
+              onClick={() =>
+                openCard()
+              }
+            >
+              <Plus />
+              Adicionar cartão
+            </button>
           </div>
+        )}
 
-          <b>
-            ••••&nbsp; {card.last4}
-          </b>
+        <h3>
+          Catálogo de instituições
+        </h3>
 
-          <small>
-            Fechamento dia {card.closing}
-            {" · "}
-            Vencimento dia {card.due}
-          </small>
+        <div className="bank-grid">
+          {banks.map(
+            (
+              bank
+            ) => {
+              const added =
+                cards.some(
+                  (
+                    card
+                  ) =>
+                    card.bank ===
+                    bank[0]
+                );
 
-          <div className="card-limit-info">
-            <span>
-              Disponível
-              <b>
-                {fmt(availableLimit)}
-              </b>
-            </span>
+              return (
+                <button
+                  type="button"
+                  key={
+                    bank[0]
+                  }
+                  className={
+                    added
+                      ? "bank-option chosen"
+                      : "bank-option"
+                  }
+                  onClick={() =>
+                    added
+                      ? setEditing(
+                          cards.find(
+                            (
+                              card
+                            ) =>
+                              card.bank ===
+                              bank[0]
+                          )!
+                        )
+                      : openCard(
+                          bank
+                        )
+                  }
+                >
+                  <span
+                    className="bank-logo"
+                    style={{
+                      background:
+                        `linear-gradient(135deg, ${bank[1]}, ${bank[2]})`,
 
-            <span>
-              Utilizado
-              <b>
-                {fmt(usedLimit)}
-              </b>
-            </span>
+                      color:
+                        bank[0] ===
+                        "Banco do Brasil"
+                          ? "#173863"
+                          : "white",
+                    }}
+                  >
+                    {
+                      bank[3]
+                    }
+                  </span>
 
-            <span>
-              Limite
-              <b>
-                {fmt(totalLimit)}
-              </b>
-            </span>
-          </div>
+                  <b>
+                    {
+                      bank[0]
+                    }
+                  </b>
+
+                  <small>
+                    {added
+                      ? "Editar cartão"
+                      : "Adicionar cartão"}
+                  </small>
+
+                  {added && (
+                    <Check />
+                  )}
+                </button>
+              );
+            }
+          )}
 
           <button
             type="button"
-            className="edit-card"
+            className="bank-option custom-bank"
             onClick={() =>
-              setEditing(card)
+              openCard()
             }
           >
-            <Pencil />
-            Editar
+            <span className="bank-logo">
+              <Plus />
+            </span>
+
+            <b>
+              Outra instituição
+            </b>
+
+            <small>
+              Cadastrar manualmente
+            </small>
           </button>
-
-          <strong>
-            {card.bank}
-          </strong>
-        </article>
-      );
-    })}
-  </div>
-) : (
-  <div className="empty-cards">
-    <CreditCard />
-
-    <b>
-      Nenhum cartão cadastrado
-    </b>
-
-    <span>
-      Adicione seu primeiro cartão.
-    </span>
-
-    <button
-      className="primary"
-      type="button"
-      onClick={() =>
-        openCard()
-      }
-    >
-      <Plus />
-      Adicionar cartão
-    </button>
-  </div>
-)}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-      <h3>
-        Catálogo de instituições
-      </h3>
-
-      <div className="bank-grid">
-        {banks.map(
-          (
-            bank
-          ) => {
-            const added =
-              cards.some(
-                (
-                  card
-                ) =>
-                  card.bank ===
-                  bank[0]
-              );
-
-            return (
-              <button
-                type="button"
-                key={
-                  bank[0]
-                }
-                className={
-                  added
-                    ? "bank-option chosen"
-                    : "bank-option"
-                }
-                onClick={() =>
-                  added
-                    ? setEditing(
-                        cards.find(
-                          (
-                            card
-                          ) =>
-                            card.bank ===
-                            bank[0]
-                        )!
-                      )
-                    : openCard(
-                        bank
-                      )
-                }
-              >
-                <span
-                  className="bank-logo"
-                  style={{
-                    background:
-                      `linear-gradient(135deg, ${bank[1]}, ${bank[2]})`,
-
-                    color:
-                      bank[0] ===
-                      "Banco do Brasil"
-                        ? "#173863"
-                        : "white",
-                  }}
-                >
-                  {
-                    bank[3]
-                  }
-                </span>
-
-                <b>
-                  {
-                    bank[0]
-                  }
-                </b>
-
-                <small>
-                  {added
-                    ? "Editar cartão"
-                    : "Adicionar cartão"}
-                </small>
-
-                {added && (
-                  <Check />
-                )}
-              </button>
-            );
-          }
-        )}
-
-        <button
-          type="button"
-          className="bank-option custom-bank"
-          onClick={() =>
-            openCard()
-          }
-        >
-          <span className="bank-logo">
-            <Plus />
-          </span>
-
-          <b>
-            Outra instituição
-          </b>
-
-          <small>
-            Cadastrar manualmente
-          </small>
-        </button>
+        </div>
       </div>
 
       {editing && (
@@ -5617,18 +5908,14 @@ function BankCatalog({
               }}
             >
               <span>
-                {
-                  editing.logo ||
-                  "CARD"
-                }
+                {editing.logo ||
+                  "CARD"}
               </span>
 
               <b>
                 ••••&nbsp;{" "}
-                {
-                  editing.last4 ||
-                  "0000"
-                }
+                {editing.last4 ||
+                  "0000"}
               </b>
 
               <small>
@@ -5812,26 +6099,35 @@ function BankCatalog({
               </label>
 
               <label>
-  Limite do cartão
+                Limite do cartão
 
-  <input
-    name="limit"
-    type="number"
-    min="0"
-    step="0.01"
-    required
-    value={editing.limit ?? 0}
-    onChange={(event) =>
-      setEditing({
-        ...editing,
-        limit:
-          Number(
-            event.target.value
-          ) || 0,
-      })
-    }
-  />
-</label>
+                <input
+                  name="limit"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  required
+                  value={
+                    editing.limit ??
+                    0
+                  }
+                  onChange={(
+                    event
+                  ) =>
+                    setEditing({
+                      ...editing,
+
+                      limit:
+                        Number(
+                          event
+                            .target
+                            .value
+                        ) ||
+                        0,
+                    })
+                  }
+                />
+              </label>
 
               <label className="color-field">
                 Cor principal
@@ -5913,7 +6209,6 @@ function BankCatalog({
                   }}
                 >
                   <Trash2 />
-
                   Excluir
                 </button>
               )}
@@ -5936,7 +6231,6 @@ function BankCatalog({
                 type="submit"
               >
                 <Check />
-
                 Salvar cartão
               </button>
             </div>
