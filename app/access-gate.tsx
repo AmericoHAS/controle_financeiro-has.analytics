@@ -224,7 +224,7 @@ export default function AccessGate({
 
             <div>
               <strong>
-                HAS Financial
+                HAS Finanças
               </strong>
 
               <span>
@@ -252,7 +252,7 @@ export default function AccessGate({
 
           <div className="access-brand-footer">
             <span>
-              HAS Financial
+              HAS Finanças
             </span>
 
             <a
