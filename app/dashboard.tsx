@@ -419,6 +419,11 @@ export default function Home({
   ] =
     useState(currentMonthKey);
 
+
+const [profileOpen, setProfileOpen] = useState(false);
+
+
+
   const [
     entries,
     setEntries,
@@ -1224,13 +1229,7 @@ const donutBackground =
         </nav>
 
         <div className="side-bottom">
-          <button className="nav" title="Preferências" onClick={() => { setSection("Preferências"); setMobile(false); }}>
-            <Settings />
-
-            <span>
-              Preferências
-            </span>
-          </button>
+          
 
           <ProfileMenu name={preferences.displayName || userEmail.split("@")[0]} email={userEmail} onProfile={() => { setSection("Minha conta"); setMobile(false); }} onLogout={onLogout} />
         </div>
@@ -1907,6 +1906,29 @@ const donutBackground =
             </section>
           </div>
         )}
+
+
+
+  <footer className="app-footer">
+  <span>
+    HAS Financial
+  </span>
+
+  <span>
+    Desenvolvido por{" "}
+    <a
+      href="https://hasanalytics.com.br"
+      target="_blank"
+      rel="noreferrer"
+    >
+      Haward Antunny · HAS Analytics
+    </a>
+  </span>
+
+  <a href="mailto:antunnyamerico@gmail.com">
+    Suporte
+  </a>
+</footer>
       </main>
 
       {/* ===================================================

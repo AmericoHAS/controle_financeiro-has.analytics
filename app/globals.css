@@ -3221,3 +3221,334 @@ textarea:focus {
   .finance-workspace .bank-title, .finance-workspace .panel-head { flex-wrap: wrap; gap: 16px; }
   .finance-workspace .account-history { padding: 16px; }
 }
+
+
+
+/* =========================================================
+   AJUSTES DOS BOTÕES DE CARTÕES
+   ========================================================= */
+
+.bank-title-actions .primary{
+  min-height:42px;
+  height:auto;
+  padding:10px 16px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  white-space:nowrap;
+  flex-shrink:0;
+}
+
+.bank-title-actions .primary svg{
+  width:17px;
+  height:17px;
+  flex:none;
+}
+
+.card-modal-foot{
+  display:flex !important;
+  align-items:center;
+  justify-content:flex-end;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.card-modal-foot > span{
+  flex:1;
+}
+
+.card-modal-foot button{
+  min-height:42px !important;
+  height:auto !important;
+  padding:10px 16px !important;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  white-space:nowrap;
+}
+
+.card-modal-foot .primary{
+  min-width:145px;
+}
+
+@media(max-width:600px){
+  .bank-title-actions{
+    width:100%;
+    flex-direction:column;
+    align-items:stretch;
+  }
+
+  .bank-title-actions label,
+  .bank-title-actions .primary{
+    width:100%;
+  }
+
+  .card-modal-foot > span{
+    display:none;
+  }
+
+  .card-modal-foot button{
+    flex:1 1 140px;
+  }
+}
+
+/* =========================================================
+   MENU DO PERFIL
+   ========================================================= */
+
+.profile-wrapper{
+  position:relative;
+}
+
+.profile-wrapper .profile{
+  width:100%;
+  border:0;
+  cursor:pointer;
+  text-align:left;
+}
+
+.profile-menu{
+  position:absolute;
+  left:10px;
+  right:10px;
+  bottom:calc(100% + 10px);
+  z-index:50;
+
+  padding:8px;
+
+  border:1px solid var(--line);
+  border-radius:14px;
+
+  background:#fff;
+
+  box-shadow:
+    0 18px 45px rgba(4,47,55,.18);
+
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+}
+
+.profile-menu-user{
+  padding:10px 11px 12px;
+  margin-bottom:4px;
+  border-bottom:1px solid var(--line);
+  overflow:hidden;
+}
+
+.profile-menu-user b,
+.profile-menu-user small{
+  display:block;
+}
+
+.profile-menu-user b{
+  font-size:12px;
+  color:var(--ink);
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.profile-menu-user small{
+  margin-top:3px;
+  color:var(--muted);
+  font-size:10px;
+}
+
+.profile-menu a,
+.profile-menu > button{
+  width:100%;
+  min-height:38px;
+  padding:8px 10px;
+
+  border:0;
+  border-radius:8px;
+
+  background:transparent;
+  color:var(--ink);
+
+  text-decoration:none;
+  font-size:12px;
+  font-weight:650;
+
+  display:flex;
+  align-items:center;
+  gap:7px;
+
+  cursor:pointer;
+}
+
+.profile-menu a:hover,
+.profile-menu > button:hover{
+  background:var(--hf-50);
+}
+
+.profile-menu > button{
+  color:#a83f3b;
+}
+
+.profile-menu > button svg{
+  width:15px;
+  height:15px;
+}
+
+
+/* =========================================================
+   RODAPÉ
+   ========================================================= */
+
+.app-footer{
+  margin:20px 30px 24px;
+  padding:15px 0;
+
+  border-top:1px solid var(--line);
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-wrap:wrap;
+  gap:8px 18px;
+
+  color:var(--muted);
+  font-size:11px;
+}
+
+.app-footer a{
+  color:var(--hf-700);
+  font-weight:700;
+  text-decoration:none;
+}
+
+.app-footer a:hover{
+  text-decoration:underline;
+}
+
+@media(max-width:600px){
+  .app-footer{
+    margin:16px;
+    flex-direction:column;
+    text-align:center;
+  }
+}
+
+
+
+/* =========================================================
+   MENU DE PERFIL
+   ========================================================= */
+
+.profile-menu{
+  position:relative;
+}
+
+.profile-menu > summary{
+  list-style:none;
+}
+
+.profile-menu > summary::-webkit-details-marker{
+  display:none;
+}
+
+.profile-popover{
+  position:absolute;
+  left:8px;
+  right:8px;
+  bottom:calc(100% + 10px);
+  z-index:100;
+
+  padding:8px;
+
+  border:1px solid var(--line);
+  border-radius:14px;
+
+  background:#fff;
+
+  box-shadow:
+    0 18px 45px rgba(4,47,55,.18);
+
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+}
+
+.profile-popover-head{
+  padding:10px 11px 12px;
+  margin-bottom:4px;
+
+  border-bottom:1px solid var(--line);
+
+  overflow:hidden;
+}
+
+.profile-popover-head strong,
+.profile-popover-head small{
+  display:block;
+}
+
+.profile-popover-head strong{
+  color:var(--ink);
+  font-size:12px;
+
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.profile-popover-head small{
+  margin-top:3px;
+
+  color:var(--muted);
+  font-size:10px;
+
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.profile-popover button,
+.profile-popover a{
+  width:100%;
+  min-height:38px;
+
+  padding:8px 10px;
+
+  border:0;
+  border-radius:8px;
+
+  background:transparent;
+  color:var(--ink);
+
+  display:flex;
+  align-items:center;
+  gap:8px;
+
+  font-size:12px;
+  font-weight:650;
+
+  text-align:left;
+  text-decoration:none;
+
+  cursor:pointer;
+}
+
+.profile-popover button:hover,
+.profile-popover a:hover{
+  background:var(--hf-50);
+}
+
+.profile-popover svg{
+  width:15px;
+  height:15px;
+  flex:none;
+}
+
+.profile-popover-divider{
+  height:1px;
+  margin:4px 2px;
+  background:var(--line);
+}
+
+.profile-popover .profile-logout{
+  color:#a83f3b;
+}
